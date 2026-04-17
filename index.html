@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Engineer — Daily</title>
+<script src="config.js" onerror="window.__configMissing=true"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.65;
+  color: #111;
+  background: #fafafa;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 32px 20px 80px;
+}
+
+h2 {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #888;
+  margin-bottom: 12px;
+}
+
+hr { border: none; border-top: 1px solid #e5e5e5; margin: 28px 0; }
+
+/* Header */
+.hdr { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 28px; }
+.hdr-title { font-size: 17px; font-weight: 600; }
+.hdr-sub { font-size: 13px; color: #777; margin-top: 3px; }
+.hdr-date { font-size: 13px; color: #999; text-align: right; }
+
+/* Loading */
+#loading { padding: 80px 0; text-align: center; color: #888; font-size: 14px; }
+.dot { display: inline-block; animation: blink 1.4s infinite; }
+.dot:nth-child(2) { animation-delay: 0.2s; }
+.dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes blink { 0%,80%,100%{opacity:0.2} 40%{opacity:1} }
+
+/* Main */
+#main { display: none; }
+
+/* Brief */
+.brief {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  padding: 18px 20px;
+  font-size: 14px;
+  line-height: 1.75;
+  color: #222;
+}
+.brief p { margin-bottom: 8px; }
+.brief p:last-child { margin-bottom: 0; }
+
+/* Lab card */
+.lab {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  padding: 16px 18px;
+  margin-bottom: 12px;
+}
+.lab.inprogress { border-color: #2563eb; }
+.lab.done { opacity: 0.65; }
+.lab-row1 { display: flex; justify-content: space-between; align-items: flex-start; }
+.lab-title { font-weight: 600; font-size: 15px; flex: 1; line-height: 1.4; }
+.lab-meta { font-size: 12px; color: #999; white-space: nowrap; margin-left: 12px; }
+.lab-badge {
+  display: inline-block; font-size: 11px; padding: 2px 8px;
+  border-radius: 10px; font-weight: 500; margin-bottom: 6px;
+}
+.badge-ip { background: #dbeafe; color: #1d4ed8; }
+.badge-done { background: #dcfce7; color: #15803d; }
+.lab-why { font-size: 13px; color: #555; margin: 6px 0 5px; line-height: 1.5; }
+.lab-infra { font-size: 12px; color: #888; margin-bottom: 6px; }
+.lab-plats { font-size: 12px; margin-bottom: 10px; }
+.lab-plats a { color: #2563eb; text-decoration: none; margin-right: 12px; }
+.lab-plats a:hover { text-decoration: underline; }
+.lab-actions { display: flex; gap: 8px; margin-top: 4px; }
+
+/* Buttons */
+button {
+  font-size: 13px; padding: 6px 14px; border-radius: 4px;
+  border: 1px solid #d0d0d0; background: #fff; cursor: pointer;
+  color: #111; transition: background 0.12s;
+}
+button:hover { background: #f5f5f5; }
+button.primary { background: #111; color: #fff; border-color: #111; }
+button.primary:hover { background: #333; }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-green { border-color: #16a34a; color: #16a34a; }
+.btn-green:hover { background: #f0fdf4; }
+
+/* Quiz */
+.quiz { margin-top: 14px; border-top: 1px solid #eee; padding-top: 14px; }
+.quiz-q { font-size: 14px; font-weight: 500; margin-bottom: 6px; color: #222; }
+.quiz-qn { font-size: 12px; color: #aaa; margin-right: 4px; }
+textarea.qta {
+  width: 100%; min-height: 75px; font-size: 13px; font-family: inherit;
+  border: 1px solid #ddd; border-radius: 4px; padding: 8px 10px;
+  resize: vertical; margin-bottom: 12px; line-height: 1.5; background: #fafafa;
+}
+textarea.qta:focus { outline: none; border-color: #2563eb; background: #fff; }
+.eval-box {
+  background: #f8f9fa; border-radius: 4px; padding: 14px 16px;
+  font-size: 13px; margin-top: 10px; line-height: 1.65;
+}
+.eval-score { font-weight: 700; font-size: 16px; margin-bottom: 6px; color: #111; }
+
+/* Scores */
+.scores-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 28px; }
+.score-row { display: flex; justify-content: space-between; padding: 4px 0;
+  border-bottom: 1px solid #f0f0f0; font-size: 13px; }
+.score-name { color: #555; }
+.score-val { font-weight: 600; font-variant-numeric: tabular-nums; }
+.low { color: #dc2626; } .mid { color: #d97706; } .hi { color: #16a34a; }
+
+/* Footer */
+.footer { font-size: 12px; color: #bbb; margin-top: 28px; display: flex; gap: 16px; flex-wrap: wrap; }
+
+/* Weekly banner */
+.wk-banner {
+  background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px;
+  padding: 14px 16px; font-size: 14px; display: flex;
+  justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 12px;
+}
+
+/* Setup */
+#setup { max-width: 600px; padding: 60px 0; display: none; }
+#setup h1 { font-size: 18px; margin-bottom: 14px; }
+#setup p { font-size: 14px; color: #444; margin-bottom: 10px; line-height: 1.6; }
+#setup pre {
+  background: #f5f5f5; border-radius: 4px; padding: 16px;
+  font-size: 13px; font-family: 'Courier New', monospace; margin: 14px 0;
+  overflow-x: auto; line-height: 1.7;
+}
+code { font-family: 'Courier New', monospace; font-size: 12px; background: #f0f0f0; padding: 1px 5px; border-radius: 3px; }
+
+/* Error */
+.err { color: #dc2626; font-size: 13px; padding: 8px 0; }
+</style>
+</head>
+<body>
+
+<div id="setup">
+  <h1>One-time setup</h1>
+  <p>Create a file named <code>config.js</code> in the same folder as this page, with your keys:</p>
+  <pre>window.CONFIG = {
+  ANTHROPIC_KEY: 'sk-ant-...',
+  GITHUB_TOKEN:  'ghp_...',
+  GITHUB_REPO:   'tkandhati/AI-Engineer',
+  PLAN_START:    '2025-04-01'
+};</pre>
+  <p>A template is in <code>config.template.js</code>. Rename it to <code>config.js</code> and fill in values.</p>
+  <p style="color:#888;font-size:13px;margin-top:16px">GitHub token: Settings → Developer Settings → Personal Access Tokens → <code>repo</code> scope.<br>
+  <code>config.js</code> is in <code>.gitignore</code> — never pushed.</p>
+</div>
+
+<div id="loading">
+  Researching<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>
+</div>
+
+<div id="main">
+  <div class="hdr">
+    <div>
+      <div class="hdr-title">AI Engineer</div>
+      <div class="hdr-sub" id="monthTag"></div>
+    </div>
+    <div class="hdr-date" id="dateTag"></div>
+  </div>
+
+  <div class="wk-banner" id="wkBanner" style="display:none">
+    <span>Weekly synthesis ready — <strong id="wkCount">0</strong> labs done this week</span>
+    <button onclick="runWeeklyEval()">Synthesize now</button>
+  </div>
+
+  <h2>Today's Brief</h2>
+  <div class="brief" id="briefEl"></div>
+
+  <hr>
+
+  <h2>Today's Labs</h2>
+  <div id="labsEl"></div>
+  <button style="font-size:13px;margin-top:6px" id="refreshBtn" onclick="refreshLabs()">Refresh open labs</button>
+
+  <hr>
+
+  <h2>Progress</h2>
+  <div class="scores-grid" id="scoresEl"></div>
+
+  <div class="footer">
+    <span id="streakEl"></span>
+    <span id="syncEl"></span>
+  </div>
+</div>
+
+<script>
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+const KEY = 'aigrow_v5';
+
+const DIMS = {
+  rag:       'RAG & Retrieval',
+  eval:      'Eval Infra',
+  finetune:  'Fine-tuning',
+  inference: 'Inference / MLOps',
+  k8s:       'K8s & Infra',
+  obs:       'Observability',
+  voice:     'Public Voice',
+  design:    'System Design'
+};
+
+const PLAT = {
+  colab:   { name:'Colab',   cost:'free',              url:'https://colab.research.google.com' },
+  kaggle:  { name:'Kaggle',  cost:'free',              url:'https://www.kaggle.com/code' },
+  runpod:  { name:'RunPod',  cost:'~$0.20/hr',         url:'https://www.runpod.io' },
+  vastai:  { name:'Vast.ai', cost:'~$0.15/hr',         url:'https://vast.ai' },
+  lambda:  { name:'Lambda',  cost:'~$0.50/hr',         url:'https://lambdalabs.com/service/gpu-cloud' },
+  local:   { name:'Local',   cost:'free',              url:'#' },
+  kind:    { name:'kind',    cost:'free (local K8s)',  url:'https://kind.sigs.k8s.io' },
+  ollama:  { name:'Ollama',  cost:'free (local LLM)',  url:'https://ollama.ai' }
+};
+
+// ── State ─────────────────────────────────────────────────────────────────────
+
+function defaults() {
+  return {
+    v: 5,
+    scores: { rag:40, eval:30, finetune:28, inference:38, k8s:32, obs:33, voice:18, design:42 },
+    labs: [],
+    doneIds: [],
+    weekDoneIds: [],
+    weekStart: isoToday(),
+    streak: 0,
+    lastActive: null,
+    brief: null,        // {date, content}
+    labsDate: null,
+    lastSync: null,
+    lastWeekEval: null
+  };
+}
+
+let S;
+function load() { try { const r=localStorage.getItem(KEY); if(r) S=JSON.parse(r); else S=defaults(); } catch(e){ S=defaults(); } }
+function save() { localStorage.setItem(KEY, JSON.stringify(S)); }
+function isoToday() { return new Date().toISOString().slice(0,10); }
+
+function planMonth() {
+  if (!window.CONFIG?.PLAN_START) return 12;
+  const ms = Date.now() - new Date(window.CONFIG.PLAN_START).getTime();
+  return Math.max(1, Math.floor(ms / (1000*60*60*24*30)));
+}
+
+// ── Claude ────────────────────────────────────────────────────────────────────
+
+async function claude(system, user, maxTokens=1800) {
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': window.CONFIG.ANTHROPIC_KEY,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: maxTokens,
+      system,
+      messages: [{ role:'user', content:user }]
+    })
+  });
+  if (!r.ok) throw new Error(`Claude ${r.status}: ${await r.text()}`);
+  return (await r.json()).content[0].text;
+}
+
+function parseJSON(raw) {
+  return JSON.parse(raw.replace(/^```[a-z]*\n?/,'').replace(/\n?```$/,'').trim());
+}
+
+function ctx() {
+  const month = planMonth();
+  const weak = Object.entries(S.scores).sort((a,b)=>a[1]-b[1]).slice(0,3).map(([k])=>DIMS[k]).join(', ');
+  return `Engineer context:
+- 20 years enterprise experience. Currently Sales at Cognizant (services firm, India).
+- Building toward AI Engineer. 18-month structured plan. Month ${month} of 18.
+- Specialization: RAG for regulated industries (finance, health, legal).
+- Month 15 target: role transition to Solutions Engineer — AI.
+- Skills scope: RAG with compliance, eval infra, inference serving, fine-tuning, DPO/GRPO, K8s, observability.
+- Skip: ML research, foundation model training, CUDA kernels, robotics, CV depth.
+- Writing: 1 technical post/month from Month 13, all posts from real work.
+
+Dimension scores (0–100): ${Object.entries(S.scores).map(([k,v])=>`${DIMS[k]}:${v}`).join(', ')}
+Weakest: ${weak}
+Labs done total: ${S.doneIds.length}  |  This week: ${S.weekDoneIds.length}`;
+}
+
+// ── Fetch sources ─────────────────────────────────────────────────────────────
+
+async function fetchHN() {
+  const AI_KW = ['llm','rag','ai ','gpt','claude','gemini','llama','mistral','inference','eval','fine-tun',
+    'embedding','vector','retrieval','langchain','agent','hugging','transformer','gpu','kubernetes',
+    'observ','openai','anthropic','model','diffusion','dataset','benchmark'];
+  try {
+    const ids = await fetch('https://hacker-news.firebaseio.com/v0/topstories.json').then(r=>r.json());
+    const items = await Promise.allSettled(
+      ids.slice(0,40).map(id=>fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`).then(r=>r.json()))
+    );
+    return items
+      .filter(r=>r.status==='fulfilled'&&r.value?.title)
+      .map(r=>r.value)
+      .filter(s=>AI_KW.some(k=>s.title.toLowerCase().includes(k)))
+      .slice(0,14)
+      .map(s=>`• ${s.title} (${s.score||0} pts)`);
+  } catch(e){ return []; }
+}
+
+async function fetchArxiv() {
+  try {
+    const q = 'search_query=cat:cs.IR+OR+cat:cs.LG+OR+cat:cs.CL&sortBy=submittedDate&sortOrder=descending&max_results=12';
+    const text = await fetch(`https://export.arxiv.org/api/query?${q}`).then(r=>r.text());
+    const doc = new DOMParser().parseFromString(text,'text/xml');
+    return Array.from(doc.querySelectorAll('entry')).slice(0,10).map(e=>{
+      const t = e.querySelector('title')?.textContent?.trim().replace(/\s+/g,' ')||'';
+      const s = e.querySelector('summary')?.textContent?.trim().slice(0,120)||'';
+      return `• ${t} — ${s}`;
+    });
+  } catch(e){ return []; }
+}
+
+// ── Daily analysis ─────────────────────────────────────────────────────────────
+
+async function analyze(hn, ax) {
+  const system = `You are an AI engineering coach. ${ctx()}
+
+Given today's AI news and papers, return:
+1. A daily brief — 4–5 sentences. ONLY content that directly applies to this engineer's plan. Technical and actionable. No trends, no opinions, no foundation model announcements without code.
+2. Five lab recommendations — specific to Month ${planMonth()}, their weak areas, regulated-industry RAG specialization.
+
+Return valid JSON only, no markdown.`;
+
+  const user = `Hacker News AI stories today:
+${hn.length ? hn.join('\n') : '(none fetched)'}
+
+arXiv papers (cs.IR/LG/CL, last 24h):
+${ax.length ? ax.join('\n') : '(none fetched)'}
+
+Valid platform keys: colab, kaggle, runpod, vastai, lambda, local, kind, ollama
+
+Return JSON:
+{
+  "brief": "paragraph",
+  "labs": [
+    {
+      "id": "slug-unique",
+      "title": "Lab title",
+      "dim": "rag|eval|finetune|inference|k8s|obs|voice|design",
+      "time": "2h",
+      "diff": "easy|medium|hard",
+      "why": "One sentence tied to this engineer's plan and current month",
+      "infra": "Specific tools, libraries, compute needed",
+      "platforms": ["colab"],
+      "steps": ["step 1","step 2","step 3","step 4","step 5"]
+    }
+  ]
+}`;
+
+  return parseJSON(await claude(system, user, 2800));
+}
+
+// ── Quiz ──────────────────────────────────────────────────────────────────────
+
+async function genQuestions(lab) {
+  const system = `You are an AI engineering coach. ${ctx()}
+
+Generate 4 questions for someone who just completed this lab. Questions must only make sense if they actually did the work. Cover: conceptual understanding, a tricky edge case, a failure mode they likely hit, and how it applies specifically to regulated-industry RAG. Return valid JSON only.`;
+
+  const user = `Lab: "${lab.title}" (${DIMS[lab.dim]})
+Steps: ${(lab.steps||[]).join(' → ')}
+
+Return JSON: {"questions":[{"id":"q1","text":"..."},{"id":"q2","text":"..."},{"id":"q3","text":"..."},{"id":"q4","text":"..."}]}`;
+
+  return parseJSON(await claude(system, user, 500)).questions;
+}
+
+async function evalAnswers(lab, questions, answers) {
+  const system = `You are an AI engineering coach. ${ctx()}
+
+Evaluate these quiz answers honestly. Score 0–100. Give 3–4 sentences of specific feedback: what they got right, the gap, what to revisit. Return valid JSON only.`;
+
+  const user = `Lab: "${lab.title}" (${DIMS[lab.dim]})
+
+${questions.map((q,i)=>`Q${i+1}: ${q.text}\nA: ${answers[i]||'(blank)'}`).join('\n\n')}
+
+Return JSON: {"score":72,"feedback":"...","delta":8}
+(delta = score points to add to this dimension, 0–15)`;
+
+  return parseJSON(await claude(system, user, 350));
+}
+
+async function weekSynth(labs) {
+  const system = `You are an AI engineering coach. ${ctx()}
+
+Write a 4–5 sentence weekly synthesis: what was actually learned (not what was done), the most important gap vs plan, and one concrete focus for next week. Be honest and specific.`;
+
+  const user = `Labs this week: ${labs.map(l=>l.title).join(', ')||'none'}`;
+  return claude(system, user, 350);
+}
+
+// ── GitHub ────────────────────────────────────────────────────────────────────
+
+async function ghCommit(path, content, msg) {
+  if (!window.CONFIG?.GITHUB_TOKEN || !window.CONFIG?.GITHUB_REPO) return;
+  try {
+    const base = `https://api.github.com/repos/${window.CONFIG.GITHUB_REPO}/contents/${path}`;
+    const hdr = { 'Authorization':`token ${window.CONFIG.GITHUB_TOKEN}`, 'Content-Type':'application/json' };
+    const ex = await fetch(base, { headers:hdr });
+    const sha = ex.ok ? (await ex.json()).sha : undefined;
+    await fetch(base, {
+      method:'PUT', headers:hdr,
+      body: JSON.stringify({ message:msg, content:btoa(unescape(encodeURIComponent(content))), ...(sha&&{sha}) })
+    });
+    S.lastSync = isoToday(); save();
+  } catch(e){ console.warn('GitHub sync failed:', e); }
+}
+
+function journalEntry() {
+  const today = isoToday();
+  const done = S.labs.filter(l=>l.status==='done');
+  let md = `## ${today} | Month ${planMonth()}\n\n`;
+  if (S.brief?.content) md += `**Brief:** ${S.brief.content}\n\n`;
+  done.forEach(l => {
+    md += `**${l.title}** (${DIMS[l.dim]})\n`;
+    if (l.eval) md += `Score: ${l.eval.score}/100 — ${l.eval.feedback}\n`;
+    md += '\n';
+  });
+  md += `**Scores:** ${Object.entries(S.scores).map(([k,v])=>`${DIMS[k]}:${v}`).join(' | ')}\n`;
+  md += `**Streak:** ${S.streak}d\n`;
+  return md;
+}
+
+function progressSummary() {
+  let md = `# Progress Summary\nUpdated: ${isoToday()} | Plan Month: ${planMonth()}/18\n\n## Scores\n\n|Dimension|Score|\n|---|---|\n`;
+  Object.entries(S.scores).forEach(([k,v])=>{ md+=`|${DIMS[k]}|${v}|\n`; });
+  md += `\n## Stats\n- Labs done: ${S.doneIds.length}\n- Streak: ${S.streak}d\n`;
+  return md;
+}
+
+async function sync() {
+  const today = isoToday();
+  await Promise.allSettled([
+    ghCommit(`learning_journal/${today}.md`, journalEntry(), `Journal: ${today}`),
+    ghCommit('progress_summary.md', progressSummary(), `Progress: ${today}`)
+  ]);
+}
+
+// ── Streak / week ─────────────────────────────────────────────────────────────
+
+function tickStreak() {
+  const today = isoToday();
+  if (S.lastActive===today) return;
+  const yest = new Date(Date.now()-86400000).toISOString().slice(0,10);
+  S.streak = S.lastActive===yest ? S.streak+1 : 1;
+  S.lastActive = today; save();
+}
+
+function checkWeekReset() {
+  const d = new Date();
+  const ws = new Date(d); ws.setDate(d.getDate()-d.getDay());
+  const wsISO = ws.toISOString().slice(0,10);
+  if (S.weekStart!==wsISO) { S.weekStart=wsISO; S.weekDoneIds=[]; save(); }
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+
+function renderAll() {
+  // Header
+  document.getElementById('monthTag').textContent = `Month ${planMonth()} of 18 — RAG for Regulated Industries`;
+  document.getElementById('dateTag').textContent = new Date().toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+  // Brief
+  const brief = document.getElementById('briefEl');
+  if (S.brief?.content) {
+    brief.innerHTML = S.brief.content.split('\n').filter(Boolean).map(p=>`<p>${p}</p>`).join('');
+  } else {
+    brief.innerHTML = '<p style="color:#aaa">Brief unavailable.</p>';
+  }
+
+  // Labs
+  document.getElementById('labsEl').innerHTML = S.labs.map((l,i)=>labCard(l,i)).join('');
+
+  // Scores
+  document.getElementById('scoresEl').innerHTML = Object.entries(S.scores).map(([k,v])=>{
+    const c = v<40?'low':v<65?'mid':'hi';
+    return `<div class="score-row"><span class="score-name">${DIMS[k]}</span><span class="score-val ${c}">${v}</span></div>`;
+  }).join('');
+
+  // Footer
+  document.getElementById('streakEl').textContent = `Streak: ${S.streak} day${S.streak!==1?'s':''}`;
+  document.getElementById('syncEl').textContent = S.lastSync ? `Last synced: ${S.lastSync}` : 'Not yet synced to GitHub';
+
+  // Weekly banner
+  const daysSince = S.lastWeekEval ? Math.floor((Date.now()-new Date(S.lastWeekEval).getTime())/86400000) : 999;
+  const wk = document.getElementById('wkBanner');
+  if (S.weekDoneIds.length>=3 && daysSince>=7) {
+    document.getElementById('wkCount').textContent = S.weekDoneIds.length;
+    wk.style.display = 'flex';
+  } else { wk.style.display = 'none'; }
+}
+
+function labCard(lab, idx) {
+  const badge = lab.status==='inprogress' ? '<span class="lab-badge badge-ip">In progress</span>'
+    : lab.status==='done' ? '<span class="lab-badge badge-done">Done</span>' : '';
+
+  const plats = (lab.platforms||[]).filter(p=>PLAT[p]).map(p=>{
+    const pl=PLAT[p];
+    return `<a href="${pl.url}" target="_blank" rel="noopener">${pl.name} (${pl.cost})</a>`;
+  }).join('');
+
+  let actions = '';
+  if (lab.status==='todo') {
+    actions = `<button onclick="startLab('${lab.id}')">Start</button>
+               <button onclick="swapLab('${lab.id}')">Swap</button>`;
+  } else if (lab.status==='inprogress') {
+    actions = `<button class="btn-green" onclick="markDone('${lab.id}')">Mark done</button>`;
+  }
+
+  let quiz = '';
+  if (lab.status==='done') {
+    if (lab.eval) {
+      quiz = `<div class="quiz"><div class="eval-box"><div class="eval-score">${lab.eval.score}/100</div><div>${lab.eval.feedback}</div></div></div>`;
+    } else if (lab.quiz) {
+      quiz = quizForm(lab);
+    } else {
+      quiz = `<div class="quiz" id="qload-${lab.id}"><button onclick="loadQuiz('${lab.id}')">Load reflection questions</button></div>`;
+    }
+  }
+
+  return `<div class="lab ${lab.status}" id="lab-${lab.id}">
+    ${badge}
+    <div class="lab-row1">
+      <div class="lab-title">${idx+1}. ${lab.title}</div>
+      <div class="lab-meta">${lab.time||'2h'} · ${lab.diff||'medium'}</div>
+    </div>
+    <div class="lab-why">${lab.why||''}</div>
+    ${lab.infra?`<div class="lab-infra">Infra: ${lab.infra}</div>`:''}
+    ${plats?`<div class="lab-plats">${plats}</div>`:''}
+    ${actions?`<div class="lab-actions">${actions}</div>`:''}
+    ${quiz}
+  </div>`;
+}
+
+function quizForm(lab) {
+  const qs = lab.quiz.map((q,i)=>`
+    <div class="quiz-q"><span class="quiz-qn">Q${i+1}.</span>${q.text}</div>
+    <textarea class="qta" id="qa-${lab.id}-${i}" placeholder="Your answer..."></textarea>
+  `).join('');
+  return `<div class="quiz"><h2 style="margin-bottom:10px">Reflection</h2>${qs}
+    <button class="primary" onclick="submitQuiz('${lab.id}')">Submit reflection</button></div>`;
+}
+
+// ── Actions ───────────────────────────────────────────────────────────────────
+
+function startLab(id) {
+  const l = S.labs.find(l=>l.id===id);
+  if (!l||l.status!=='todo') return;
+  l.status='inprogress'; l.startedAt=new Date().toISOString();
+  tickStreak(); save(); renderAll();
+}
+
+function swapLab(id) {
+  const idx = S.labs.findIndex(l=>l.id===id);
+  if (idx===-1||S.labs[idx].status!=='todo') return;
+  S.labs.splice(idx,1); save(); renderAll();
+}
+
+async function markDone(id) {
+  const l = S.labs.find(l=>l.id===id);
+  if (!l||l.status!=='inprogress') return;
+  l.status='done'; l.doneAt=new Date().toISOString();
+  if (!S.weekDoneIds.includes(id)) S.weekDoneIds.push(id);
+  if (!S.doneIds.includes(id)) S.doneIds.push(id);
+  tickStreak(); save(); renderAll();
+  await loadQuiz(id);
+}
+
+async function loadQuiz(id) {
+  const l = S.labs.find(l=>l.id===id);
+  if (!l) return;
+  const el = document.getElementById(`qload-${id}`);
+  if (el) el.innerHTML = '<span style="color:#888;font-size:13px">Generating questions…</span>';
+  try {
+    l.quiz = await genQuestions(l); save(); renderAll();
+  } catch(e) {
+    if (el) el.innerHTML = `<span class="err">Failed. <button onclick="loadQuiz('${id}')">Retry</button></span>`;
+  }
+}
+
+async function submitQuiz(id) {
+  const l = S.labs.find(l=>l.id===id);
+  if (!l?.quiz) return;
+  const answers = l.quiz.map((_,i)=>(document.getElementById(`qa-${id}-${i}`)?.value||'').trim());
+  const btn = document.querySelector(`#lab-${id} .primary`);
+  if (btn) { btn.disabled=true; btn.textContent='Evaluating…'; }
+  try {
+    l.eval = await evalAnswers(l, l.quiz, answers);
+    S.scores[l.dim] = Math.min(100, S.scores[l.dim] + (l.eval.delta||5));
+    save(); renderAll();
+    sync(); // background
+  } catch(e) {
+    if (btn) { btn.disabled=false; btn.textContent='Submit reflection'; }
+    alert('Evaluation failed. Please try again.');
+  }
+}
+
+async function refreshLabs() {
+  const btn = document.getElementById('refreshBtn');
+  btn.disabled=true; btn.textContent='Refreshing…';
+  try {
+    const keep = S.labs.filter(l=>l.status!=='todo');
+    const excl = [...S.doneIds, ...keep.map(l=>l.id)];
+    const [hn, ax] = await Promise.allSettled([fetchHN(), fetchArxiv()]);
+    const result = await analyze(hn.value||[], ax.value||[]);
+    const fresh = result.labs.filter(l=>!excl.includes(l.id)).map(l=>({...l,status:'todo'}));
+    S.labs = [...keep, ...fresh].slice(0,5);
+    save(); renderAll();
+  } catch(e) { alert('Refresh failed. Please try again.'); }
+  btn.disabled=false; btn.textContent='Refresh open labs';
+}
+
+async function runWeeklyEval() {
+  const banner = document.getElementById('wkBanner');
+  banner.innerHTML = '<span style="color:#888">Synthesizing your week…</span>';
+  try {
+    const labs = S.labs.filter(l=>S.weekDoneIds.includes(l.id));
+    const text = await weekSynth(labs);
+    S.lastWeekEval = isoToday(); save();
+    banner.innerHTML = `<div style="width:100%">
+      <div style="font-weight:600;margin-bottom:8px">Weekly synthesis</div>
+      <div style="font-size:14px;line-height:1.7">${text}</div>
+      <button style="margin-top:10px" onclick="this.closest('.wk-banner').style.display='none'">Dismiss</button>
+    </div>`;
+    sync();
+  } catch(e) { banner.innerHTML = '<span class="err">Synthesis failed. <button onclick="runWeeklyEval()">Retry</button></span>'; }
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+
+async function init() {
+  if (window.__configMissing || !window.CONFIG?.ANTHROPIC_KEY) {
+    document.getElementById('loading').style.display='none';
+    document.getElementById('setup').style.display='block';
+    return;
+  }
+
+  load(); checkWeekReset(); tickStreak();
+
+  const today = isoToday();
+  const cached = S.labsDate===today && S.brief?.date===today && S.labs.length>0;
+
+  if (cached) {
+    document.getElementById('loading').style.display='none';
+    document.getElementById('main').style.display='block';
+    renderAll(); return;
+  }
+
+  try {
+    const [hn, ax] = await Promise.allSettled([fetchHN(), fetchArxiv()]);
+    const result = await analyze(hn.value||[], ax.value||[]);
+
+    S.brief = { date:today, content:result.brief };
+    S.labsDate = today;
+
+    const keep = S.labs.filter(l=>l.status==='inprogress'||l.status==='done');
+    const keepIds = keep.map(l=>l.id);
+    const fresh = result.labs.filter(l=>!keepIds.includes(l.id)).map(l=>({...l,status:'todo'}));
+    S.labs = [...keep, ...fresh].slice(0,5);
+    if (!S.labs.length) S.labs = fresh.slice(0,5);
+
+    save();
+  } catch(e) {
+    console.error('Init error:', e);
+    if (!S.brief) S.brief = { date:today, content:`Could not fetch today's brief. Error: ${e.message}` };
+  }
+
+  document.getElementById('loading').style.display='none';
+  document.getElementById('main').style.display='block';
+  renderAll();
+}
+
+init();
+</script>
+</body>
+</html>
