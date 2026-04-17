@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Engineer — Daily Briefing</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #09090f; color: #d4d8ed; font-family: system-ui, sans-serif; font-size: 13px; line-height: 1.6; padding: 18px; max-width: 800px; margin: 0 auto; }
+h2 { font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #7c6af7; margin-bottom: 10px; }
+.section { margin-bottom: 26px; }
+a { color: #8b9be8; text-decoration: none; }
+a:hover { color: #a78bfa; }
+
+/* LOADING OVERLAY */
+#loadingOverlay { position:fixed; inset:0; background:#09090f; z-index:200; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; }
+.loading-logo { font-size:28px; margin-bottom:8px; }
+.loading-title { font-size:13px; font-weight:700; color:#a78bfa; letter-spacing:.06em; }
+.loading-step { font-size:12px; color:#4b5070; transition:color .3s; min-height:18px; }
+.loading-step.active { color:#7c6af7; }
+.loading-bar { width:220px; height:2px; background:#1a1a2e; border-radius:99px; overflow:hidden; margin-top:4px; }
+.loading-bar-fill { height:100%; background:#7c6af7; border-radius:99px; transition:width .4s ease; }
+
+/* TOPBAR */
+.topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid #1a1a2e; }
+.logo { font-weight:800; font-size:13px; color:#a78bfa; }
+.meta { display:flex; gap:16px; font-size:11px; color:#4b5070; }
+.meta strong { color:#7c6af7; }
+
+/* GURU */
+.guru { background:#0f0f1e; border-left:2px solid #7c6af7; padding:8px 12px; border-radius:4px; font-size:12px; color:#8b8fb5; font-style:italic; margin-bottom:20px; }
+
+/* SHIMMER */
+.shimmer { background:linear-gradient(90deg,#0f0f1e 25%,#181830 50%,#0f0f1e 75%); background-size:200% 100%; animation:sh 1.5s infinite; border-radius:4px; height:12px; margin-bottom:7px; }
+@keyframes sh { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+/* INTELLIGENCE BRIEF */
+.brief-card { background:#0f0f1e; border:1px solid #1e1e35; border-radius:8px; padding:14px; margin-bottom:8px; }
+.brief-label { font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; margin-bottom:5px; }
+.brief-text { font-size:12.5px; color:#8b8fb5; line-height:1.6; }
+.brief-insight { font-size:12px; color:#c4c8e2; margin-top:5px; font-weight:600; }
+
+/* NEWS / PAPERS */
+.item { display:flex; gap:7px; margin-bottom:8px; }
+.bullet { color:#7c6af7; flex-shrink:0; font-size:11px; margin-top:2px; }
+.item-body { flex:1; }
+.item-title { font-size:12.5px; color:#c4c8e2; line-height:1.4; }
+.item-title:hover { color:#a78bfa; }
+.item-meta { font-size:10px; color:#2d3050; margin-top:1px; }
+.status-line { font-size:10px; color:#2d3050; margin-bottom:8px; }
+
+/* LAB CARDS */
+.lab { background:#0f0f1e; border:1px solid #1a1a2e; border-radius:8px; padding:14px; margin-bottom:10px; transition:border-color .2s; }
+.lab.inprogress { border-color:#f59e0b55; }
+.lab.done { opacity:.45; border-color:#10b98133; pointer-events:none; }
+.lab-top { display:flex; align-items:center; gap:6px; margin-bottom:8px; flex-wrap:wrap; }
+.badge { font-size:10px; font-weight:700; padding:2px 7px; border-radius:99px; text-transform:uppercase; white-space:nowrap; }
+.why-tag { font-size:10px; padding:1px 6px; border-radius:3px; font-weight:600; white-space:nowrap; }
+.lab-title { font-weight:700; font-size:13.5px; margin-bottom:5px; }
+.lab-why { font-size:12px; color:#5a5f7e; margin-bottom:8px; line-height:1.5; }
+
+/* STEPS */
+.lab-steps { font-size:12px; color:#4b5070; padding-left:16px; margin-bottom:8px; }
+.lab-steps li { margin-bottom:2px; }
+
+/* INFRA SECTION */
+.infra-box { background:#090914; border:1px solid #141428; border-radius:6px; padding:10px 12px; margin-bottom:10px; }
+.infra-row { display:flex; align-items:flex-start; gap:6px; margin-bottom:6px; font-size:11.5px; }
+.infra-icon { flex-shrink:0; color:#4b5070; }
+.infra-text { color:#6b7090; }
+.infra-text strong { color:#9ca3c0; }
+.platforms { display:flex; flex-wrap:wrap; gap:5px; margin-top:6px; }
+.plat { display:flex; align-items:center; gap:4px; font-size:11px; padding:3px 9px; border-radius:5px; white-space:nowrap; text-decoration:none; border:1px solid transparent; transition:border-color .15s; }
+.plat.free { background:#0a160a; border-color:#14281433; color:#4ade80; }
+.plat.free:hover { border-color:#22c55e55; }
+.plat.paid { background:#160a0a; border-color:#28141433; color:#fb923c; }
+.plat.paid:hover { border-color:#f9731655; }
+.plat.local { background:#0a0a16; border-color:#14142833; color:#818cf8; }
+.plat.local:hover { border-color:#7c6af755; }
+.plat-cost { color:#374151; font-size:10px; }
+
+/* LINKS */
+.lab-links { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:9px; }
+.lab-links a { font-size:11px; background:#141428; padding:2px 8px; border-radius:4px; color:#6070a0; }
+.lab-links a:hover { color:#a78bfa; }
+
+/* ACTIONS */
+.lab-actions { display:flex; gap:6px; align-items:center; }
+button { cursor:pointer; border:none; border-radius:5px; font-size:11px; font-weight:600; padding:4px 11px; transition:opacity .15s; }
+button:active { opacity:.7; }
+.btn-start { background:#7c6af7; color:#fff; }
+.btn-done  { background:#059669; color:#fff; }
+.btn-swap  { background:transparent; color:#3d4266; border:1px solid #1e1e35; font-size:10px; margin-left:auto; }
+.btn-swap:hover { color:#7a7f9e; }
+.btn-swap:disabled { opacity:.25; cursor:not-allowed; }
+.ip-tag   { font-size:10px; color:#f59e0b; font-weight:700; }
+
+/* GROWTH */
+.dim-row { display:flex; align-items:center; gap:7px; margin-bottom:5px; }
+.dim-name { width:100px; font-size:11px; color:#4b5070; flex-shrink:0; }
+.bar { flex:1; height:4px; background:#1a1a2e; border-radius:99px; overflow:hidden; }
+.bar-fill { height:100%; border-radius:99px; transition:width .8s; }
+.dim-sc { width:22px; text-align:right; font-size:10px; color:#2d304a; }
+
+/* QUIZ MODAL */
+.overlay { position:fixed; inset:0; background:rgba(0,0,0,.92); display:flex; align-items:center; justify-content:center; padding:16px; z-index:50; }
+.modal { background:#0f0f1e; border:1px solid #1e1e35; border-radius:10px; padding:20px; max-width:520px; width:100%; max-height:88vh; overflow-y:auto; }
+.modal-title { font-size:14px; font-weight:700; margin-bottom:4px; }
+.modal-sub { font-size:11px; color:#4b5070; margin-bottom:16px; }
+.q-block { margin-bottom:16px; }
+.q-label { font-size:12.5px; font-weight:600; color:#c4c8e2; display:block; margin-bottom:5px; }
+.q-hint { font-size:11px; color:#2d3050; background:#0a0a14; padding:5px 8px; border-radius:4px; margin-bottom:6px; border-left:2px solid #2d3050; }
+textarea { background:#09090f; border:1px solid #1e1e35; border-radius:5px; color:#d4d8ed; padding:8px 10px; width:100%; font-size:12px; font-family:inherit; resize:vertical; outline:none; }
+textarea:focus { border-color:#7c6af7; }
+.stars { display:flex; gap:6px; margin-top:4px; }
+.star-btn { font-size:18px; background:none; border:none; cursor:pointer; opacity:.2; padding:0; transition:opacity .1s; }
+.star-btn.on { opacity:1; }
+.options { display:flex; flex-direction:column; gap:5px; margin-top:4px; }
+.opt { background:#141428; border:1px solid #1e1e35; border-radius:5px; padding:7px 10px; cursor:pointer; font-size:12px; color:#8b8fb5; text-align:left; }
+.opt:hover { border-color:#7c6af7; color:#c4c8e2; }
+.opt.selected { border-color:#7c6af7; background:#1a1a3a; color:#c4c8e2; }
+.modal-footer { display:flex; gap:8px; margin-top:16px; }
+.btn-submit { background:#7c6af7; color:#fff; padding:6px 16px; font-size:12px; border-radius:6px; }
+.btn-cancel { background:#1a1a2e; color:#4b5563; padding:6px 12px; font-size:12px; border-radius:6px; }
+
+/* WEEKLY BANNER */
+.weekly-banner { background:#0f0f1e; border:1px solid #7c6af733; border-radius:7px; padding:11px 14px; margin-bottom:18px; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.btn-weekly { background:#7c6af7; color:#fff; font-size:11px; padding:4px 12px; border-radius:5px; flex-shrink:0; cursor:pointer; border:none; }
+
+@keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+.fade-in { animation:fadeIn .35s ease forwards; }
+</style>
+</head>
+<body>
+
+<!-- LOADING OVERLAY -->
+<div id="loadingOverlay">
+  <div class="loading-logo">🧠</div>
+  <div class="loading-title">AI ENGINEER · DAILY BRIEFING</div>
+  <div class="loading-step" id="loadStep">Initializing…</div>
+  <div class="loading-bar"><div class="loading-bar-fill" id="loadBar" style="width:0%"></div></div>
+</div>
+
+<!-- PAGE (hidden until load complete) -->
+<div id="page" style="display:none;">
+
+<div class="topbar">
+  <div class="logo">🧠 AI Engineer · Daily Briefing</div>
+  <div class="meta">
+    <span><strong id="streak">0</strong> 🔥 streak</span>
+    <span>Week: <strong id="weekDone">0</strong> done</span>
+    <span id="dateLabel"></span>
+  </div>
+</div>
+
+<div class="guru" id="guru"></div>
+
+<!-- WEEKLY EVAL BANNER -->
+<div class="weekly-banner" id="weeklyBanner" style="display:none;">
+  <div style="font-size:12px;color:#8b8fb5;">📋 <strong>Weekly check-in ready.</strong> <span id="weeklyCount">0</span> labs done this week — time for your guru to evaluate your growth.</div>
+  <button class="btn-weekly" onclick="openWeeklyEval()">Take Eval →</button>
+</div>
+
+<!-- DAILY INTELLIGENCE -->
+<div class="section">
+  <h2>Daily Intelligence Brief</h2>
+  <div id="intelligenceBrief">
+    <div class="shimmer" style="width:90%;height:60px;border-radius:6px;"></div>
+  </div>
+</div>
+
+<!-- NEWS -->
+<div class="section">
+  <h2>Hot Topics &amp; News</h2>
+  <div id="newsStatus" class="status-line">scanning…</div>
+  <div id="newsFeed"><div class="shimmer" style="width:80%"></div><div class="shimmer" style="width:65%"></div><div class="shimmer" style="width:75%"></div></div>
+</div>
+
+<!-- PAPERS -->
+<div class="section">
+  <h2>Research Papers · Practical Picks</h2>
+  <div id="paperStatus" class="status-line">fetching arXiv…</div>
+  <div id="paperFeed"><div class="shimmer" style="width:70%"></div><div class="shimmer" style="width:82%"></div><div class="shimmer" style="width:60%"></div></div>
+</div>
+
+<!-- LABS -->
+<div class="section">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+    <h2 style="margin-bottom:0;">Today's Labs <span style="color:#2d3050;font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;margin-left:4px;">5 curated · in-progress labs are locked</span></h2>
+    <button class="btn-swap" style="margin-left:0;" onclick="refreshTodoLabs()">↻ refresh todo</button>
+  </div>
+  <div id="labList"></div>
+  <div id="doneSection" style="display:none;margin-top:14px;">
+    <h2>Completed Today</h2>
+    <div id="doneList"></div>
+  </div>
+</div>
+
+<!-- GROWTH -->
+<div class="section">
+  <h2>Growth Snapshot</h2>
+  <div id="dimBars"></div>
+  <div style="margin-top:8px;font-size:11px;color:#2d3050;"><span id="weakestLine"></span> &nbsp;·&nbsp; <span id="strongestLine"></span></div>
+</div>
+
+</div><!-- /page -->
+
+<!-- QUIZ MODAL -->
+<div class="overlay" id="quizModal" style="display:none;">
+  <div class="modal">
+    <div class="modal-title" id="quizTitle"></div>
+    <div class="modal-sub">Your guru uses these answers to measure real understanding — not just completion.</div>
+    <div id="quizBody"></div>
+    <div class="modal-footer">
+      <button class="btn-submit" onclick="submitQuiz()">Submit Learning →</button>
+      <button class="btn-cancel" onclick="closeQuiz()">Skip for now</button>
+    </div>
+  </div>
+</div>
+
+<!-- WEEKLY MODAL -->
+<div class="overlay" id="weeklyModal" style="display:none;">
+  <div class="modal">
+    <div class="modal-title">📋 Weekly Evaluation</div>
+    <div class="modal-sub" id="weeklySub"></div>
+    <div id="weeklyBody"></div>
+    <div class="modal-footer">
+      <button class="btn-submit" onclick="submitWeeklyEval()">Submit Evaluation →</button>
+      <button class="btn-cancel" onclick="closeWeeklyEval()">Later</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── PLATFORMS ─────────────────────────────────────────────
+const PLAT = {
+  'colab':  { name:'Google Colab Free', cost:'Free',       cls:'free',  icon:'🆓', note:'T4 16GB · up to 12h/session',             url:'https://colab.research.google.com' },
+  'kaggle': { name:'Kaggle Notebooks',  cost:'Free',       cls:'free',  icon:'🆓', note:'P100 16GB · 30h/week quota',              url:'https://kaggle.com/code' },
+  'runpod': { name:'RunPod',            cost:'$0.20–0.44/h',cls:'paid', icon:'⚡', note:'RTX 3090 / A10G · serverless option',     url:'https://runpod.io' },
+  'vastai': { name:'Vast.ai',           cost:'$0.10–0.30/h',cls:'paid', icon:'⚡', note:'Spot market · cheapest GPU cloud',        url:'https://vast.ai' },
+  'lambda': { name:'Lambda Labs',       cost:'$0.50/h',    cls:'paid',  icon:'⚡', note:'A10 24GB · reliable, no queuing',         url:'https://lambdalabs.com/service/gpu-cloud' },
+  'local':  { name:'Your Laptop (CPU)', cost:'Free',       cls:'local', icon:'💻', note:'No GPU needed · runs on any machine',     url:'#' },
+  'kind':   { name:'Kind / Minikube',   cost:'Free',       cls:'local', icon:'💻', note:'Local K8s cluster · Docker required',     url:'https://kind.sigs.k8s.io' },
+  'ollama': { name:'Ollama (local)',    cost:'Free',       cls:'local', icon:'💻', note:'CPU-friendly local model serving',        url:'https://ollama.ai' },
+};
+
+// ── DIMS ──────────────────────────────────────────────────
+const DIMS = {
+  rag:           { name:'RAG & Retrieval',  color:'#7c3aed' },
+  eval:          { name:'Eval Infra',       color:'#3b82f6' },
+  finetune:      { name:'Fine-tuning',      color:'#ec4899' },
+  inference:     { name:'Inference/MLOps',  color:'#f97316' },
+  infra:         { name:'K8s & Infra',      color:'#14b8a6' },
+  observability: { name:'Observability',    color:'#eab308' },
+  voice:         { name:'Public Voice',     color:'#22c55e' },
+  design:        { name:'System Design',    color:'#6366f1' }
+};
+
+const GURU = [
+  "Your 20 years of enterprise experience is your moat. Every pattern you learn lands on real client intuition that product engineers simply don't have.",
+  "The regulated industry niche is wide open. Every day you invest adds distance between you and engineers doing generic RAG.",
+  "Depth is earned, not claimed. Every expertise must have a public artifact — a post, a repo, a talk. 'I worked on it' doesn't count.",
+  "Ship beats perfect. A working RAG with an eval harness teaches you more than a perfect one that never launches.",
+  "One focused lab beats five started. Go deep on one before moving on.",
+  "Your sales background means you've seen 20+ broken AI setups. That pattern recognition is what clients pay Senior rates for.",
+  "The best engineers learn in public. Even a 150-word LinkedIn post compounds. Start now, not at Month 13.",
+  "Month 15 target: role transition complete. Every lab finished today is evidence for that conversation.",
+  "RAG for regulated industries — every HIPAA edge case mastered puts a brick in a wall no generalist can climb.",
+  "Execution means weekly artifacts. What is public today that wasn't public seven days ago?"
+];
+
+// ── LABS ──────────────────────────────────────────────────
+const LABS = [
+  {
+    id:'rag_hybrid', dim:'rag', time:'90 min', diff:'Medium', hot:5, interest:4,
+    title:'Hybrid Search: BM25 + Semantic',
+    why:'Pure semantic search misses exact-match queries — drug names, regulation codes, case numbers. Hybrid search is the production standard for regulated RAG.',
+    infra:'CPU only · 4–8 GB RAM · no GPU needed · Python 3.10+',
+    platforms:['colab','local'],
+    steps:['pip install langchain rank_bm25 sentence-transformers chromadb','Load 20 docs into Chroma; create BM25Retriever from same docs','EnsembleRetriever(retrievers=[bm25,semantic], weights=[0.4,0.6])','Run 10 test queries — log which retriever contributes most to each result','Record 3 query types that improved most with BM25 vs pure semantic'],
+    links:[{l:'LangChain EnsembleRetriever',u:'https://python.langchain.com/docs/modules/data_connection/retrievers/ensemble'},{l:'BEIR benchmark paper',u:'https://arxiv.org/abs/2104.08663'}],
+    quiz:[
+      {type:'open',q:'In your own words: what does BM25 do that semantic embedding cannot? Explain the mechanism specifically.',hint:'Term frequency + inverse document frequency vs. cosine similarity in embedding space — fundamentally different matching strategies'},
+      {type:'open',q:'You are building RAG for a pharmaceutical client. Give 3 real query types where hybrid significantly outperforms pure semantic.',hint:'Drug codes (NDC numbers), regulation section references, exact procedure names with acronyms'},
+      {type:'open',q:'Name 2 failure modes of hybrid search. When does it produce worse results than pure semantic?',hint:'The weight tuning problem — a fixed 0.4/0.6 split cannot adapt to query type. What happens when BM25 matches stop words or noise?'},
+      {type:'rate',q:'If a client asked you to implement hybrid search end-to-end this week, how confident are you?'}
+    ]
+  },
+  {
+    id:'rag_citation', dim:'rag', time:'60 min', diff:'Easy-Med', hot:4, interest:5,
+    title:'Citation & Provenance Tracking',
+    why:'Regulated RAG must be auditable. Every answer needs a traceable source — source doc, page, chunk — or the compliance team rejects it.',
+    infra:'CPU only · needs OpenAI or local LLM API key · 4 GB RAM',
+    platforms:['colab','local'],
+    steps:['pip install llama-index openai','Load 3 PDFs with SimpleDirectoryReader','CitationQueryEngine.from_defaults(index, citation_chunk_size=512)','Ask 5 questions — inspect response.source_nodes for each','Build a formatter: "Answer: ... [Source: filename · chunk 3 · score 0.87]"'],
+    links:[{l:'LlamaIndex Citation Query Engine',u:'https://docs.llamaindex.ai/en/stable/examples/query_engine/citation_query_engine/'}],
+    quiz:[
+      {type:'open',q:'Explain chunk-level vs document-level citation. Which does your implementation provide and why does the distinction matter for a compliance audit?',hint:'An auditor needs to verify the exact passage, not just that the document was consulted — chunk-level with page reference is the minimum for regulated use'},
+      {type:'open',q:'Two retrieved chunks give contradictory information on the same question. How should your system handle and surface this?',hint:'Confidence scores on each source node, explicit conflict flagging, showing both sources with a note — what would a lawyer want to see?'},
+      {type:'open',q:'What metadata fields beyond filename are critical for regulated citations? List at least 4.',hint:'Document version/date, section number, effective date, jurisdiction/author, revision history — what changes the legal validity of the citation?'},
+      {type:'rate',q:'Confidence building citation tracking for a live healthcare client this week?'}
+    ]
+  },
+  {
+    id:'rag_hipaa', dim:'rag', time:'45 min', diff:'Easy', hot:4, interest:3,
+    title:'HIPAA Constraints → RAG Architecture Map',
+    why:'HIPAA is not just "add encryption." The rules directly constrain where embeddings live, what you can log, and what never leaves the network boundary.',
+    infra:'No compute needed · reading + analysis exercise · use any text editor',
+    platforms:['local'],
+    steps:['Read HHS Safe Harbor — 18 PHI identifiers (link below, 30 min read)','For each: can it appear in a chunk? in an embedding? in logs? Build a table','Map: which RAG components touch PHI? (embedding server, vector DB, LLM call, logs)','Write a 1-page checklist: compliant vs non-compliant design decisions','Identify the 3 most common mistakes clients make before calling you'],
+    links:[{l:'HHS Safe Harbor — 18 PHI identifiers',u:'https://www.hhs.gov/hipaa/for-professionals/privacy/special-topics/de-identification/index.html'},{l:'PHI in AI systems',u:'https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8067491/'}],
+    quiz:[
+      {type:'open',q:'List 3 HIPAA constraints that most directly change how you design a RAG pipeline. For each, state what you must NOT do.',hint:'PHI in embedding server calls (data leaves network), PHI in LLM API prompts (sent to OpenAI), PHI verbatim in debug logs — each is a different violation'},
+      {type:'open',q:'A client wants to use the OpenAI API for their healthcare RAG. What is your response and what alternative do you propose?',hint:'PHI would leave the covered entity boundary — BAA required at minimum, but many compliance teams say no. Alternative: local model, Azure OpenAI with BAA, or redact before API call'},
+      {type:'open',q:'You discover your RAG logs full prompts for debugging. What PHI risk does this create and how do you fix it in 30 minutes?',hint:'Logs contain chunks verbatim — PII/PHI in plain text in your logging system. Fix: scrub logs, add PII detection before logging, or log only metadata'},
+      {type:'rate',q:'If a healthcare compliance officer asked you to walk through your RAG architecture right now, how confident are you?'}
+    ]
+  },
+  {
+    id:'rag_parent_child', dim:'rag', time:'60 min', diff:'Easy-Med', hot:3, interest:4,
+    title:'Parent-Child Retrieval Pattern',
+    why:'Small chunks = better retrieval precision. Parent chunks = better answer context. This pattern gives you both without trading one for the other.',
+    infra:'CPU only · 4 GB RAM · no GPU · works offline with local embeddings',
+    platforms:['colab','local'],
+    steps:['pip install langchain sentence-transformers chromadb','ParentDocumentRetriever: child_splitter=200 tokens, parent_splitter=800 tokens','Store parents in InMemoryStore, children in Chroma','Run 5 complex multi-sentence questions','Compare answer completeness: flat 500-token chunking vs parent-child'],
+    links:[{l:'LangChain Parent Document Retriever',u:'https://python.langchain.com/docs/modules/data_connection/retrievers/parent_document_retriever'}],
+    quiz:[
+      {type:'open',q:'Explain exactly why storing small chunks for retrieval but returning parent chunks for generation improves results. What specific problem does each half solve?',hint:'Small chunks → dense retrieval finds the right paragraph; large parent → LLM gets enough surrounding context to answer accurately without hallucinating'},
+      {type:'open',q:'What happens to the parent-child pattern when your documents have inconsistent structure — some 1-line sections, some 5-page appendices?',hint:'Short sections may be smaller than your child chunk size; long appendices may have many children pointing to an enormous parent — context window overflow'},
+      {type:'options',q:'In the parent-child retriever, what does the vector store actually index?',
+       opts:['Parent chunks (800 tokens)','Child chunks (200 tokens)','Both parent and child chunks','Document-level embeddings'],answer:1},
+      {type:'rate',q:'Confidence implementing this pattern from scratch in a client project?'}
+    ]
+  },
+  {
+    id:'rag_hyde', dim:'rag', time:'60 min', diff:'Medium', hot:3, interest:5,
+    title:'HyDE — Hypothetical Document Embeddings',
+    why:'HyDE improves recall on questions where the answer phrasing differs from how documents are written — very common in regulatory QA.',
+    infra:'CPU only · needs LLM API key (OpenAI or Anthropic) · 4 GB RAM',
+    platforms:['colab','local'],
+    steps:['Read HyDE paper abstract + Section 3 (link below, 20 min)','Implement: LLM generates a hypothetical answer → embed that answer → retrieve','Test on 10 questions: compare recall vs direct question embedding','Find 3 questions where HyDE improves and 2 where it hurts','Build a router: HyDE for definition questions, direct for lookup queries'],
+    links:[{l:'HyDE paper (arxiv)',u:'https://arxiv.org/abs/2212.10496'}],
+    quiz:[
+      {type:'open',q:'Explain the core intuition of HyDE. Why does embedding a hypothetical answer retrieve better chunks than embedding the question?',hint:'In embedding space, answers cluster near other answers. A question about treatment options is semantically far from the treatment options passage — a hypothetical answer bridges this gap'},
+      {type:'open',q:'For which question types does HyDE fail? Give 2 specific examples from a legal or medical domain.',hint:'Lookup queries where the LLM hallucinates wrong facts (wrong drug dosage) — now you retrieve chunks near the wrong answer. Factual questions where the LLM\'s prior is wrong'},
+      {type:'open',q:'What is the latency cost of HyDE vs direct retrieval and is it acceptable for a real-time user interface?',hint:'One extra LLM call before retrieval — typically 500-1500ms depending on model. For async batch queries, acceptable; for real-time chat, you need to evaluate user patience vs quality gain'},
+      {type:'rate',q:'Confidence building a HyDE pipeline and explaining the tradeoff to a client?'}
+    ]
+  },
+  {
+    id:'eval_ragas', dim:'eval', time:'75 min', diff:'Medium', hot:5, interest:5,
+    title:'RAGAS: Baseline Your RAG in 75 Minutes',
+    why:'You cannot improve what you cannot measure. RAGAS gives you 4 numbers that pinpoint exactly what is broken in your pipeline.',
+    infra:'CPU only · OpenAI API key required for LLM-based metrics · 4 GB RAM',
+    platforms:['colab','local'],
+    steps:['pip install ragas langchain openai','Build minimal RAG: 5 docs, 5 questions + ground-truth answers','from ragas.metrics import faithfulness, answer_relevancy, context_recall, context_precision','result = evaluate(dataset, metrics=[...]) — log all 4 scores','Identify lowest metric — that is your #1 fix priority for next week'],
+    links:[{l:'RAGAS quickstart',u:'https://docs.ragas.io/en/latest/getstarted/index.html'},{l:'RAGAS metrics deep-dive',u:'https://docs.ragas.io/en/latest/concepts/metrics/index.html'}],
+    quiz:[
+      {type:'open',q:'Explain faithfulness vs answer relevancy with a concrete example where one is high and the other is low.',hint:'Faithfulness=0.4, relevancy=0.9: the answer addresses the question well but adds facts not in the retrieved chunks (hallucination). Or reverse: faithfulness=0.9, relevancy=0.3 — sticks to chunks but misses what was actually asked'},
+      {type:'open',q:'Your faithfulness is 0.6 but context_recall is 0.9. Where is the problem — retrieval or generation — and what do you fix first?',hint:'High recall = right chunks retrieved. Low faithfulness = LLM deviated from those chunks. Fix is in generation: temperature, system prompt, or model choice — not retrieval'},
+      {type:'open',q:'A client asks "how do we know if our RAG is getting worse over time?" Design the monitoring system using RAGAS infrastructure you just built.',hint:'Weekly automated eval run, log scores to time-series DB (simple: a CSV), alert when faithfulness < 0.75 for any 24h window, root cause checklist'},
+      {type:'rate',q:'Confidence explaining all 4 RAGAS metrics and their implications to a non-technical client PM?'}
+    ]
+  },
+  {
+    id:'eval_promptfoo', dim:'eval', time:'60 min', diff:'Easy-Med', hot:4, interest:4,
+    title:'Automated RAG Eval with promptfoo',
+    why:'Manual testing does not scale. promptfoo gives you repeatable CI-runnable evals in under an hour — the iteration loop fast teams use.',
+    infra:'Node.js 18+ only · no GPU · no API key required for basic evals · runs on any laptop',
+    platforms:['local'],
+    steps:['npm install -g promptfoo  OR  npx promptfoo@latest','promptfoo init — generates starter promptfooconfig.yaml','Write 10 test cases: prompt, expected keywords, provider (openai:gpt-4o-mini)','npx promptfoo eval — review the HTML report (pass/fail per test)','Fix 2 failing cases; re-run; verify they pass'],
+    links:[{l:'promptfoo getting started',u:'https://www.promptfoo.dev/docs/getting-started'},{l:'Evaluate RAG with promptfoo',u:'https://www.promptfoo.dev/docs/guides/evaluate-rag'}],
+    quiz:[
+      {type:'options',q:'promptfoo\'s "contains" assertion vs "llm-rubric" assertion — what is the key difference?',
+       opts:['contains is faster; llm-rubric is more accurate','contains checks exact string match; llm-rubric asks an LLM to judge quality','contains is free; llm-rubric costs API tokens','contains works offline; llm-rubric needs internet'],answer:1},
+      {type:'open',q:'3 of your 10 tests fail. How do you determine if each failure is a retrieval problem or a generation problem?',hint:'Add assertion on retrieved chunks (is the right chunk in top-3?), then separate assertion on the answer — isolates which stage broke'},
+      {type:'open',q:'How would you add promptfoo eval to a GitHub Actions CI pipeline that blocks merges if pass rate drops below 80%?',hint:'npx promptfoo eval --ci → exit code 1 on failure → GitHub Actions step fails → PR blocked. Set min-pass threshold in promptfooconfig.yaml'},
+      {type:'rate',q:'Confidence setting up promptfoo CI eval for a client RAG project this week?'}
+    ]
+  },
+  {
+    id:'eval_llm_judge', dim:'eval', time:'90 min', diff:'Medium', hot:5, interest:5,
+    title:'LLM-as-Judge: Build a RAG Quality Scorer',
+    why:'Human eval does not scale. An LLM judge scores thousands of RAG outputs against criteria that matter to regulated clients — auditable and repeatable.',
+    infra:'CPU only · OpenAI or Anthropic API key · no GPU · 4 GB RAM',
+    platforms:['colab','local'],
+    steps:['Design rubric: accuracy (1-5), citation quality (1-5), regulatory compliance tone (1-5)','Write a judge system prompt enforcing the rubric with examples for each score','Run judge on 10 RAG outputs — compare to your own manual scores','Calculate agreement: Cohen\'s kappa or simple % match between human and judge scores','Tune system prompt until agreement > 80% on your 10-sample test set'],
+    links:[{l:'LLM-as-judge patterns (HF Cookbook)',u:'https://huggingface.co/learn/cookbook/llm_judge'},{l:'G-Eval paper',u:'https://arxiv.org/abs/2303.16634'}],
+    quiz:[
+      {type:'open',q:'What is "position bias" in LLM-as-judge and how do you detect and eliminate it?',hint:'LLMs prefer whichever option appears first when comparing two outputs. Test: swap order of A vs B — if scores flip, you have position bias. Fix: score each output independently, never comparatively'},
+      {type:'open',q:'Your judge uses GPT-4o. A client asks: "what if OpenAI changes the model behavior?" Design your eval infrastructure to be model-change-resilient.',hint:'Pin judge model version, store raw outputs separately from scores, run calibration set whenever you update the judge, track inter-version agreement'},
+      {type:'open',q:'Write 3 bullet points for a "regulatory compliance tone" rubric that would give consistent, auditable scores across different reviewers.',hint:'5=explicit citations for every claim, hedging language for uncertainties, disclaimers present; 3=some citations, inconsistent hedging; 1=confident assertions with no source support'},
+      {type:'rate',q:'Confidence building and calibrating an LLM judge for a regulated industry client?'}
+    ]
+  },
+  {
+    id:'eval_golden', dim:'eval', time:'2 hrs', diff:'Medium', hot:3, interest:3,
+    title:'Build a 20-Question Golden Dataset',
+    why:'Your eval quality directly limits your iteration speed. A golden dataset is the single highest-leverage investment in your RAG pipeline.',
+    infra:'No GPU · text editing + Python for RAGAS scoring · any machine · OpenAI API key for scoring',
+    platforms:['local'],
+    steps:['Choose domain: financial regulations, clinical guidelines, or legal contracts','Write 20 questions: expected answer, relevant source chunk, difficulty (easy/medium/hard)','Include 4 adversarial questions: designed to expose hallucination or retrieval failure','Split: 15 regular eval, 5 held-out for final validation','Run RAGAS on all 20 — your reproducible baseline is now set'],
+    links:[{l:'RAGAS synthetic test generation',u:'https://docs.ragas.io/en/latest/concepts/testset_generation.html'}],
+    quiz:[
+      {type:'open',q:'What makes a question "adversarial" for RAG? Write one example from a healthcare domain and explain what failure mode it tests.',hint:'A question that sounds answerable but the answer is NOT in the document corpus — tests if RAG confabulates vs. correctly says "I don\'t know." Or: a question with a correct answer that contradicts what a language model would guess from pretraining'},
+      {type:'open',q:'You have 20 test questions: 15 easy, 5 hard. Your RAG scores 0.85 overall. Why is this misleading and how do you report it more honestly?',hint:'The 15 easy questions inflate the aggregate. You need: easy accuracy = X, hard accuracy = Y separately. Clients care about the hard questions — those are the ones that actually matter in production'},
+      {type:'open',q:'A colleague says "just use RAGAS synthetic generation instead of hand-crafting." What is your response — when is synthetic adequate and when must you hand-craft?',hint:'Synthetic = fast, misses domain edge cases, doesn\'t capture what clients actually ask. Hand-crafted = slow, captures real failure patterns. For a regulated client demo, hand-craft the hard questions at minimum'},
+      {type:'rate',q:'Confidence that your golden dataset would catch real production failures before they reach the client?'}
+    ]
+  },
+  {
+    id:'finetune_lora', dim:'finetune', time:'2 hrs', diff:'Medium', hot:5, interest:5,
+    title:'LoRA Fine-tune a 7B Model (Unsloth)',
+    why:'Unsloth makes LoRA 2× faster with 60% less VRAM. This is the practical path to fine-tuning for anyone without an 8×A100 cluster.',
+    infra:'T4 16GB GPU (minimum) · Colab Free or Kaggle is sufficient · ~15 min training on 500 examples',
+    platforms:['colab','kaggle','runpod','vastai'],
+    steps:['Open the Unsloth Colab notebook (link below — free T4 runtime)','FastLanguageModel.from_pretrained("unsloth/Mistral-7B-v0.3", load_in_4bit=True)','get_peft_model(model, r=16, lora_alpha=16, target_modules=["q_proj","v_proj"])','Train 1 epoch on 500 Alpaca-format examples — watch training loss decrease','Compare base vs fine-tuned on 5 test prompts — log the quality delta'],
+    links:[{l:'Unsloth free Colab (T4 runtime)',u:'https://colab.research.google.com/drive/135ced7oHytdxu3N2DNe1Z0kqjyYIkDXp'},{l:'LoRA paper',u:'https://arxiv.org/abs/2106.09685'}],
+    quiz:[
+      {type:'open',q:'Explain LoRA\'s core mechanism in 3 sentences. What matrices does it decompose, and why does this reduce trainable parameters dramatically?',hint:'ΔW = BA where B is d×r and A is r×d with r<<d. Instead of updating the full d×d weight matrix, you train two small matrices. For r=16 in a 4096-dim layer, that\'s 16×4096×2 vs 4096×4096 parameters'},
+      {type:'open',q:'You tried r=4 and r=64. Describe the practical tradeoffs — what changed in training time, memory usage, and output quality?',hint:'Higher r = more expressive (closer to full fine-tuning) but more VRAM and slower. Too-high r risks memorizing the training set. r=16-64 is the practical sweet spot for most tasks'},
+      {type:'open',q:'A client wants to fine-tune on 50 customer support examples. Will LoRA work well here? What risks do you warn them about?',hint:'50 examples is dangerously low — severe overfitting risk, catastrophic forgetting of general language, distribution mismatch between their 50 examples and real user queries. Recommend more data or few-shot prompting instead'},
+      {type:'rate',q:'Could you run a LoRA fine-tune for a client and explain the results confidently without re-reading documentation?'}
+    ]
+  },
+  {
+    id:'finetune_dpo', dim:'finetune', time:'60 min', diff:'Medium', hot:4, interest:4,
+    title:'DPO: Draw the Training Loop, Understand the Math',
+    why:'DPO comes up in every senior AI interview and client conversation about alignment. Drawing it is how you actually understand it.',
+    infra:'No compute needed · paper reading + drawing exercise · any machine',
+    platforms:['local'],
+    steps:['Read DPO paper Sections 1–3 only (4 pages, 30 min): arxiv.org/abs/2305.18290','Draw RLHF: reward model → PPO optimizer → policy update — 3 boxes with arrows','Draw DPO: preference pairs → direct policy gradient → policy update — 2 boxes','Circle what DPO eliminates; write in the margin WHY it still works without a reward model','Write: 3 concrete scenarios where you would still choose RLHF over DPO'],
+    links:[{l:'DPO paper',u:'https://arxiv.org/abs/2305.18290'},{l:'DPO with TRL step-by-step',u:'https://huggingface.co/blog/dpo-trl'}],
+    quiz:[
+      {type:'open',q:'Explain DPO\'s key insight in 2 sentences — why can it optimize preferences without a separate reward model?',hint:'DPO shows mathematically that the optimal policy under RLHF can be expressed as a function of the reference policy and the reward. This means the reward is implicitly encoded in the policy ratio — no explicit reward model needed'},
+      {type:'open',q:'A team says "DPO is always better than RLHF because it\'s simpler." Give a concrete scenario where you would choose RLHF instead.',hint:'When you need an explicit reward signal you can inspect, audit, or share across multiple policies. Or when you need online RL from live human feedback. DPO requires offline preference data — RLHF can learn online'},
+      {type:'options',q:'What training data format does DPO require that standard SFT does not?',
+       opts:['Instruction-output pairs','Chosen vs. rejected response preference pairs','Raw text for continued pretraining','Reward scores for each output'],answer:1},
+      {type:'rate',q:'Confidence explaining DPO vs RLHF in a Principal-level AI interview or client technical review?'}
+    ]
+  },
+  {
+    id:'inference_vllm', dim:'inference', time:'90 min', diff:'Medium', hot:5, interest:5,
+    title:'Deploy vLLM + Benchmark Throughput',
+    why:'vLLM\'s PagedAttention doubles throughput vs naive serving. Regulated clients who want on-prem will ask for your benchmark numbers before signing.',
+    infra:'A10G 24GB or A100 40GB recommended · T4 works for 8B models with AWQ quantization',
+    platforms:['colab','runpod','vastai','lambda'],
+    steps:['RunPod: rent a 1× A10G pod ($0.44/h) — takes 5 min to start','pip install vllm','python -m vllm.entrypoints.api_server --model meta-llama/Meta-Llama-3-8B-Instruct --quantization awq','Run throughput benchmark: 50 requests at concurrency 1, 4, 8, 16 — record tokens/sec','Calculate: hourly cost ÷ throughput = $/1M tokens · compare to Claude 3 Haiku API ($0.25/1M input)'],
+    links:[{l:'vLLM quickstart',u:'https://docs.vllm.ai/en/latest/getting_started/quickstart.html'},{l:'PagedAttention paper',u:'https://arxiv.org/abs/2309.06180'},{l:'RunPod GPU rental',u:'https://runpod.io'}],
+    quiz:[
+      {type:'open',q:'Explain PagedAttention in 2 sentences. What specific memory management problem does it solve vs naive KV-cache allocation?',hint:'Naive KV-cache pre-allocates the maximum context length per request — 90% waste for short requests. PagedAttention uses non-contiguous physical memory blocks (like OS virtual memory paging), allocating only what each token needs'},
+      {type:'open',q:'Your benchmark: concurrency=1: 120 tok/s, concurrency=8: 680 tok/s, concurrency=32: 720 tok/s. What does this curve tell you and at what concurrency would you run production?',hint:'Throughput plateaus = GPU fully saturated. p99 latency climbs steeply at high concurrency. Production sweet spot is where you\'re at ~85% saturation — between 8 and 16 here. Depends on your latency SLA'},
+      {type:'open',q:'A regulated client says "we cannot send data to any external API." You propose self-hosted vLLM. List 5 concerns you must address beyond throughput.',hint:'Model versioning/update process, security hardening (no public port), audit logging of all queries, SLA/uptime (who is on-call?), cost model (GPU is expensive 24/7 vs pay-per-token API)'},
+      {type:'rate',q:'Confidence sizing and deploying a vLLM cluster for a production regulated client?'}
+    ]
+  },
+  {
+    id:'inference_quant', dim:'inference', time:'60 min', diff:'Medium', hot:4, interest:4,
+    title:'Quantization: GGUF vs AWQ vs GPTQ Compared',
+    why:'Every regulated client asking about on-prem deployment will ask which quantization to use. You need a practised, data-backed answer.',
+    infra:'CPU for GGUF · T4 GPU for AWQ/GPTQ · Colab Free is sufficient for both',
+    platforms:['colab','kaggle','local'],
+    steps:['Download Mistral 7B Q4_K_M GGUF via llama.cpp (CPU, ~4GB download)','Load same model in AWQ 4-bit via AutoAWQ in Colab T4','Run same 10-question benchmark on both — record: memory use, tokens/sec, answer quality (1-5 manual score)','Build a comparison table: method | VRAM | tok/s | quality | best-for','Write 1-paragraph recommendations for: CPU-only air-gap, GPU cloud, developer laptop'],
+    links:[{l:'llama.cpp releases (GGUF models)',u:'https://github.com/ggerganov/llama.cpp/releases'},{l:'AutoAWQ GitHub',u:'https://github.com/casper-hansen/AutoAWQ'},{l:'GGUF model hub',u:'https://huggingface.co/TheBloke'}],
+    quiz:[
+      {type:'options',q:'For a CPU-only air-gapped server with 64GB RAM and no GPU, which quantization format is the best choice?',
+       opts:['GPTQ (GPU-optimized INT4)','AWQ (activation-aware, GPU)','GGUF Q4_K_M with llama.cpp','bitsandbytes NF4 (GPU only)'],answer:2},
+      {type:'open',q:'Explain what "activation-aware" means in AWQ and what it preserves that uniform quantization does not.',hint:'AWQ identifies the ~1% of weights with highest activation magnitude and protects them from quantization. Uniform INT4 treats all weights equally — high-salience weights get degraded just like noise weights, causing quality collapse'},
+      {type:'open',q:'A client fine-tuned a model on medical abbreviations and now wants to quantize it. What additional quantization risk do they face vs a general-purpose model?',hint:'Domain-specific vocabulary is often encoded in rare weights. Quantization disproportionately degrades low-magnitude weights — medical abbreviations may live there. Run a domain-specific quality check after quantization, not just a generic benchmark'},
+      {type:'rate',q:'Confidence recommending a specific quantization strategy to a client CTO with cost and quality justification?'}
+    ]
+  },
+  {
+    id:'infra_helm', dim:'infra', time:'90 min', diff:'Medium', hot:3, interest:4,
+    title:'Helm Chart for a Model Server',
+    why:'Every enterprise K8s deployment needs a Helm chart. Without one you cannot call yourself K8s-native and clients will know it.',
+    infra:'Docker + Kind or Minikube on your laptop · no GPU for the chart exercise · free',
+    platforms:['kind','local'],
+    steps:['brew install kind helm  (or choco install kind helm on Windows)','kind create cluster && helm create model-server','Edit values.yaml: modelName, gpuCount, memoryLimit, port, replicaCount','Edit templates/deployment.yaml: add nvidia.com/gpu resource request + configmap env','helm install model-server ./model-server --dry-run --debug — fix all validation errors'],
+    links:[{l:'Helm chart template guide',u:'https://helm.sh/docs/chart_template_guide/'},{l:'Kind quickstart',u:'https://kind.sigs.k8s.io/docs/user/quick-start/'},{l:'K8s GPU scheduling',u:'https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/'}],
+    quiz:[
+      {type:'open',q:'Your model server pod gets OOMKilled mid-inference. Walk through exactly what happens: K8s behavior, liveness probe state, and what happens to the in-flight request.',hint:'OOMKill → container restart (not pod replacement unless restartPolicy=Never) → liveness probe starts failing after grace period → if liveness fails 3x, K8s kills and reschedules → in-flight request gets a 502 or timeout — client must handle this with retry logic'},
+      {type:'open',q:'A client needs to deploy to 3 environments (dev/staging/prod) with different GPU counts and model configs. How does your chart support this without code duplication?',hint:'Environment-specific values files: helm install -f prod-values.yaml. Base values.yaml has defaults; override files only specify what changes. No templating logic changes between environments'},
+      {type:'open',q:'How do you update the model weights in production with zero downtime using your Helm chart?',hint:'RollingUpdate strategy + readiness probe must pass before old pod terminates. Model loading takes 30-90s — your readiness probe initialDelaySeconds must be > model load time or you\'ll kill the old pod before new one is ready'},
+      {type:'rate',q:'Confidence deploying this Helm chart to a client Kubernetes cluster with GPU nodes this week?'}
+    ]
+  },
+  {
+    id:'infra_multitenant', dim:'infra', time:'60 min', diff:'Medium', hot:4, interest:3,
+    title:'Multi-Tenant K8s Namespace Design',
+    why:'Regulated clients require hard data isolation between tenants before POC sign-off. This design surfaces in every regulated AI engagement.',
+    infra:'Design exercise · Kind cluster optional for validation · free · any laptop',
+    platforms:['kind','local'],
+    steps:['Draw: 3 client namespaces, 1 shared inference namespace, 1 observability namespace — label every data flow','Write NetworkPolicy: deny all cross-namespace traffic, allow only → inference namespace → model server','Write RBAC: each client namespace gets its own ServiceAccount with get/list on its own secrets only','Write ResourceQuota per namespace: 4 CPU, 8Gi memory, 1 GPU maximum','Review: what can Tenant A see about Tenant B given this design? Find the gaps'],
+    links:[{l:'K8s Network Policies',u:'https://kubernetes.io/docs/concepts/services-networking/network-policies/'},{l:'K8s RBAC deep-dive',u:'https://kubernetes.io/docs/reference/access-authn-authz/rbac/'}],
+    quiz:[
+      {type:'open',q:'A pod in Tenant A\'s namespace attempts a DNS lookup for a service in Tenant B\'s namespace. Walk through exactly what happens in your design and why.',hint:'DNS lookup resolves (CoreDNS is cluster-wide) — name resolution succeeds but TCP connection is blocked by NetworkPolicy at L3/L4. This is a subtlety: NetworkPolicy doesn\'t block DNS, just connections. Mention this gap to clients'},
+      {type:'open',q:'Security audit asks: "Can a compromised pod in Tenant A escalate to cluster admin?" Walk through your RBAC design and identify the weakest point.',hint:'ServiceAccount token is mounted by default — if attacker reads it, they can make API server calls. Your RoleBinding limits scope, but audit: are there any ClusterRoleBindings? Can the pod read other namespaces\' secrets? Check for RBAC wildcards'},
+      {type:'open',q:'You need to onboard a 4th tenant mid-production without disrupting existing tenants. Write the 5-step runbook.',hint:'1) Create namespace, 2) Apply NetworkPolicy, 3) Create ServiceAccount + RBAC, 4) Apply ResourceQuota, 5) Deploy client app + smoke test isolation. Each step must be non-disruptive to existing tenants'},
+      {type:'rate',q:'Confidence presenting this multi-tenant design to a regulated enterprise InfoSec team?'}
+    ]
+  },
+  {
+    id:'obs_otel', dim:'observability', time:'90 min', diff:'Medium', hot:5, interest:5,
+    title:'OpenTelemetry Tracing for LLM Apps',
+    why:'You cannot debug production RAG without traces. Token counts, latency breakdowns, and prompt template IDs in every span is the minimum viable observability.',
+    infra:'CPU only · Docker for Jaeger UI · no GPU · 4 GB RAM · Python 3.10+',
+    platforms:['local','colab'],
+    steps:['pip install opentelemetry-sdk traceloop-sdk','docker run -d -p 16686:16686 -p 4317:4317 jaegertracing/all-in-one','from traceloop.sdk import Traceloop; Traceloop.init(app_name="my-rag", exporter_endpoint="http://localhost:4317")','Run your RAG pipeline — all LLM + vector DB calls are auto-instrumented','Open localhost:16686 → find the slowest span in your end-to-end RAG trace'],
+    links:[{l:'OpenLLMetry / Traceloop (GitHub)',u:'https://github.com/traceloop/openllmetry'},{l:'Jaeger getting started',u:'https://www.jaegertracing.io/docs/latest/getting-started/'}],
+    quiz:[
+      {type:'open',q:'A user reports a RAG query that took 8 seconds. Walk through exactly how you use OTel traces to diagnose which component caused the latency.',hint:'Look at span timeline: embedding span, vector retrieval span, re-ranking span, LLM generation span, post-processing span. The longest span is your culprit. Then look at attributes: how many tokens? how many chunks retrieved?'},
+      {type:'open',q:'Your traces show p50=300ms but p99=8s for RAG queries. Name 3 likely root causes and how you would investigate each.',hint:'1) LLM context length variance — long queries = slow generation, check token_count attribute; 2) Vector DB cache miss on cold start — check DB latency distribution; 3) Retry storms on LLM rate limit — look for spans with repeated calls'},
+      {type:'open',q:'A regulated client says "our InfoSec team will not approve sending traces to an external SaaS." Design a fully self-contained observability stack.',hint:'Self-hosted Jaeger or Grafana Tempo + OTel Collector all running inside their VPC. Docker Compose for single-machine setup. All within the compliance boundary — no data leaves the network'},
+      {type:'rate',q:'Confidence debugging a production RAG performance issue using OTel traces you set up?'}
+    ]
+  },
+  {
+    id:'obs_drift', dim:'observability', time:'60 min', diff:'Easy-Med', hot:4, interest:4,
+    title:'RAG Quality Drift Detection (Evidently AI)',
+    why:'Output quality drift is the silent production killer. Faithfulness can drop 30% before a client notices — unless you are monitoring it.',
+    infra:'CPU only · no GPU · pip install evidently ragas · 4 GB RAM · free to run',
+    platforms:['local','colab'],
+    steps:['pip install evidently ragas openai','Create dataset: 20 RAG responses with RAGAS scores — this is your baseline','Simulate drift: reduce top-k from 5 to 2, re-score 20 new responses (quality should drop)','Build Evidently Report(metrics=[DataDriftPreset()]) comparing baseline vs drifted','Set TestSuite: TestColumnValueMean(column="faithfulness", gt=0.75) — confirm it fails on drifted data'],
+    links:[{l:'Evidently AI quickstart',u:'https://docs.evidentlyai.com/get-started/tutorial'},{l:'LLM monitoring blog post',u:'https://www.evidentlyai.com/blog/llm-evaluation-monitoring'}],
+    quiz:[
+      {type:'open',q:'Name 3 root causes that would cause faithfulness to drop silently in production — without any infrastructure failure or error logs.',hint:'1) Document corpus updated with contradictory content; 2) Embedding model silently updated → semantic space shifted; 3) User query distribution shifted to harder questions — corpus coverage gap'},
+      {type:'open',q:'Faithfulness drops from 0.87 to 0.71 over 2 weeks. Walk through your investigation: what do you check first, second, third?',hint:'1) Was there a code deploy in that window? 2) Was there a corpus update? 3) Was the embedding or LLM model version changed? 4) Did the query distribution change (new user segment, new use case)? — it\'s almost always one of these four'},
+      {type:'open',q:'A client wants an SLA guaranteeing RAG faithfulness stays above 0.80. How do you operationalize this promise in your architecture?',hint:'Weekly automated RAGAS eval run, alert when score < 0.80 for any 24h window, runbook for each root cause (corpus issue: re-index; model issue: rollback; query issue: retraining), incident response playbook — and be honest about what you cannot guarantee'},
+      {type:'rate',q:'Confidence setting up and operationalizing quality drift monitoring for a regulated production RAG system?'}
+    ]
+  },
+  {
+    id:'voice_post', dim:'voice', time:'45 min', diff:'Easy', hot:2, interest:3,
+    title:'Write One Real Technical LinkedIn Post',
+    why:'Public writing compounds. A 150-word post from real work beats any certification. This habit is non-negotiable for the Month 13 writing cadence.',
+    infra:'No compute · writing exercise · LinkedIn account',
+    platforms:['local'],
+    steps:['Choose: one specific thing you learned or built this week','Format: 1 sentence problem → 2–3 sentences what you did → 1–2 sentences what you learned','Do NOT start with "Excited to share" or "AI is transforming" — start with the problem','Add one specific data point (e.g. "faithfulness dropped from 0.90 to 0.61 when...")','Post it. Now. Then paste the first 2 sentences in the quiz below.'],
+    links:[{l:'Will Larson — writing as a staff engineer',u:'https://lethain.com'},{l:'Eugene Yan — ML engineer writing guide',u:'https://eugeneyan.com/writing/'}],
+    quiz:[
+      {type:'open',q:'Paste the first 2 sentences of your post. Would you stop scrolling to read this from a stranger?',hint:'First sentence must create immediate curiosity or state a surprising fact. If it begins with "I" or "Excited" or "Today I learned" it probably doesn\'t hook'},
+      {type:'open',q:'What specific technical number or observation did you include? If none, what would make it more concrete?',hint:'Numbers create credibility instantly. "RAG faithfulness improved from 0.62 to 0.89 after switching to hybrid search" is 10x more shareable than "hybrid search improved results"'},
+      {type:'open',q:'Look at 3 posts from AI engineers you respect. What structural pattern do they use that you could adopt next time?',hint:'Problem → insight → implication is the most common strong structure. Or: counterintuitive claim → evidence → takeaway for the reader'},
+      {type:'rate',q:'How consistent is your public writing cadence right now? (1=never, 5=post every week)'}
+    ]
+  },
+  {
+    id:'design_multitenant', dim:'design', time:'90 min', diff:'Medium', hot:4, interest:5,
+    title:'Design a Multi-Tenant RAG Architecture',
+    why:'This is the most common whiteboard question for regulated AI roles. A rehearsed, defensible design sets you apart from every other candidate.',
+    infra:'No compute · whiteboard or draw.io · design + documentation exercise · free',
+    platforms:['local'],
+    steps:['Draw: Tenant A namespace, Tenant B namespace, shared inference namespace, observability namespace','Label every isolation boundary and state the enforcement mechanism (K8s NetworkPolicy, RBAC, separate vector indexes)','Add: unified observability layer — what data flows there without violating tenant isolation?','Add: per-tenant cost attribution — how do you track LLM spend per client for chargeback?','Write: 3 ways this design fails and your specific mitigation for each'],
+    links:[{l:'AWS multi-tenant SaaS architecture patterns',u:'https://docs.aws.amazon.com/whitepapers/latest/saas-multi-tenant-api-access/patterns.html'}],
+    quiz:[
+      {type:'open',q:'Your design uses a shared vector store with tenant-id metadata filtering. A security researcher says this is insufficient isolation — are they right? What is the actual risk?',hint:'Metadata filtering is enforced in application code, not at the storage layer. A bug in filtering logic (off-by-one, missing filter on one endpoint) exposes cross-tenant data. True isolation requires separate index/collection per tenant'},
+      {type:'open',q:'A regulated client says "our data must never be on the same physical hardware as another client." How does your design change and what does it cost?',hint:'This requires dedicated infrastructure — separate K8s node pools with node selectors, separate vector DB instances, possibly separate accounts. 3-5x more expensive than logical isolation — be direct about this tradeoff'},
+      {type:'open',q:'You need cross-tenant analytics (e.g. "which query categories are most common across all clients?") without exposing any client data. How do you design this?',hint:'Aggregation before leaving namespace: each tenant emits anonymized query category counts (not raw queries) to a shared metrics bus. Or: differential privacy with a noise budget. Never raw cross-tenant data access'},
+      {type:'rate',q:'Would you feel confident presenting this design on a whiteboard to a regulated enterprise CTO?'}
+    ]
+  },
+  {
+    id:'design_airgap', dim:'design', time:'60 min', diff:'Medium', hot:4, interest:5,
+    title:'Design an Air-Gapped LLM Deployment',
+    why:'Many regulated clients — defence, healthcare, government — cannot use cloud APIs. You need a practised, tested answer for this.',
+    infra:'Ollama on your laptop for hands-on testing · CPU is fine · free · 8 GB RAM minimum',
+    platforms:['ollama','local'],
+    steps:['curl -fsSL https://ollama.ai/install.sh | sh  (Mac/Linux) or download from ollama.ai','ollama pull mistral:7b-instruct-q4_K_M  (~4.1GB download)','ollama run mistral:7b-instruct-q4_K_M — test 3 questions, measure first token latency on CPU','List every component in a RAG stack and mark: needs internet? (yes/no)','Write a 1-page air-gap spec: model choice, embedding model, vector DB, monitoring — all offline'],
+    links:[{l:'Ollama model library',u:'https://ollama.ai/library'},{l:'HF Hub offline mode',u:'https://huggingface.co/docs/hub/offline'}],
+    quiz:[
+      {type:'open',q:'For a 16-core CPU-only server with 64GB RAM serving a healthcare RAG, what model and quantization do you deploy and why?',hint:'Mistral 7B Q4_K_M via llama.cpp/Ollama: ~4GB model fits with headroom for embeddings + vector DB. First token latency ~2-5s on CPU is acceptable for async use cases. Alternatively Llama 3 8B Q4 — comparable quality'},
+      {type:'open',q:'The client\'s IT team asks: "how do we update the model when a better one comes out, without internet access?" Walk through the process.',hint:'Download on internet-connected machine → verify SHA256 checksum → transfer via approved removable media or DMZ server → validate in air-gapped staging → deploy with rollback plan. This process takes 1-2 days — set expectations accordingly'},
+      {type:'open',q:'Name 3 quality compromises of air-gapped RAG vs cloud RAG and how you set honest client expectations about each.',hint:'1) Smaller models = lower reasoning quality on complex queries; 2) No model updates = capability gap grows over time; 3) No access to embedding APIs = must host embedding model too (more infra). Frame each as a known, manageable tradeoff, not a surprise'},
+      {type:'rate',q:'Confidence proposing and scoping an air-gapped LLM deployment for an enterprise client?'}
+    ]
+  },
+  {
+    id:'design_incident', dim:'design', time:'45 min', diff:'Easy', hot:3, interest:4,
+    title:'AI Incident Response Playbook for Regulated Systems',
+    why:'Most AI vendors never bring this up. When you do, it signals that you understand production operations — and clients remember it.',
+    infra:'No compute · writing exercise · any text editor · free',
+    platforms:['local'],
+    steps:['Define the trigger: what constitutes an "AI incident"? (faithfulness < 0.6? user complaint? data exposure? wrong answer on a critical query?)','Write the escalation chain: who gets paged, in what order, with what information in the alert','Define containment: can you disable AI responses and fall back to human? How fast?','Write the post-mortem template: timeline, root cause, customer impact, fix, prevention measure','Review: does this satisfy a healthcare or financial regulator\'s audit requirement?'],
+    links:[{l:'Google SRE — Managing Incidents',u:'https://sre.google/sre-book/managing-incidents/'}],
+    quiz:[
+      {type:'open',q:'Your RAG starts giving incorrect medical dosage information. What are your first 3 actions in the next 5 minutes, in exact order?',hint:'1) Disable AI responses for affected query type (circuit breaker or feature flag) — contain the damage NOW; 2) Alert on-call + account team; 3) Begin root cause investigation. Never investigate before containing — time matters when patients are involved'},
+      {type:'open',q:'The compliance team asks for an AI incident log covering the past 12 months. What data must you have been capturing from day 1 to produce this?',hint:'Query logs (anonymized but timestamped), response logs, RAGAS scores over time, model version history with change dates, user complaint log, incident timestamps — retroactive logging is impossible. This is why you instrument on day 1'},
+      {type:'open',q:'A regulator asks: "what is your fallback when the AI fails?" Design the fallback in technical terms.',hint:'Circuit breaker pattern: when error rate > X% or quality score < Y for Z minutes, automatically route to fallback. Fallback options: "I cannot answer this reliably — please contact [human]", search without LLM generation, or queue for human review. The fallback must be faster and more reliable than the main path'},
+      {type:'rate',q:'If asked in a client meeting right now, could you walk through a complete AI incident response plan without notes?'}
+    ]
+  }
+];
+
+// ── WEEKLY EVAL QUESTIONS ────────────────────────────────
+function buildWeeklyQuestions(doneLabs){
+  const q=[
+    {type:'open',q:'Pick the 2 most valuable things you learned this week. For each: how would you use it in a client engagement starting next Monday?',hint:'Be specific — not "I learned about RAG" but "I can now build hybrid search and explain the precision improvement with numbers to a client"'},
+  ];
+  if(doneLabs.some(l=>l.dim==='rag'||l.dim==='eval'))
+    q.push({type:'open',q:'A new client arrives next week: 50,000 regulatory documents, needs a Q&A system. Walk through your full architecture proposal.',hint:'Hybrid RAG → citation tracking → RAGAS baseline → OTel observability → drift monitoring — connect what you built this week into a coherent system'});
+  if(doneLabs.some(l=>l.dim==='infra'||l.dim==='inference'))
+    q.push({type:'open',q:'The same client says "we cannot use cloud APIs." How does your architecture change and what do you tell them they are giving up?',hint:'Air-gap design, quantization choice, on-prem K8s, Ollama for serving, quality tradeoffs — be specific and honest about the capability delta'});
+  q.push({type:'open',q:'What is the ONE thing from this week you feel you understood at surface level only? What is your plan to go deeper?',hint:'Intellectual honesty here matters more than showing strength — your guru adjusts next week\'s labs based on this answer'});
+  q.push({type:'rate',q:'Overall this week: how much of what you did could you explain confidently to a senior client stakeholder? (1=very little, 5=most of it)'});
+  return q;
+}
+
+// ── STATE ─────────────────────────────────────────────────
+const SK='aigrow_v4';
+let S=(()=>{try{const s=localStorage.getItem(SK);if(s)return JSON.parse(s);}catch(e){}
+  return{streak:0,lastVisit:null,scores:{rag:50,eval:50,finetune:50,inference:50,infra:50,observability:50,voice:50,design:50},todayDate:null,labs:[],doneLabIds:[],weekKey:null,weekDone:0,weekLabsDone:[],lastWeekEval:null,guruIdx:0};
+})();
+function save(){localStorage.setItem(SK,JSON.stringify(S));}
+
+let quizLabId=null;
+const QA={};
+const weeklyQA={};
+
+// ── LOADING SEQUENCE ──────────────────────────────────────
+const LOAD_STEPS=[
+  'Scanning Hacker News for AI signals…',
+  'Fetching latest arXiv papers…',
+  'Analyzing your growth trajectory…',
+  'Identifying cheapest compute options…',
+  'Curating labs for your weak dimensions…',
+  'Building your daily intelligence brief…'
+];
+
+function runLoadingSequence(onDone){
+  let i=0;
+  const el=document.getElementById('loadStep');
+  const bar=document.getElementById('loadBar');
+  function step(){
+    if(i>=LOAD_STEPS.length){onDone();return;}
+    el.textContent=LOAD_STEPS[i];
+    bar.style.width=`${Math.round((i+1)/LOAD_STEPS.length*100)}%`;
+    i++;
+    setTimeout(step,420);
+  }
+  step();
+}
+
+// ── INIT ──────────────────────────────────────────────────
+async function init(){
+  // Start loading animation and data fetches in parallel
+  const [newsResult, paperResult] = await Promise.allSettled([
+    runLoadingSequence(()=>{}),
+    fetchNewsData(),
+    fetchPapersData()
+  ]);
+
+  // Wait for animation to finish (min 2.5s)
+  await new Promise(r=>setTimeout(r,2600));
+
+  // Setup state
+  const today=new Date().toISOString().slice(0,10);
+  const yesterday=new Date(Date.now()-86400000).toISOString().slice(0,10);
+  if(!S.lastVisit)S.streak=1;
+  else if(S.lastVisit===yesterday)S.streak=(S.streak||0)+1;
+  else if(S.lastVisit!==today)S.streak=1;
+  S.lastVisit=today;
+  const wk=weekKey();
+  if(S.weekKey!==wk){S.weekKey=wk;S.weekDone=0;S.weekLabsDone=[];}
+  if(S.todayDate!==today){S.todayDate=today;S.labs=pickLabs(5,[]);}
+  const doy=Math.floor((Date.now()-new Date(new Date().getFullYear(),0,0))/86400000);
+  S.guruIdx=doy%GURU.length;
+  save();
+
+  // Show page
+  document.getElementById('loadingOverlay').style.display='none';
+  document.getElementById('page').style.display='block';
+
+  document.getElementById('streak').textContent=S.streak;
+  document.getElementById('weekDone').textContent=S.weekDone||0;
+  document.getElementById('dateLabel').textContent=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  document.getElementById('guru').textContent=GURU[S.guruIdx];
+
+  renderLabs();
+  renderBars();
+  checkWeeklyEval();
+  renderIntelligence();
+}
+
+function weekKey(){const d=new Date(),day=d.getDay(),diff=d.getDate()-day+(day===0?-6:1);return new Date(d.setDate(diff)).toISOString().slice(0,10);}
+
+// ── LAB SELECTION ─────────────────────────────────────────
+function pickLabs(n,excludeIds){
+  const dims=Object.keys(S.scores).sort((a,b)=>S.scores[a]-S.scores[b]);
+  const avail=LABS.filter(l=>!S.doneLabIds.includes(l.id)&&!excludeIds.includes(l.id));
+  const pool=avail.length>=n?avail:LABS.filter(l=>!excludeIds.includes(l.id));
+  const sel=[];
+  const notPicked=()=>pool.filter(l=>!sel.find(s=>s.id===l.id));
+
+  // Slots 1-2: weakest 2 dims
+  for(const dim of dims.slice(0,3)){
+    if(sel.length>=2)break;
+    const c=notPicked().filter(l=>l.dim===dim);
+    if(c.length)sel.push({id:c[0].id,status:'todo',why:'weak'});
+  }
+  // Slot 3: hottest topic
+  const hotPool=notPicked().filter(l=>l.hot).sort((a,b)=>(b.hot||0)-(a.hot||0));
+  if(hotPool.length)sel.push({id:hotPool[0].id,status:'todo',why:'hot'});
+  // Slot 4: highest interest
+  const intPool=notPicked().sort((a,b)=>(b.interest||3)-(a.interest||3));
+  if(intPool.length&&sel.length<n)sel.push({id:intPool[0].id,status:'todo',why:'interesting'});
+  // Slot 5: fill random
+  const rest=notPicked();
+  while(sel.length<n&&rest.length){const i=Math.floor(Math.random()*rest.length);sel.push({id:rest[i].id,status:'todo',why:'mixed'});rest.splice(i,1);}
+  return sel;
+}
+
+const getLab=id=>LABS.find(l=>l.id===id);
+const getSL=id=>S.labs.find(l=>l.id===id);
+
+// ── RENDER LABS ───────────────────────────────────────────
+function renderLabs(){
+  const active=S.labs.filter(l=>l.status!=='done');
+  const done=S.labs.filter(l=>l.status==='done');
+  const whyLabel={'weak':'<span class="why-tag" style="background:#1a1028;color:#a78bfa;">↑ weak area</span>','hot':'<span class="why-tag" style="background:#1a1008;color:#f97316;">🔥 hot topic</span>','interesting':'<span class="why-tag" style="background:#081a10;color:#4ade80;">★ interesting</span>','mixed':''};
+
+  document.getElementById('labList').innerHTML=active.map((sl,idx)=>{
+    const lab=getLab(sl.id);if(!lab)return'';
+    const dim=DIMS[lab.dim];
+    const ip=sl.status==='inprogress';
+    const platHtml=lab.platforms.map(p=>{const pl=PLAT[p];if(!pl)return'';return`<a href="${pl.url}" target="_blank" class="plat ${pl.cls}" title="${pl.note}">${pl.icon} ${pl.name} <span class="plat-cost">${pl.cost}</span></a>`;}).join('');
+    return `<div class="lab ${ip?'inprogress':''} fade-in" id="lc-${lab.id}" style="animation-delay:${idx*0.05}s;">
+      <div class="lab-top">
+        <span class="badge" style="background:${dim.color}22;color:${dim.color};">${dim.name}</span>
+        <span style="font-size:10px;color:#2d3050;">⏱ ${lab.time} · ${lab.diff}</span>
+        ${whyLabel[sl.why]||''}
+        ${ip?'<span class="ip-tag">● IN PROGRESS</span>':''}
+        <button class="btn-swap" onclick="swapLab('${lab.id}')" ${ip?'disabled title="Finish before swapping"':''}style="margin-left:auto;">↻</button>
+      </div>
+      <div class="lab-title">${lab.title}</div>
+      <div class="lab-why">${lab.why}</div>
+
+      <div class="infra-box">
+        <div class="infra-row"><span class="infra-icon">🖥</span><span class="infra-text"><strong>Infrastructure:</strong> ${lab.infra}</span></div>
+        <div class="infra-row" style="margin-bottom:0;"><span class="infra-icon">💰</span><span class="infra-text"><strong>Cheapest options:</strong></span></div>
+        <div class="platforms">${platHtml}</div>
+      </div>
+
+      <ol class="lab-steps">${lab.steps.map(s=>`<li>${s}</li>`).join('')}</ol>
+      ${lab.links.length?`<div class="lab-links">${lab.links.map(l=>`<a href="${l.u}" target="_blank">📎 ${l.l}</a>`).join('')}</div>`:''}
+      <div class="lab-actions">
+        ${!ip?`<button class="btn-start" onclick="startLab('${lab.id}')">▶ Start</button>`:''}
+        <button class="btn-done" onclick="openQuiz('${lab.id}')">${ip?'✓ Submit Learning':'✓ Mark Done'}</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  const ds=document.getElementById('doneSection');
+  if(done.length){
+    ds.style.display='block';
+    document.getElementById('doneList').innerHTML=done.map(sl=>{
+      const lab=getLab(sl.id);if(!lab)return'';
+      const dim=DIMS[lab.dim];
+      return `<div class="lab done" style="padding:9px 12px;"><div style="display:flex;align-items:center;gap:8px;"><span style="color:#10b981;">✓</span><span style="flex:1;">${lab.title}</span><span class="badge" style="background:${dim.color}22;color:${dim.color};">${dim.name}</span></div></div>`;
+    }).join('');
+  }else{ds.style.display='none';}
+}
+
+// ── ACTIONS ───────────────────────────────────────────────
+function startLab(id){const sl=getSL(id);if(sl)sl.status='inprogress';save();renderLabs();}
+
+function swapLab(id){
+  const sl=getSL(id);if(!sl||sl.status==='inprogress')return;
+  const usedIds=S.labs.map(l=>l.id);
+  const lab=getLab(id);
+  let avail=LABS.filter(l=>!usedIds.includes(l.id)&&!S.doneLabIds.includes(l.id)&&l.dim===lab?.dim);
+  if(!avail.length)avail=LABS.filter(l=>!usedIds.includes(l.id)&&!S.doneLabIds.includes(l.id));
+  if(!avail.length)return;
+  const pick=avail[Math.floor(Math.random()*avail.length)];
+  sl.id=pick.id;sl.status='todo';
+  save();renderLabs();
+}
+
+function refreshTodoLabs(){
+  const keep=S.labs.filter(l=>l.status!=='todo');
+  const usedIds=[...keep.map(l=>l.id),...S.doneLabIds];
+  const fresh=pickLabs(5-keep.length,usedIds);
+  S.labs=[...keep,...fresh];
+  save();renderLabs();
+}
+
+// ── QUIZ ──────────────────────────────────────────────────
+function openQuiz(id){
+  const lab=getLab(id);if(!lab)return;
+  quizLabId=id;Object.keys(QA).forEach(k=>delete QA[k]);
+  document.getElementById('quizTitle').textContent=lab.title;
+  document.getElementById('quizBody').innerHTML=lab.quiz.map((q,i)=>renderQ(q,i,'quiz')).join('');
+  document.getElementById('quizModal').style.display='flex';
+}
+
+function renderQ(q,i,pfx){
+  if(q.type==='open')return`<div class="q-block"><label class="q-label">${i+1}. ${q.q}</label>${q.hint?`<div class="q-hint">💡 ${q.hint}</div>`:''}<textarea rows="3" oninput="${pfx}QA[${i}]=this.value" placeholder="Write your answer — specifics matter more than length."></textarea></div>`;
+  if(q.type==='rate')return`<div class="q-block"><label class="q-label">${i+1}. ${q.q}</label><div class="stars">${[1,2,3,4,5].map(v=>`<button class="star-btn" id="${pfx}_s${i}_${v}" onclick="${pfx}Star(${i},${v})">⭐</button>`).join('')}</div></div>`;
+  if(q.type==='options')return`<div class="q-block"><label class="q-label">${i+1}. ${q.q}</label><div class="options">${q.opts.map((o,v)=>`<button class="opt" id="${pfx}_o${i}_${v}" onclick="${pfx}Opt(${i},${v},'${pfx}_o${i}')">${o}</button>`).join('')}</div></div>`;
+  return'';
+}
+window.quizQA=QA;
+window.quizStar=(i,val)=>{QA[i]=val;for(let v=1;v<=5;v++){const b=document.getElementById(`quiz_s${i}_${v}`);if(b)b.classList.toggle('on',v<=val);}};
+window.quizOpt=(i,val,pfx)=>{QA[i]=val;document.querySelectorAll(`[id^="${pfx}_"]`).forEach((b,idx)=>b.classList.toggle('selected',idx===val));};
+
+function closeQuiz(){document.getElementById('quizModal').style.display='none';quizLabId=null;}
+
+function submitQuiz(){
+  const lab=getLab(quizLabId);if(!lab)return;
+  let rating=3;
+  lab.quiz.forEach((q,i)=>{if(q.type==='rate'&&QA[i]!=null)rating=parseInt(QA[i])||3;});
+  const delta=(rating-3)*5+5;
+  S.scores[lab.dim]=Math.max(10,Math.min(95,(S.scores[lab.dim]||50)+delta));
+  const sl=getSL(quizLabId);
+  if(sl){sl.status='done';if(!S.doneLabIds.includes(quizLabId))S.doneLabIds.push(quizLabId);}
+  if(!S.weekLabsDone.includes(quizLabId))S.weekLabsDone.push(quizLabId);
+  S.weekDone=(S.weekDone||0)+1;
+  document.getElementById('weekDone').textContent=S.weekDone;
+  save();closeQuiz();renderLabs();renderBars();checkWeeklyEval();
+  // Auto-fill a new todo lab
+  const todoCount=S.labs.filter(l=>l.status==='todo').length;
+  if(todoCount<2){const used=S.labs.map(l=>l.id);const extras=pickLabs(2-todoCount,[...used,...S.doneLabIds]);S.labs.push(...extras);save();renderLabs();}
+}
+
+// ── BARS ──────────────────────────────────────────────────
+function renderBars(){
+  const keys=Object.keys(DIMS);
+  document.getElementById('dimBars').innerHTML=keys.map(k=>{const sc=S.scores[k]||50;return`<div class="dim-row"><div class="dim-name">${DIMS[k].name}</div><div class="bar"><div class="bar-fill" style="width:${sc}%;background:${DIMS[k].color};"></div></div><div class="dim-sc">${sc}</div></div>`;}).join('');
+  const w=keys.reduce((a,b)=>S.scores[a]<S.scores[b]?a:b);
+  const s=keys.reduce((a,b)=>S.scores[a]>S.scores[b]?a:b);
+  document.getElementById('weakestLine').textContent=`⚠ Focus: ${DIMS[w].name} (${S.scores[w]})`;
+  document.getElementById('strongestLine').textContent=`💪 Strength: ${DIMS[s].name} (${S.scores[s]})`;
+}
+
+// ── WEEKLY EVAL ───────────────────────────────────────────
+function checkWeeklyEval(){
+  const done=S.weekLabsDone.length;
+  const daysSince=S.lastWeekEval?Math.floor((Date.now()-new Date(S.lastWeekEval).getTime())/86400000):999;
+  if(done>=3&&daysSince>=7){document.getElementById('weeklyBanner').style.display='flex';document.getElementById('weeklyCount').textContent=done;}
+  else document.getElementById('weeklyBanner').style.display='none';
+}
+
+function openWeeklyEval(){
+  const doneLabs=S.weekLabsDone.map(id=>getLab(id)).filter(Boolean);
+  document.getElementById('weeklySub').textContent=`Labs this week: ${doneLabs.map(l=>l.title).join(', ')||'none yet'}. Honest answers help your guru tune next week\'s plan.`;
+  document.getElementById('weeklyBody').innerHTML=buildWeeklyQuestions(doneLabs).map((q,i)=>renderQ(q,i,'wk')).join('');
+  document.getElementById('weeklyModal').style.display='flex';
+}
+window.weeklyQA=weeklyQA;
+window.wkQA=weeklyQA;
+window.wkStar=(i,val)=>{weeklyQA[i]=val;for(let v=1;v<=5;v++){const b=document.getElementById(`wk_s${i}_${v}`);if(b)b.classList.toggle('on',v<=val);}};
+window.wkOpt=(i,val,pfx)=>{weeklyQA[i]=val;document.querySelectorAll(`[id^="${pfx}_"]`).forEach((b,idx)=>b.classList.toggle('selected',idx===val));};
+
+function closeWeeklyEval(){document.getElementById('weeklyModal').style.display='none';}
+function submitWeeklyEval(){
+  let rating=3;Object.keys(weeklyQA).forEach(i=>{if(typeof weeklyQA[i]==='number')rating=weeklyQA[i];});
+  const adj=(rating-3)*2;Object.keys(S.scores).forEach(k=>{S.scores[k]=Math.max(10,Math.min(95,S.scores[k]+adj));});
+  S.lastWeekEval=new Date().toISOString().slice(0,10);
+  save();closeWeeklyEval();renderBars();checkWeeklyEval();
+}
+
+// ── INTELLIGENCE BRIEF ────────────────────────────────────
+let _newsStories=[];
+let _paperTitles=[];
+
+function renderIntelligence(){
+  const keys=Object.keys(S.scores);
+  const w=keys.reduce((a,b)=>S.scores[a]<S.scores[b]?a:b);
+  const totalDone=S.doneLabIds.length;
+  const weekDone=S.weekLabsDone.length;
+  const topStory=_newsStories[0];
+  const topPaper=_paperTitles[0];
+
+  const briefs=[
+    {label:'📈 Your Trajectory',color:'#7c6af7',
+     text:`${totalDone} labs completed all-time · ${weekDone} this week. Weakest dimension: <strong>${DIMS[w].name}</strong> (score: ${S.scores[w]}). Today's labs are weighted toward this area — one focused session moves the score.`},
+    {label:'🔥 Market Signal',color:'#f97316',
+     text:topStory?`Trending now: "<em>${topStory}</em>" — stay current on what practitioners are discussing; it shapes what clients ask about next quarter.`:'Hacker News AI signals loading — check the Hot Topics section below for what engineers are shipping this week.'},
+    {label:'📄 Research Insight',color:'#3b82f6',
+     text:topPaper?`Latest practical paper: "<em>${topPaper}</em>" — skim the abstract and methods. Papers give you the precise vocabulary clients expect when you propose architectures.`:'arXiv papers loading — the Research Papers section below has this week\'s practical picks.'},
+    {label:'💰 Cost Insight',color:'#22c55e',
+     text:`For today's labs: ${S.labs.filter(l=>l.status!=='done').map(sl=>{const lab=getLab(sl.id);return lab?lab.title:'';}).filter(Boolean).slice(0,2).join(', ')} — all doable on <strong>Colab Free (T4)</strong> or your laptop. GPU labs on RunPod cost under $1 total at today's spot prices.`}
+  ];
+
+  document.getElementById('intelligenceBrief').innerHTML=briefs.map((b,i)=>`
+    <div class="brief-card fade-in" style="animation-delay:${i*0.08}s;">
+      <div class="brief-label" style="color:${b.color};">${b.label}</div>
+      <div class="brief-text">${b.text}</div>
+    </div>`).join('');
+}
+
+// ── NEWS ──────────────────────────────────────────────────
+const AI_KW=['ai','llm','gpt','claude','gemini','openai','anthropic','machine learning','neural','rag','inference','embedding','fine-tun','mistral','llama','vllm','agent','transformer'];
+
+async function fetchNewsData(){
+  try{
+    const ids=await fetch('https://hacker-news.firebaseio.com/v0/topstories.json').then(r=>r.json());
+    const stories=await Promise.all(ids.slice(0,60).map(id=>fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`).then(r=>r.json()).catch(()=>null)));
+    const ai=stories.filter(s=>s&&s.title&&s.url&&AI_KW.some(k=>s.title.toLowerCase().includes(k))).slice(0,6);
+    _newsStories=(ai.length?ai:stories.filter(s=>s&&s.title&&s.url).slice(0,5)).map(s=>s.title);
+    document.getElementById('newsFeed').innerHTML=_newsStories.map((t,i)=>{
+      const s=(ai.length?ai:[])[i]||{url:'#',score:0,time:Date.now()/1000};
+      return`<div class="item"><span class="bullet">▸</span><div class="item-body"><a href="${s.url||'#'}" target="_blank" class="item-title">${t}</a><div class="item-meta">${s.score||''} ${s.score?'pts ·':''} ${new Date((s.time||Date.now()/1000)*1000).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div></div></div>`;
+    }).join('');
+    document.getElementById('newsStatus').textContent=`${_newsStories.length} AI signals · ${new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})}`;
+  }catch(e){
+    _newsStories=['Claude Opus 4.7 raises reasoning bar for enterprise AI','vLLM 0.6: continuous batching + speculative decoding','LangGraph for production multi-agent workflows','Mistral Small 3.1 — strong benchmarks at lower cost','Evidently AI ships LLM output quality monitoring'];
+    document.getElementById('newsFeed').innerHTML=_newsStories.map(t=>`<div class="item"><span class="bullet">▸</span><div class="item-body"><a href="#" class="item-title">${t}</a></div></div>`).join('');
+    document.getElementById('newsStatus').textContent='offline — curated signals';
+  }
+}
+
+async function fetchPapersData(){
+  try{
+    const q='ti:RAG+OR+ti:retrieval+augmented+OR+ti:LLM+inference+OR+ti:fine-tuning+OR+ti:alignment';
+    const xml=await fetch(`https://export.arxiv.org/api/query?search_query=${q}&max_results=5&sortBy=submittedDate&sortOrder=descending`).then(r=>r.text());
+    const doc=new DOMParser().parseFromString(xml,'application/xml');
+    const entries=[...doc.querySelectorAll('entry')].slice(0,5);
+    if(!entries.length)throw new Error();
+    _paperTitles=entries.map(e=>e.querySelector('title')?.textContent?.replace(/\n/g,' ').trim()||'');
+    document.getElementById('paperFeed').innerHTML=entries.map(e=>{
+      const title=e.querySelector('title')?.textContent?.replace(/\n/g,' ').trim()||'';
+      const link=e.querySelector('id')?.textContent?.replace('abs','pdf')||'#';
+      const summary=(e.querySelector('summary')?.textContent?.trim()||'').slice(0,110);
+      const date=e.querySelector('published')?.textContent?.slice(0,10)||'';
+      return`<div class="item"><span class="bullet">▸</span><div class="item-body"><a href="${link}" target="_blank" class="item-title">${title}</a><div class="item-meta">${summary}… · ${date}</div></div></div>`;
+    }).join('');
+    document.getElementById('paperStatus').textContent=`${entries.length} recent papers`;
+  }catch(e){
+    _paperTitles=['RAGAS: Automated Evaluation of RAG','LoRA: Low-Rank Adaptation of Large Language Models','PagedAttention: Efficient Memory for LLM Serving','DPO: Direct Preference Optimization','AWQ: Activation-aware Weight Quantization'];
+    document.getElementById('paperFeed').innerHTML=[
+      ['RAGAS: Automated Evaluation of Retrieval Augmented Generation','https://arxiv.org/abs/2309.15217','Faithfulness, answer relevancy, context recall as core RAG eval metrics','2023-09-27'],
+      ['LoRA: Low-Rank Adaptation of Large Language Models','https://arxiv.org/abs/2106.09685','Reduces trainable parameters by 10,000× with negligible quality loss','2021-06-17'],
+      ['Efficient Memory Management for LLM Serving (PagedAttention)','https://arxiv.org/abs/2309.06180','vLLM\'s core innovation — 2× throughput via non-contiguous KV cache','2023-09-12'],
+      ['DPO: Direct Preference Optimization as Language Model Alignment','https://arxiv.org/abs/2305.18290','Eliminates the reward model — trains directly on preference pairs','2023-05-29'],
+      ['AWQ: Activation-aware Weight Quantization for LLM Compression','https://arxiv.org/abs/2306.00978','Protects the 1% of weights that matter most — beats uniform INT4','2023-06-01']
+    ].map(([t,u,s,d])=>`<div class="item"><span class="bullet">▸</span><div class="item-body"><a href="${u}" target="_blank" class="item-title">${t}</a><div class="item-meta">${s} · ${d}</div></div></div>`).join('');
+    document.getElementById('paperStatus').textContent='offline — curated papers';
+  }
+}
+
+window.addEventListener('DOMContentLoaded',init);
+</script>
+</body>
+</html>
