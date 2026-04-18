@@ -274,6 +274,107 @@ code { font-family: 'Courier New', monospace; font-size: 12px; background: #f0f0
 
 const KEY = 'aigrow_v5';
 
+// ── Curated source registry (updated monthly) ─────────────────────────────────
+// Last updated: 2026-04
+
+const CURATED = {
+  rag: {
+    tools: ['LangChain','LlamaIndex','Haystack','RAGAS','ChromaDB','Qdrant','Weaviate','pgvector','txtai','DSPy'],
+    regulated: ['presidio (PII detection)','structured audit logging','citation enforcement','HIPAA-compliant chunking','metadata filtering','access-control-aware retrieval'],
+    refs: [
+      {t:'LangChain RAG tutorial',         u:'https://python.langchain.com/docs/tutorials/rag/'},
+      {t:'LlamaIndex RAG guide',           u:'https://docs.llamaindex.ai/en/stable/understanding/rag/'},
+      {t:'RAGAS evaluation framework',     u:'https://docs.ragas.io/'},
+      {t:'Weaviate hybrid search',         u:'https://weaviate.io/developers/weaviate/search/hybrid'},
+      {t:'Qdrant filtering guide',         u:'https://qdrant.tech/documentation/concepts/filtering/'},
+      {t:'Microsoft Presidio (PII)',       u:'https://microsoft.github.io/presidio/'},
+      {t:'DSPy (programmatic prompting)',  u:'https://dspy-docs.vercel.app/'},
+    ]
+  },
+  eval: {
+    tools: ['RAGAS','promptfoo','Braintrust','Arize Phoenix','DeepEval','TruLens','UpTrain','Langfuse evals'],
+    refs: [
+      {t:'promptfoo docs',                 u:'https://promptfoo.dev/docs/'},
+      {t:'DeepEval (confident-ai)',        u:'https://docs.confident-ai.com/'},
+      {t:'Braintrust eval guide',         u:'https://www.braintrustdata.com/docs'},
+      {t:'Arize Phoenix tracing+evals',   u:'https://docs.arize.com/phoenix'},
+      {t:'TruLens RAG evaluation',        u:'https://www.trulens.org/trulens_eval/'},
+      {t:'RAGAS metrics explained',       u:'https://docs.ragas.io/en/stable/concepts/metrics/'},
+    ]
+  },
+  finetune: {
+    tools: ['Unsloth','Axolotl','LLaMA-Factory','PEFT','TRL','QLoRA','GRPO','DPO'],
+    refs: [
+      {t:'Unsloth (fast fine-tuning)',     u:'https://github.com/unslothai/unsloth'},
+      {t:'HuggingFace PEFT docs',         u:'https://huggingface.co/docs/peft'},
+      {t:'TRL — DPO trainer',             u:'https://huggingface.co/docs/trl/dpo_trainer'},
+      {t:'TRL — GRPO trainer',            u:'https://huggingface.co/docs/trl/grpo_trainer'},
+      {t:'Axolotl config guide',          u:'https://github.com/OpenAccess-AI-Collective/axolotl'},
+      {t:'LLaMA-Factory',                 u:'https://github.com/hiyouga/LLaMA-Factory'},
+      {t:'QLoRA paper',                   u:'https://arxiv.org/abs/2305.14314'},
+    ]
+  },
+  inference: {
+    tools: ['vLLM','TGI','llama.cpp','Ollama','Modal','BentoML','Ray Serve','Triton','SGLang'],
+    refs: [
+      {t:'vLLM docs',                     u:'https://docs.vllm.ai/'},
+      {t:'TGI (text-generation-inference)',u:'https://huggingface.co/docs/text-generation-inference'},
+      {t:'Modal — serverless GPU',        u:'https://modal.com/docs/guide'},
+      {t:'BentoML serving guide',         u:'https://docs.bentoml.com/'},
+      {t:'SGLang (structured generation)',u:'https://github.com/sgl-project/sglang'},
+      {t:'LLM inference optimization',   u:'https://www.anyscale.com/blog/continuous-batching-llm-inference'},
+    ]
+  },
+  k8s: {
+    tools: ['kind','k3s','KServe','Ray Serve','Helm','ArgoCD','Karpenter','KEDA'],
+    refs: [
+      {t:'KServe (model serving on K8s)', u:'https://kserve.github.io/website/'},
+      {t:'Ray Serve on K8s',              u:'https://docs.ray.io/en/latest/serve/production-guide/kubernetes.html'},
+      {t:'kind quickstart',               u:'https://kind.sigs.k8s.io/docs/user/quick-start/'},
+      {t:'KEDA (event-driven autoscaling)',u:'https://keda.sh/docs/'},
+      {t:'Helm chart best practices',     u:'https://helm.sh/docs/chart_best_practices/'},
+      {t:'ArgoCD GitOps guide',           u:'https://argo-cd.readthedocs.io/en/stable/'},
+    ]
+  },
+  obs: {
+    tools: ['Langfuse','Arize Phoenix','Evidently AI','OpenTelemetry','WhyLabs','Prometheus','Grafana'],
+    refs: [
+      {t:'Langfuse LLM observability',    u:'https://langfuse.com/docs'},
+      {t:'Evidently AI (drift detection)',u:'https://docs.evidentlyai.com/'},
+      {t:'OpenTelemetry for LLMs',       u:'https://opentelemetry.io/docs/instrumentation/python/'},
+      {t:'Arize Phoenix (tracing)',       u:'https://docs.arize.com/phoenix'},
+      {t:'WhyLabs monitoring',            u:'https://docs.whylabs.ai/'},
+      {t:'Prometheus + Grafana stack',    u:'https://grafana.com/docs/grafana/latest/getting-started/get-started-grafana-prometheus/'},
+    ]
+  },
+  voice: {
+    inspire: ['Eugene Yan','Chip Huyen','Sebastian Raschka','Jason Liu','Hamel Husain'],
+    refs: [
+      {t:'Eugene Yan — applied ML writing',u:'https://eugeneyan.com/writing/'},
+      {t:'Chip Huyen blog',               u:'https://huyenchip.com/blog/'},
+      {t:'Sebastian Raschka newsletter',  u:'https://magazine.sebastianraschka.com/'},
+      {t:'Jason Liu — RAG and structured outputs',u:'https://jxnl.co/writing/'},
+      {t:'Hamel Husain — LLM evals',     u:'https://hamel.dev/'},
+    ]
+  },
+  design: {
+    refs: [
+      {t:'Designing ML Systems (Chip Huyen)',   u:'https://www.oreilly.com/library/view/designing-machine-learning/9781098107956/'},
+      {t:'ML system design patterns',           u:'https://eugeneyan.com/writing/ml-design-docs/'},
+      {t:'The Pragmatic Engineer — AI systems', u:'https://newsletter.pragmaticengineer.com/'},
+      {t:'AWS Well-Architected ML lens',        u:'https://docs.aws.amazon.com/wellarchitected/latest/machine-learning-lens/machine-learning-lens.html'},
+    ]
+  },
+  free_llm: [
+    {name:'Claude API (you have it)',  url:'https://console.anthropic.com',      note:'Best for RAG tasks, use claude-haiku-4-5 to save cost'},
+    {name:'Groq — llama3/mixtral',    url:'https://console.groq.com',            note:'Free tier, extremely fast inference'},
+    {name:'Google AI Studio',         url:'https://aistudio.google.com',         note:'Gemini free tier, generous limits'},
+    {name:'Together AI',              url:'https://api.together.xyz',            note:'Free $25 credit on signup'},
+    {name:'Colab T4 GPU',            url:'https://colab.research.google.com',   note:'Free GPU, 4–6hr sessions, ideal for fine-tuning labs'},
+    {name:'Kaggle GPU (P100)',        url:'https://www.kaggle.com/code',         note:'Free 30hr/week GPU, no session timeout'},
+  ]
+};
+
 const DIMS = {
   rag:       'RAG & Retrieval',
   eval:      'Eval Infra',
@@ -334,6 +435,16 @@ function parseJSON(raw) {
   return JSON.parse(raw.replace(/^```[a-z]*\n?/,'').replace(/\n?```$/,'').trim());
 }
 
+function curatedCtx() {
+  const llm = CURATED.free_llm.map(l=>`  • ${l.name}: ${l.note} — ${l.url}`).join('\n');
+  const dims = Object.entries(CURATED).filter(([k])=>DIMS[k]).map(([k,v])=>{
+    const tools = v.tools ? `tools: ${v.tools.slice(0,6).join(', ')}` : '';
+    const regs = v.regulated ? `regulated patterns: ${v.regulated.slice(0,4).join(', ')}` : '';
+    return `  ${DIMS[k]}: ${[tools,regs].filter(Boolean).join(' | ')}`;
+  }).join('\n');
+  return `Curated source registry (updated ${CURATED.updated||'monthly'}):\n${dims}\nFree LLM options:\n${llm}`;
+}
+
 function ctx() {
   const month = planMonth();
   const weak = Object.entries(S.scores).sort((a,b)=>a[1]-b[1]).slice(0,3).map(([k])=>DIMS[k]).join(', ');
@@ -346,7 +457,8 @@ function ctx() {
 - Skip: ML research, foundation model training, CUDA kernels, robotics, CV depth.
 - Writing: 1 technical post/month from Month 13. All posts from real work.
 Scores (0–100): ${Object.entries(S.scores).map(([k,v])=>`${DIMS[k]}:${v}`).join(', ')}
-Weakest: ${weak} | Labs done: ${S.doneIds.length} | This week: ${S.weekDoneIds.length}`;
+Weakest: ${weak} | Labs done: ${S.doneIds.length} | This week: ${S.weekDoneIds.length}
+${curatedCtx()}`;
 }
 
 // ── Fetch sources ─────────────────────────────────────────────────────────────
@@ -404,8 +516,8 @@ async function analyze(hn, ax, hf) {
 Your job: given today's actual AI papers and discussions, identify what is genuinely relevant to this engineer's plan and build labs directly from those sources. Labs must be grounded in today's real content — not generic exercises.
 
 Rules:
-- Every lab must be inspired by or directly tied to one of the sources provided below
-- Reference URLs must only come from the sources provided — never invent URLs
+- Every lab must be inspired by today's fetched sources OR the curated registry in your context
+- Reference URLs: prefer URLs from today's fetched sources; for stable tool docs (LangChain, RAGAS, vLLM etc.) use the known URLs from the curated registry; never invent or guess URLs
 - Prefer HuggingFace daily papers (community-curated best of day) and high-score HN items
 - Discard anything not relevant to: RAG, evals, inference, fine-tuning, K8s, observability
 - For LLM access: recommend Claude API (user already has key), Groq free tier (llama3/mixtral, very fast, free), or Colab T4 free GPU. Never recommend local GPU unless the lab cannot work otherwise.
