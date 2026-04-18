@@ -1150,12 +1150,11 @@ Return JSON:
     {"title": "Go deeper", "url": "real URL"},
     {"title": "Apply it", "url": "real URL from curated registry"}
   ]
-}`, 900);
+}`, 1500);
 
     const b = parseJSON(raw);
     S.brief = { date: isoToday(), ...b };
-    S.sources = { hn:(hn.value||[]).length, ax:(ax.value||[]).length, hf:(hf.value||[]).length };
-    S.sources = { hn:(hn.value||[]).length, ax:(ax.value||[]).length, hf:(hf.value||[]).length };
+    S.sources = { hn:(hn.value||[]).length, ax:(ax.value||[]).length, hf:(hf.value||[]).length, feeds:(feeds.value||[]).length };
     save();
     renderBrief();
   } catch(e) {
