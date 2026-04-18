@@ -546,6 +546,7 @@ function defaults() {
     labs: [], doneIds: [], weekDoneIds: [],
     weekStart: isoToday(), streak: 0, lastActive: null,
     brief: null, labsDate: null, lastSync: null, lastWeekEval: null,
+    dimAnalysis: null,  // Agent 1 output: focus_dims, gap, week_goal
     evidence: []   // [{date, dim, lab, score, text}] — high-level proof of skills
   };
 }
@@ -697,102 +698,82 @@ async function fetchFeeds() {
   return results.flatMap(r => r.status === 'fulfilled' ? r.value : []);
 }
 
-// ── Daily analysis ────────────────────────────────────────────────────────────
+// ── Multi-agent pipeline ──────────────────────────────────────────────────────
+// Agent 1: Progress analyzer — reads history, identifies focus dims + gaps
+// Agent 2: Brief synthesizer — deep concept from today's sources with citations
+// Agent 3: Lab generator — 5 guided labs with source/infra/steps
+// Agent 4: Evaluator (evalAnswers) — quiz scoring + evidence
+// ─────────────────────────────────────────────────────────────────────────────
 
-async function analyze(hn, ax, hf, feeds=[]) {
-  const system = `You are an AI engineering coach doing deep daily research. ${ctx()}
+function sourceText(hn, ax, hf, feeds) {
+  const hnText   = hn.length    ? hn.map(s=>`[HN score:${s.score}] ${s.title} | ${s.url}`).join('\n') : '(none)';
+  const axText   = ax.length    ? ax.map(p=>`[arXiv] ${p.title}\n  ${p.abstract}\n  ${p.url}`).join('\n') : '(none)';
+  const hfText   = hf.length    ? hf.map(p=>`[HF ${p.upvotes}↑] ${p.title}\n  ${p.abstract}\n  ${p.url}`).join('\n') : '(none)';
+  const feedText = feeds.length ? feeds.map(f=>`[${f.source}] ${f.title}\n  ${f.desc}\n  ${f.url}`).join('\n') : '(none)';
+  return `=== HACKER NEWS ===\n${hnText}\n\n=== ARXIV ===\n${axText}\n\n=== HUGGINGFACE DAILY ===\n${hfText}\n\n=== BLOGS & NEWSLETTERS (${feeds.length} articles / ${CURATED.feeds.length} writers) ===\n${feedText}`;
+}
 
-Your job: given today's actual AI papers and discussions, identify what is genuinely relevant to this engineer's plan and build labs directly from those sources. Labs must be grounded in today's real content — not generic exercises.
+// Agent 1 — Progress analyzer
+async function analyzeProgress() {
+  const cached = S.dimAnalysis?.date === isoToday();
+  if (cached) return S.dimAnalysis;
 
-Rules:
-- Every lab must be inspired by today's fetched sources OR the curated registry in your context
-- Reference URLs: prefer URLs from today's fetched sources; for stable tool docs (LangChain, RAGAS, vLLM etc.) use the known URLs from the curated registry; never invent or guess URLs
-- Prefer HuggingFace daily papers (community-curated best of day) and high-score HN items
-- Discard anything not relevant to: RAG, evals, inference, fine-tuning, K8s, observability
-- For LLM access: recommend Claude API (user already has key), Groq free tier (llama3/mixtral, very fast, free), or Colab T4 free GPU. Never recommend local GPU unless the lab cannot work otherwise.
+  const scoreLines = Object.entries(S.scores).map(([k,v])=>`  ${k}: ${v}/100 (${levelFor(v)})`).join('\n');
+  const evLines = (S.evidence||[]).slice(-10).map(e=>`  [${e.date}] ${e.dim} — ${e.text}`).join('\n') || '  (none yet)';
+  const doneCount = (S.doneIds||[]).length;
 
-Return valid JSON only — no markdown, no extra text. CRITICAL: never use literal newlines inside JSON string values; keep every string value on a single line.`;
+  const system = `You are a learning coach analyzing an AI engineer's progress. ${ctx()} Return valid JSON only. CRITICAL: no literal newlines inside JSON string values.`;
+  const user = `Current scores:\n${scoreLines}\n\nRecent evidence (last 10):\n${evLines}\n\nTotal labs completed: ${doneCount}\nPlan month: ${planMonth()}/18\n\nReturn JSON:\n{"focus_dims":["dim1","dim2"],"strength_dims":["dim3"],"gap":"One sentence: biggest skill gap vs the plan right now","week_goal":"One concrete sentence: what to focus on this week to stay on track","progression_note":"One sentence on inference level progress (current: ${levelFor(S.scores.inference||0)}, target: pro by Month 12)"}`;
+  try {
+    const result = parseJSON(await claude(system, user, 500));
+    S.dimAnalysis = { date: isoToday(), ...result };
+    save();
+    return S.dimAnalysis;
+  } catch(e) {
+    return { focus_dims: ['rag','eval'], strength_dims: [], gap: '', week_goal: '', progression_note: '' };
+  }
+}
 
-  const hnText   = hn.length    ? hn.map(s=>`  - "${s.title}" | score:${s.score} | ${s.url}`).join('\n') : '  (none)';
-  const axText   = ax.length    ? ax.map(p=>`  - ${p.title}\n    ${p.abstract}\n    URL: ${p.url}`).join('\n') : '  (none)';
-  const hfText   = hf.length    ? hf.map(p=>`  - ${p.title} (${p.upvotes} upvotes)\n    ${p.abstract}\n    URL: ${p.url}`).join('\n') : '  (none)';
-  const feedText = feeds.length ? feeds.map(f=>`  - [${f.source}] ${f.title}\n    ${f.desc}\n    URL: ${f.url}`).join('\n') : '  (none)';
+// Agent 2 — Brief synthesizer
+async function synthesizeBrief(hn, ax, hf, feeds) {
+  const system = `You are a technical synthesis expert. Your only job: from today's AI research sources, identify ONE specific sub-concept that is most relevant to this engineer's plan, and synthesize it into a deep, citation-backed brief. ${ctx()} Return valid JSON only. CRITICAL: no literal newlines inside JSON string values.`;
 
-  const user = `=== HACKER NEWS ===
-${hnText}
+  const user = `${sourceText(hn,ax,hf,feeds)}
 
-=== ARXIV PAPERS (cs.IR / cs.LG / cs.CL) ===
-${axText}
+You are reading today's best AI engineering content from 26 reputed writers + arXiv + HuggingFace. Pick the single most important, must-know concept published today — the one that a serious AI engineer should not miss. It does not have to match my weak areas; it should be the most insightful thing in today's sources. NOT a broad topic — a precise mechanism. Examples of right level: "How RAGAS faithfulness uses NLI entailment scoring", "GRPO's group relative baseline vs PPO critic", "pgvector HNSW ef_construction tradeoff for filtered recall". Wrong: "RAG evaluation", "fine-tuning".
 
-=== HUGGINGFACE DAILY PAPERS ===
-${hfText}
+Return JSON:
+{"topic":"Precise sub-concept","source_title":"Exact source title","source_url":"Real URL from sources above","source_author":"Author or org","why_you":"Why this specific concept matters for Month ${planMonth()} regulated-industry RAG — 1-2 sentences","points":["How the mechanism works internally — be specific","What the naive approach fails at","A concrete number formula or threshold that matters","A real production tradeoff or failure mode","How to apply or test this — specific tool config or code pattern"],"synthesis":"2-3 sentences: your technical take on what this means for regulated-industry RAG — what most engineers miss","links":[{"title":"Primary source","url":"real URL from sources"},{"title":"Go deeper","url":"real URL from sources or curated registry"},{"title":"Apply it","url":"real URL from curated registry"}]}`;
 
-=== BLOGS & NEWSLETTERS (${feeds.length} articles from ${CURATED.feeds.length} writers) ===
-${feedText}
+  return parseJSON(await claude(system, user, 1800));
+}
 
-Valid compute platform keys: colab, kaggle, runpod, vastai, lambda, local, kind, ollama
+// Agent 3 — Lab generator
+async function generateLabs(hn, ax, hf, feeds, dimAnalysis, excludeIds=[]) {
+  const focusDims = (dimAnalysis?.focus_dims||[]).join(', ') || 'rag, eval, inference';
+  const gap = dimAnalysis?.gap || '';
+  const weekGoal = dimAnalysis?.week_goal || '';
 
-Return this exact JSON — all URLs must come from the sources above or the curated registry:
-{
-  "brief": {
-    "topic": "A specific sub-concept — NOT a broad area. Examples of the right level: 'How RAGAS computes answer relevancy using an LLM judge', 'GRPO group baseline vs PPO value function', 'pgvector HNSW index tuning for filtered recall'. Wrong level: 'RAG evaluation', 'fine-tuning', 'vector databases'.",
-    "source_title": "Exact title of the paper or article this is drawn from",
-    "source_url": "Real URL from sources above",
-    "why_you": "1–2 sentences connecting this specific concept to Month ${planMonth()} and regulated-industry RAG",
-    "points": [
-      "Explain the mechanism — how does this actually work internally? Be specific.",
-      "What problem does this solve that the naive approach fails at?",
-      "A concrete number, formula, or threshold that matters in practice",
-      "A tradeoff or failure mode practitioners hit — not theory, real production issue",
-      "How to apply or test this yourself — specific tool, config, or code pattern"
-    ],
-    "synthesis": "2–3 sentences: your own technical take — what this means for regulated-industry RAG specifically, what most people miss about this concept",
-    "links": [
-      {"title": "Primary source", "url": "real URL from sources above"},
-      {"title": "Go deeper", "url": "real URL from sources or curated registry"},
-      {"title": "Apply it", "url": "real URL from curated registry"}
-    ]
-  },
-  "labs": [
-    {
-      "id": "unique-slug",
-      "title": "Specific lab title — derived from today's sources",
-      "dim": "rag|eval|finetune|inference|k8s|obs|voice|design",
-      "time": "2h",
-      "diff": "easy|medium|hard",
-      "why": "1–2 sentences: why this lab NOW for Month ${planMonth()} — name the specific paper or post that triggered it",
-      "source_blog": {
-        "title": "Exact title of the blog post, paper, or tutorial this lab is based on",
-        "url": "Real URL from today's sources — this is the primary reading for this lab",
-        "author": "Author name e.g. Eugene Yan, Sebastian Raschka, or paper authors"
-      },
-      "prerequisites": [
-        "Concrete thing to know or have done — e.g. 'Understand what a vector embedding is'",
-        "Concrete tool/account needed — e.g. 'Hugging Face account (free)'",
-        "Concrete prior skill — e.g. 'Basic Python: list comprehensions, pip install'"
-      ],
-      "setup": "Exact pip install command to run first — e.g. pip install ragas langchain-community chromadb",
-      "best_platform": "colab",
-      "platform_note": "One sentence why this platform — e.g. 'Colab free T4 is enough; no local GPU needed'",
-      "platforms": ["colab"],
-      "llm_note": "Specific model + access — e.g. 'Use claude-haiku-4-5 via your existing API key (cheap) or Groq llama3 (free)'",
-      "steps": [
-        "Step 1 — concrete action with tool name e.g. 'Open Colab, paste pip install command, run cell'",
-        "Step 2 — e.g. 'Load the dataset: use datasets.load_dataset(...)'",
-        "Step 3 — e.g. 'Build the pipeline: LangChain RAG chain with ChromaDB retriever'",
-        "Step 4 — e.g. 'Run RAGAS evaluation: compute faithfulness and answer_relevancy scores'",
-        "Step 5 — e.g. 'Compare: tweak chunk_size from 256→512, re-run, note score delta'"
-      ],
-      "references": [
-        {"title": "Same as source_blog — primary reading", "url": "same URL as source_blog.url"},
-        {"title": "Official tool docs relevant to this lab", "url": "real stable doc URL from curated registry"},
-        {"title": "One more related resource", "url": "real URL"}
-      ]
-    }
-  ]
-}`;
+  const system = `You are an AI lab instructor. Your only job: generate 5 specific, hands-on lab exercises grounded in today's real sources. Each lab must be immediately actionable with a clear source to read, exact setup commands, and concrete steps. ${ctx()} Return valid JSON only. CRITICAL: no literal newlines inside JSON string values.`;
 
-  return parseJSON(await claude(system, user, 4500));
+  const user = `${sourceText(hn,ax,hf,feeds)}
+
+Engineer context:
+- Focus dimensions today: ${focusDims}
+- Biggest gap: ${gap}
+- Week goal: ${weekGoal}
+- Plan month: ${planMonth()}/18
+- Already completed lab IDs (exclude): ${excludeIds.join(', ')||'none'}
+
+Valid platform keys: colab, kaggle, runpod, vastai, lambda, local, kind, ollama
+
+Generate 5 labs. At least 2 must target the focus dimensions. Each lab must be directly inspired by one of today's sources above.
+
+Return JSON:
+{"labs":[{"id":"kebab-slug","title":"Specific lab title from today's sources","dim":"rag|eval|finetune|inference|k8s|obs|voice|design","time":"2h","diff":"easy|medium|hard","why":"Why this lab now — name the specific source that triggered it","source_blog":{"title":"Exact blog/paper title — primary reading before starting","url":"Real URL from today's sources above","author":"Author name"},"prerequisites":["Know X — e.g. understand what a vector index is","Have Y — e.g. HuggingFace account (free)","Can do Z — e.g. run Python in Colab"],"setup":"pip install exact-package another-package","best_platform":"colab","platform_note":"Why this platform — e.g. Colab T4 free is enough, no GPU needed","platforms":["colab"],"llm_note":"Exact model + access method — e.g. Use claude-haiku-4-5 (your key, cheap) or Groq llama-3.1-8b (free)","steps":["1. Open Colab at colab.research.google.com, paste setup command, run","2. Exact action with code or command","3. Exact action with code or command","4. Run evaluation or measurement with specific metric","5. Compare or tweak one parameter and observe the delta"],"references":[{"title":"Same as source_blog — read first","url":"same URL as source_blog.url"},{"title":"Official tool docs","url":"real stable URL from curated registry"},{"title":"Related resource","url":"real URL"}]}]}`;
+
+  const result = parseJSON(await claude(system, user, 4000));
+  return result.labs || [];
 }
 
 // ── Quiz ──────────────────────────────────────────────────────────────────────
@@ -995,9 +976,34 @@ function dailyArchiveMd() {
   return md;
 }
 
+function kbEntryMd() {
+  const today = isoToday();
+  const b = S.brief || {};
+  if (!b.topic) return null;
+  // Slug from topic for filename
+  const slug = b.topic.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,60);
+  const links = (b.links||[]).filter(l=>l.url&&!l.url.includes('...')).map((l,i)=>`[^${i+1}]: [${l.title}](${l.url})`).join('\n');
+  let md = `---\ntags: [ai-engineering]\ndate: ${today}\nsource: ${b.source_title||''}\nauthor: ${b.source_author||''}\n---\n\n`;
+  md += `# ${b.topic}\n\n`;
+  if (b.why_you) md += `> ${b.why_you}\n\n`;
+  if (b.points?.length) {
+    md += `## What you need to know\n`;
+    b.points.forEach(p => { md += `- ${p}\n`; });
+    md += '\n';
+  }
+  if (b.synthesis) md += `## Key insight\n${b.synthesis}\n\n`;
+  if (b.source_url && !b.source_url.includes('...')) md += `## Primary source\n[${b.source_title||b.source_url}](${b.source_url})\n\n`;
+  if (links) md += `## References\n${links}\n`;
+  return { md, slug };
+}
+
 async function archiveToday() {
   const today = isoToday();
-  await ghCommit(`archive/${today}.md`, dailyArchiveMd(), `Daily archive: ${today}`);
+  const kb = kbEntryMd();
+  await Promise.allSettled([
+    ghCommit(`archive/${today}.md`, dailyArchiveMd(), `Daily archive: ${today}`),
+    kb ? ghCommit(`kb/${kb.slug}.md`, kb.md, `KB: ${S.brief?.topic||today}`) : Promise.resolve()
+  ]);
 }
 
 async function sync() {
@@ -1254,17 +1260,20 @@ async function submitQuiz(id) {
 
 async function refreshLabs() {
   const btn=document.getElementById('refreshBtn');
-  btn.disabled=true; btn.textContent='Refreshing…';
+  btn.disabled=true; btn.textContent='Generating labs…';
   try {
     const keep=S.labs.filter(l=>l.status!=='todo');
-    const excl=[...S.doneIds,...keep.map(l=>l.id)];
-    const [hn,ax,hf,feeds]=await Promise.allSettled([fetchHN(),fetchArxiv(),fetchHFPapers(),fetchFeeds()]);
-    const result=await analyze(hn.value||[],ax.value||[],hf.value||[],feeds.value||[]);
-    const fresh=result.labs.filter(l=>!excl.includes(l.id)).map(l=>({...l,status:'todo'}));
+    const excl=[...(S.doneIds||[]),...keep.map(l=>l.id)];
+    const [[hn,ax,hf,feeds], dimAnalysis] = await Promise.all([
+      Promise.allSettled([fetchHN(),fetchArxiv(),fetchHFPapers(),fetchFeeds()]),
+      analyzeProgress()
+    ]);
+    const labs = await generateLabs(hn.value||[],ax.value||[],hf.value||[],feeds.value||[], dimAnalysis, excl);
+    const fresh = labs.filter(l=>!excl.includes(l.id)).map(l=>({...l,status:'todo'}));
     S.labs=[...keep,...fresh].slice(0,5);
     save(); renderAll();
-  } catch(e){ alert('Refresh failed. Please try again.'); }
-  btn.disabled=false; btn.textContent='Refresh open labs';
+  } catch(e){ alert('Lab refresh failed: ' + e.message); }
+  btn.disabled=false; btn.textContent='↻ Refresh open labs';
 }
 
 async function runWeeklyEval() {
@@ -1283,56 +1292,18 @@ async function runWeeklyEval() {
   } catch(e){ banner.innerHTML='<span class="err">Failed. <button onclick="runWeeklyEval()">Retry</button></span>'; }
 }
 
-// ── Brief refresh ─────────────────────────────────────────────────────────────
+// ── Brief refresh (Agent 2 — synthesizer) ────────────────────────────────────
 
 async function refreshBrief() {
   window._briefFetching = true;
   const btn = document.getElementById('briefRefreshBtn');
-  btn.disabled = true; btn.textContent = '↻ Fetching…';
-  document.getElementById('briefEl').innerHTML = '<div class="brief-body" style="color:#aaa;font-size:13px">Researching…</div>';
+  btn.disabled = true; btn.textContent = '↻ Synthesizing…';
+  document.getElementById('briefEl').innerHTML = '<div class="brief-body" style="color:#aaa;font-size:13px">Synthesizing today\'s best concept from 26 writers + arXiv + HuggingFace…</div>';
 
   try {
     const [hn,ax,hf,feeds] = await Promise.allSettled([fetchHN(),fetchArxiv(),fetchHFPapers(),fetchFeeds()]);
-
-    const system = `You are an AI engineering coach. ${ctx()}
-Give a fresh angle — pick a DIFFERENT specific sub-concept from what was shown earlier. Return valid JSON only — no markdown. CRITICAL: never use literal newlines inside JSON string values; keep every string value on a single line.`;
-
-    const hnText   = (hn.value||[]).map(s=>`  - "${s.title}" | ${s.url}`).join('\n')||'(none)';
-    const axText   = (ax.value||[]).map(p=>`  - ${p.title}\n    ${p.abstract}\n    URL: ${p.url}`).join('\n')||'(none)';
-    const hfText   = (hf.value||[]).map(p=>`  - ${p.title} (${p.upvotes} upvotes)\n    ${p.abstract}\n    URL: ${p.url}`).join('\n')||'(none)';
-    const feedText = (feeds.value||[]).map(f=>`  - [${f.source}] ${f.title}\n    ${f.desc}\n    URL: ${f.url}`).join('\n')||'(none)';
-
-    const raw = await claude(system,
-`HN: ${hnText}\narXiv: ${axText}\nHF daily papers: ${hfText}
-
-=== BLOGS & NEWSLETTERS (${(feeds.value||[]).length} articles from ${CURATED.feeds.length} writers) ===
-${feedText}
-
-Pick a DIFFERENT specific sub-concept from what was shown earlier. Not a broad topic — a precise mechanism or technique. Examples of the right level: "How RAGAS computes faithfulness using NLI", "GRPO's group relative baseline vs PPO critic", "HNSW ef_construction tradeoffs for filtered RAG". Wrong level: "RAG evaluation", "fine-tuning methods".
-
-Return JSON:
-{
-  "topic": "Precise sub-concept title",
-  "source_title": "Exact paper or article title",
-  "source_url": "Real URL from sources",
-  "why_you": "Why this specific concept matters for Month ${planMonth()} regulated-industry RAG",
-  "points": [
-    "Explain the mechanism — how it actually works internally",
-    "What problem the naive approach fails at",
-    "A concrete number, formula, or threshold that matters",
-    "A real production tradeoff or failure mode",
-    "How to apply or test this — specific tool, config, or code pattern"
-  ],
-  "synthesis": "Your own technical take on what this means for regulated-industry RAG — what most people miss",
-  "links": [
-    {"title": "Primary source", "url": "real URL"},
-    {"title": "Go deeper", "url": "real URL"},
-    {"title": "Apply it", "url": "real URL from curated registry"}
-  ]
-}`, 2500);
-
-    const b = parseJSON(raw);
-    S.brief = { date: isoToday(), ...b };
+    const brief = await synthesizeBrief(hn.value||[], ax.value||[], hf.value||[], feeds.value||[]);
+    S.brief = { date: isoToday(), ...brief };
     S.sources = { hn:(hn.value||[]).length, ax:(ax.value||[]).length, hf:(hf.value||[]).length, feeds:(feeds.value||[]).length };
     save();
     renderBrief();
@@ -1341,7 +1312,7 @@ Return JSON:
   }
 
   window._briefFetching = false;
-  btn.disabled = false; btn.textContent = '↻ Refresh';
+  btn.disabled = false; btn.textContent = '↻ New angle';
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
@@ -1368,30 +1339,33 @@ async function init() {
   }
 
   try {
+    // Phase 1: fetch all sources + run progress analysis in parallel
     setStatus('Reading 26 AI writers, arXiv & Hacker News…');
-    const [hn,ax,hf,feeds] = await Promise.allSettled([fetchHN(),fetchArxiv(),fetchHFPapers(),fetchFeeds()]);
-    setStatus('Synthesizing with Claude — finding what matters for you today…');
-    const result = await analyze(hn.value||[], ax.value||[], hf.value||[], feeds.value||[]);
+    const [[hn,ax,hf,feeds], dimAnalysis] = await Promise.all([
+      Promise.allSettled([fetchHN(),fetchArxiv(),fetchHFPapers(),fetchFeeds()]),
+      analyzeProgress()
+    ]);
+    const src = { hn:hn.value||[], ax:ax.value||[], hf:hf.value||[], feeds:feeds.value||[] };
+    S.sources = { hn:src.hn.length, ax:src.ax.length, hf:src.hf.length, feeds:src.feeds.length };
 
-    if (result.brief && result.brief.topic) {
-      S.brief = { date:today, ...result.brief };
-    } else if (typeof result.brief === 'string') {
-      S.brief = { date:today, content:result.brief };
-    }
-    // if result.brief is missing, leave S.brief null so renderBrief() auto-fetches it
-
-    S.labsDate = today;
-    S.sources = { hn:(hn.value||[]).length, ax:(ax.value||[]).length, hf:(hf.value||[]).length, feeds:(feeds.value||[]).length };
-
+    // Phase 2: brief synthesis + lab generation in parallel
+    setStatus('Agent 1: synthesizing today\'s concept… Agent 2: building your labs…');
     const keep = S.labs.filter(l=>l.status==='inprogress'||l.status==='done');
-    const keepIds = keep.map(l=>l.id);
-    const fresh = (result.labs||[]).filter(l=>!keepIds.includes(l.id)).map(l=>({...l,status:'todo'}));
-    S.labs = [...keep,...fresh].slice(0,5);
+    const excludeIds = [...(S.doneIds||[]), ...keep.map(l=>l.id)];
+    const [brief, labs] = await Promise.all([
+      synthesizeBrief(src.hn, src.ax, src.hf, src.feeds),
+      generateLabs(src.hn, src.ax, src.hf, src.feeds, dimAnalysis, excludeIds)
+    ]);
+
+    S.brief = { date:today, ...brief };
+    S.labsDate = today;
+    const fresh = labs.filter(l=>!excludeIds.includes(l.id)).map(l=>({...l,status:'todo'}));
+    S.labs = [...keep, ...fresh].slice(0,5);
     if (!S.labs.length) S.labs = fresh.slice(0,5);
     save();
   } catch(e) {
     console.error('Init error:', e);
-    // leave S.brief null so renderBrief() triggers refreshBrief() automatically
+    // leave S.brief null so renderBrief() auto-triggers refreshBrief()
   }
 
   document.getElementById('loading').style.display='none';
