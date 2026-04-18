@@ -858,6 +858,69 @@ function evidenceSummary() {
   return md;
 }
 
+function dailyArchiveMd() {
+  const today = isoToday();
+  const b = S.brief || {};
+  let md = `# AI Engineer Daily — ${today}\n`;
+  md += `> Month ${planMonth()}/18 · Streak ${S.streak}d\n\n`;
+
+  // Brief
+  md += `## Today's Brief\n`;
+  if (b.topic) {
+    md += `**${b.topic}**\n\n`;
+    if (b.why_you) md += `*${b.why_you}*\n\n`;
+    if (b.points?.length) {
+      md += `### Key Points\n`;
+      b.points.forEach(p => { md += `- ${p}\n`; });
+      md += '\n';
+    }
+    if (b.synthesis) md += `### Synthesis\n${b.synthesis}\n\n`;
+    if (b.links?.length) {
+      md += `### References\n`;
+      b.links.filter(l=>l.url&&!l.url.includes('...')).forEach((l,i) => {
+        md += `[^${i+1}]: [${l.title}](${l.url})\n`;
+      });
+      md += '\n';
+    }
+  } else if (b.content) {
+    md += `${b.content}\n\n`;
+  }
+
+  // Labs
+  md += `## Today's Labs\n\n`;
+  S.labs.forEach((l, i) => {
+    const status = l.status === 'done' ? '✅' : l.status === 'inprogress' ? '🔄' : '⬜';
+    md += `### ${status} Lab ${i+1}: ${l.title}\n`;
+    md += `**Dimension:** ${DIMS[l.dim] || l.dim} | **Time:** ${l.time} | **Difficulty:** ${l.diff}\n\n`;
+    if (l.why) md += `*${l.why}*\n\n`;
+    if (l.steps?.length) {
+      md += `**Steps:**\n`;
+      l.steps.forEach((s, si) => { md += `${si+1}. ${s}\n`; });
+      md += '\n';
+    }
+    if (l.references?.length) {
+      md += `**References:**\n`;
+      l.references.filter(r=>r.url&&!r.url.includes('...')).forEach(r => {
+        md += `- [${r.title}](${r.url})\n`;
+      });
+      md += '\n';
+    }
+    if (l.eval) md += `**Quiz score:** ${l.eval.score}/100 — ${l.eval.feedback}\n\n`;
+  });
+
+  // Scores
+  md += `## Scores\n`;
+  Object.entries(S.scores).forEach(([k,v]) => {
+    md += `- **${k.toUpperCase()}** ${v}/100 (${levelFor(v)})\n`;
+  });
+  return md;
+}
+
+async function archiveToday() {
+  const today = isoToday();
+  await ghCommit(`archive/${today}.md`, dailyArchiveMd(), `Daily archive: ${today}`);
+}
+
 async function sync() {
   const today = isoToday();
   await Promise.allSettled([
@@ -1209,6 +1272,7 @@ async function init() {
   document.getElementById('loading').style.display='none';
   document.getElementById('main').style.display='block';
   renderAll();
+  archiveToday(); // silently commit archive/YYYY-MM-DD.md to GitHub
 }
 
 init();
