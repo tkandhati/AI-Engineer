@@ -1,14 +1,17 @@
 @echo off
+setlocal enabledelayedexpansion
+
 :: Free ports first
 call "%~dp0stop.bat"
 timeout /t 1 /nobreak >nul
 
-:: Read API key from apikey.txt, or prompt
-if exist "%~dp0apikey.txt" (
-    set /p ANTHROPIC_KEY=<"%~dp0apikey.txt"
-) else (
-    set /p ANTHROPIC_KEY=Enter Anthropic API key:
+:: Read key from apikey.txt — prompt once and save if missing
+if not exist "%~dp0apikey.txt" (
+    set /p ANTHROPIC_KEY=Enter Anthropic API key (saved for future runs):
+    echo !ANTHROPIC_KEY!> "%~dp0apikey.txt"
+    echo Key saved to apikey.txt
 )
+set /p ANTHROPIC_KEY=<"%~dp0apikey.txt"
 
 :: Start proxy
 start "AI Proxy" cmd /k "set ANTHROPIC_KEY=%ANTHROPIC_KEY% && python "%~dp0proxy.py""
