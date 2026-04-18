@@ -184,14 +184,11 @@ textarea.qta:focus { outline: none; border-color: #2563eb; background: #fff; }
 .blog-result-text { color: #444; }
 .blog-score { font-size: 20px; font-weight: 700; margin-bottom: 14px; }
 
-/* Scores */
-.scores-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 32px; }
-.score-row {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 6px 0; border-bottom: 1px solid #f2f2f2; font-size: 13px;
-}
-.score-name { color: #666; }
-.score-val { font-weight: 700; font-variant-numeric: tabular-nums; font-size: 14px; }
+/* Scores — compact strip */
+.scores-strip { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 12px; color: #999; }
+.score-chip { display: flex; align-items: center; gap: 4px; }
+.score-chip-name { color: #bbb; }
+.score-chip-val { font-weight: 700; font-variant-numeric: tabular-nums; }
 .low { color: #dc2626; } .mid { color: #d97706; } .hi { color: #16a34a; }
 
 /* Footer */
@@ -271,13 +268,10 @@ code { font-family: 'Courier New', monospace; font-size: 12px; background: #f0f0
     <div id="blogResult"></div>
   </div>
 
-  <hr>
-
-  <h2>Progress</h2>
-  <div class="scores-grid" id="scoresEl"></div>
-
   <div class="footer">
     <span id="streakEl"></span>
+    <span>·</span>
+    <div class="scores-strip" id="scoresEl"></div>
     <span id="syncEl"></span>
   </div>
 </div>
@@ -385,7 +379,55 @@ const CURATED = {
     {name:'Together AI',              url:'https://api.together.xyz',            note:'Free $25 credit on signup'},
     {name:'Colab T4 GPU',            url:'https://colab.research.google.com',   note:'Free GPU, 4–6hr sessions, ideal for fine-tuning labs'},
     {name:'Kaggle GPU (P100)',        url:'https://www.kaggle.com/code',         note:'Free 30hr/week GPU, no session timeout'},
-  ]
+  ],
+
+  // ── Progression ladders — where the engineer is and where to take them ───────
+  progression: {
+    inference: {
+      goal: 'pro by Month 12',
+      current: 'basic',
+      ladder: [
+        {
+          level: 'basic', score: '0–25',
+          knows: 'Can call an OpenAI-compatible API. Knows what a token is.',
+          labs: ['Run vLLM locally with a small model (Qwen-1.5B)', 'Understand request/response latency vs throughput', 'Serve a model with Ollama, benchmark with curl']
+        },
+        {
+          level: 'intermediate', score: '26–50',
+          knows: 'Understands batching, quantization basics, KV cache concept.',
+          labs: ['INT4 quantization with bitsandbytes vs GGUF — measure quality loss', 'Continuous batching in vLLM — why it beats static batching', 'Build a simple load tester: requests/sec vs TTFT at different batch sizes', 'Deploy TGI on Colab, tune max_batch_prefill_tokens']
+        },
+        {
+          level: 'advanced', score: '51–75',
+          knows: 'Can tune serving configs for latency/cost tradeoffs. Understands speculative decoding, tensor parallelism.',
+          labs: ['Speculative decoding with a draft model — measure speedup on RAG outputs', 'Tensor parallelism across 2 GPUs with vLLM (use Colab + Kaggle)', 'PagedAttention internals — why KV cache fragmentation matters', 'Build a multi-model router: small model for classification, large for generation', 'Token budget enforcement for regulated outputs (max_tokens per user tier)']
+        },
+        {
+          level: 'pro', score: '76–100',
+          knows: 'Designs production serving architectures. Owns cost-per-token, SLA, and autoscaling.',
+          labs: ['Cost-per-token dashboard across model sizes and quantization levels', 'Autoscaling inference with KEDA on K8s — scale to zero on idle', 'SLA-aware routing: latency budget per request tier', 'Benchmark RAG-specific workloads: long-context retrieval latency vs chunk size', 'Incident runbook for inference degradation in a regulated environment']
+        }
+      ]
+    },
+    rag: {
+      goal: 'production-grade regulated RAG by Month 12',
+      ladder: [
+        { level:'basic',        score:'0–25',  knows:'Can build a basic RAG with LangChain over a PDF.' },
+        { level:'intermediate', score:'26–50', knows:'Handles chunking strategies, hybrid search, basic evals.' },
+        { level:'advanced',     score:'51–75', knows:'Metadata filtering, reranking, citation enforcement, PII handling.' },
+        { level:'pro',          score:'76–100',knows:'Full regulated RAG: HIPAA audit trail, access-control retrieval, eval suite, air-gap deployment.' }
+      ]
+    },
+    eval: {
+      goal: 'build and own eval infra for regulated RAG',
+      ladder: [
+        { level:'basic',        score:'0–25',  knows:'Knows RAGAS exists. Can run a basic eval.' },
+        { level:'intermediate', score:'26–50', knows:'Understands faithfulness, answer relevancy, context recall metrics.' },
+        { level:'advanced',     score:'51–75', knows:'Custom metrics, LLM-as-judge, regression testing on prompt changes.' },
+        { level:'pro',          score:'76–100',knows:'Owns eval infra: CI-integrated, dataset versioned, metrics dashboard, drift detection.' }
+      ]
+    }
+  }
 };
 
 const DIMS = {
@@ -415,7 +457,7 @@ const PLAT = {
 function defaults() {
   return {
     v: 5,
-    scores: { rag:40, eval:30, finetune:28, inference:38, k8s:32, obs:33, voice:18, design:42 },
+    scores: { rag:40, eval:30, finetune:28, inference:20, k8s:32, obs:33, voice:18, design:42 },
     labs: [], doneIds: [], weekDoneIds: [],
     weekStart: isoToday(), streak: 0, lastActive: null,
     brief: null, labsDate: null, lastSync: null, lastWeekEval: null
@@ -448,14 +490,31 @@ function parseJSON(raw) {
   return JSON.parse(raw.replace(/^```[a-z]*\n?/,'').replace(/\n?```$/,'').trim());
 }
 
+function levelFor(score) {
+  return score <= 25 ? 'basic' : score <= 50 ? 'intermediate' : score <= 75 ? 'advanced' : 'pro';
+}
+
 function curatedCtx() {
-  const llm = CURATED.free_llm.map(l=>`  • ${l.name}: ${l.note} — ${l.url}`).join('\n');
+  const llm = CURATED.free_llm.map(l=>`  • ${l.name}: ${l.note}`).join('\n');
   const dims = Object.entries(CURATED).filter(([k])=>DIMS[k]).map(([k,v])=>{
     const tools = v.tools ? `tools: ${v.tools.slice(0,6).join(', ')}` : '';
-    const regs = v.regulated ? `regulated patterns: ${v.regulated.slice(0,4).join(', ')}` : '';
+    const regs = v.regulated ? `regulated: ${v.regulated.slice(0,3).join(', ')}` : '';
     return `  ${DIMS[k]}: ${[tools,regs].filter(Boolean).join(' | ')}`;
   }).join('\n');
-  return `Curated source registry (updated ${CURATED.updated||'monthly'}):\n${dims}\nFree LLM options:\n${llm}`;
+
+  // Progression context for tracked dimensions
+  const prog = Object.entries(CURATED.progression||{}).map(([dim, p])=>{
+    const score = S.scores[dim] || 0;
+    const current = levelFor(score);
+    const ladder = p.ladder || [];
+    const currentStep = ladder.find(l=>l.level===current);
+    const nextStep = ladder[ladder.indexOf(currentStep)+1];
+    return `  ${DIMS[dim]||dim}: currently ${current} (score ${score}) → goal: ${p.goal}
+    Current level knows: ${currentStep?.knows||''}
+    Next level to reach: ${nextStep?.level||'pro'} — ${nextStep?.knows||'already at goal'}`;
+  }).join('\n');
+
+  return `Curated source registry (updated ${CURATED.updated||'monthly'}):\n${dims}\nFree LLM options:\n${llm}\nProgression goals:\n${prog}`;
 }
 
 function ctx() {
@@ -810,8 +869,11 @@ function renderBrief() {
 
 function renderScores() {
   document.getElementById('scoresEl').innerHTML = Object.entries(S.scores).map(([k,v])=>{
-    const c = v<40?'low':v<65?'mid':'hi';
-    return `<div class="score-row"><span class="score-name">${DIMS[k]}</span><span class="score-val ${c}">${v}</span></div>`;
+    const c = v<=25?'low':v<=50?'mid':'hi';
+    const lvl = levelFor(v);
+    const hasProg = CURATED.progression?.[k];
+    const label = hasProg ? `${k.toUpperCase()} <span style="font-weight:400;color:#ddd">${lvl}</span>` : k.toUpperCase();
+    return `<span class="score-chip"><span class="score-chip-name">${label}</span><span class="score-chip-val ${c}">${v}</span></span>`;
   }).join('');
 }
 
