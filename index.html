@@ -206,6 +206,19 @@ ol.prereq-list li::before {
   border-radius: 6px; padding: 8px 12px; line-height: 1.55;
   border-left: 3px solid #16a34a;
 }
+.lab-source-link {
+  display: block; margin-top: 8px; margin-bottom: 2px;
+  font-size: 12.5px; font-weight: 600; color: #1e40af;
+  background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px;
+  padding: 7px 12px; text-decoration: none; line-height: 1.4;
+}
+.lab-source-link:hover { background: #dbeafe; }
+.lab-setup-cmd {
+  display: block; font-family: 'Courier New', monospace; font-size: 12.5px;
+  background: #1e293b; color: #7dd3fc; border-radius: 6px;
+  padding: 9px 14px; margin-top: 4px; letter-spacing: 0.02em;
+  word-break: break-all;
+}
 
 /* Blog assessment */
 .blog-card {
@@ -560,7 +573,16 @@ async function claude(system, user, maxTokens=1800) {
 }
 
 function parseJSON(raw) {
-  return JSON.parse(raw.replace(/^```[a-z]*\n?/,'').replace(/\n?```$/,'').trim());
+  const s = raw.replace(/^```[a-z]*\n?/,'').replace(/\n?```$/,'').trim();
+  try {
+    return JSON.parse(s);
+  } catch(e) {
+    // Claude sometimes writes literal newlines inside JSON string values (invalid JSON).
+    // Replace newlines that appear inside quoted strings with a space.
+    const fixed = s.replace(/"((?:[^"\\]|\\.)*)"/g,
+      (m, inner) => '"' + inner.replace(/\r?\n/g,' ') + '"');
+    return JSON.parse(fixed);
+  }
 }
 
 function levelFor(score) {
@@ -689,7 +711,7 @@ Rules:
 - Discard anything not relevant to: RAG, evals, inference, fine-tuning, K8s, observability
 - For LLM access: recommend Claude API (user already has key), Groq free tier (llama3/mixtral, very fast, free), or Colab T4 free GPU. Never recommend local GPU unless the lab cannot work otherwise.
 
-Return valid JSON only — no markdown, no extra text.`;
+Return valid JSON only — no markdown, no extra text. CRITICAL: never use literal newlines inside JSON string values; keep every string value on a single line.`;
 
   const hnText   = hn.length    ? hn.map(s=>`  - "${s.title}" | score:${s.score} | ${s.url}`).join('\n') : '  (none)';
   const axText   = ax.length    ? ax.map(p=>`  - ${p.title}\n    ${p.abstract}\n    URL: ${p.url}`).join('\n') : '  (none)';
@@ -738,24 +760,39 @@ Return this exact JSON — all URLs must come from the sources above or the cura
       "dim": "rag|eval|finetune|inference|k8s|obs|voice|design",
       "time": "2h",
       "diff": "easy|medium|hard",
-      "why": "Why this lab for Month ${planMonth()} — reference the specific source that inspired it",
-      "infra": "Exact tools, libraries, versions needed",
-      "best_platform": "colab",
-      "platform_note": "One sentence: why this specific platform is the best choice for this lab (cost, GPU need, setup ease)",
-      "platforms": ["colab"],
-      "prerequisites": ["concrete prerequisite 1", "concrete prerequisite 2"],
-      "llm_note": "Specific LLM recommendation with free access method",
-      "references": [
-        {"title": "The source that inspired this lab", "url": "real URL from sources above"},
-        {"title": "Official docs or tutorial", "url": "real URL — only if you are certain it exists"},
-        {"title": "Related tool or paper", "url": "real URL from sources above or well-known stable doc URL"}
+      "why": "1–2 sentences: why this lab NOW for Month ${planMonth()} — name the specific paper or post that triggered it",
+      "source_blog": {
+        "title": "Exact title of the blog post, paper, or tutorial this lab is based on",
+        "url": "Real URL from today's sources — this is the primary reading for this lab",
+        "author": "Author name e.g. Eugene Yan, Sebastian Raschka, or paper authors"
+      },
+      "prerequisites": [
+        "Concrete thing to know or have done — e.g. 'Understand what a vector embedding is'",
+        "Concrete tool/account needed — e.g. 'Hugging Face account (free)'",
+        "Concrete prior skill — e.g. 'Basic Python: list comprehensions, pip install'"
       ],
-      "steps": ["Concrete step 1","Concrete step 2","Concrete step 3","Concrete step 4","Concrete step 5"]
+      "setup": "Exact pip install command to run first — e.g. pip install ragas langchain-community chromadb",
+      "best_platform": "colab",
+      "platform_note": "One sentence why this platform — e.g. 'Colab free T4 is enough; no local GPU needed'",
+      "platforms": ["colab"],
+      "llm_note": "Specific model + access — e.g. 'Use claude-haiku-4-5 via your existing API key (cheap) or Groq llama3 (free)'",
+      "steps": [
+        "Step 1 — concrete action with tool name e.g. 'Open Colab, paste pip install command, run cell'",
+        "Step 2 — e.g. 'Load the dataset: use datasets.load_dataset(...)'",
+        "Step 3 — e.g. 'Build the pipeline: LangChain RAG chain with ChromaDB retriever'",
+        "Step 4 — e.g. 'Run RAGAS evaluation: compute faithfulness and answer_relevancy scores'",
+        "Step 5 — e.g. 'Compare: tweak chunk_size from 256→512, re-run, note score delta'"
+      ],
+      "references": [
+        {"title": "Same as source_blog — primary reading", "url": "same URL as source_blog.url"},
+        {"title": "Official tool docs relevant to this lab", "url": "real stable doc URL from curated registry"},
+        {"title": "One more related resource", "url": "real URL"}
+      ]
     }
   ]
 }`;
 
-  return parseJSON(await claude(system, user, 3500));
+  return parseJSON(await claude(system, user, 4500));
 }
 
 // ── Quiz ──────────────────────────────────────────────────────────────────────
@@ -1100,27 +1137,40 @@ function labCard(lab, idx) {
     }
   }
 
+  // Source blog — the original article/paper this lab is based on
+  const blog = lab.source_blog;
+  const blogHtml = (blog?.url && !blog.url.includes('...'))
+    ? `<a href="${blog.url}" target="_blank" rel="noopener" class="lab-source-link">
+        📖 ${blog.title}${blog.author ? ` <span style="font-weight:400;opacity:0.7">· ${blog.author}</span>` : ''}
+      </a>` : '';
+
   const prereqHtml = (lab.prerequisites||[]).length
     ? `<div class="lab-section">
-        <div class="lab-section-label">Prerequisites</div>
+        <div class="lab-section-label">Before you start</div>
         <ul class="prereq-list">${(lab.prerequisites||[]).map(p=>`<li>${p}</li>`).join('')}</ul>
+      </div>` : '';
+
+  const setupHtml = lab.setup
+    ? `<div class="lab-section">
+        <div class="lab-section-label">Setup</div>
+        <code class="lab-setup-cmd">${lab.setup}</code>
       </div>` : '';
 
   const stepsHtml = (lab.steps||[]).length
     ? `<div class="lab-section">
-        <div class="lab-section-label">Steps</div>
+        <div class="lab-section-label">Step-by-step guide</div>
         <ol class="prereq-list">${(lab.steps||[]).map(s=>`<li>${s}</li>`).join('')}</ol>
       </div>` : '';
 
-  const refsHtml = (lab.references||[]).length
+  const refsHtml = (lab.references||[]).filter(r=>r.url&&!r.url.includes('...')).length
     ? `<div class="lab-section">
-        <div class="lab-section-label">References</div>
+        <div class="lab-section-label">Further reading</div>
         <ul class="ref-list">${(lab.references||[]).filter(r=>r.url&&!r.url.includes('...')).map(r=>`<li><a href="${r.url}" target="_blank" rel="noopener">↗ ${r.title}</a></li>`).join('')}</ul>
       </div>` : '';
 
   const llmHtml = lab.llm_note
     ? `<div class="lab-section">
-        <div class="lab-section-label">Free LLM</div>
+        <div class="lab-section-label">Free LLM to use</div>
         <div class="llm-note">${lab.llm_note}</div>
       </div>` : '';
 
@@ -1131,9 +1181,10 @@ function labCard(lab, idx) {
       <div class="lab-meta">${lab.time||'2h'} · ${lab.diff||'medium'}</div>
     </div>
     <div class="lab-why">${lab.why||''}</div>
+    ${blogHtml}
     ${prereqHtml}
     ${platformHtml}
-    ${lab.infra?`<div class="lab-section"><div class="lab-section-label">Infra</div><div class="lab-infra" style="margin:0">${lab.infra}</div></div>`:''}
+    ${setupHtml}
     ${llmHtml}
     ${stepsHtml}
     ${refsHtml}
@@ -1244,7 +1295,7 @@ async function refreshBrief() {
     const [hn,ax,hf,feeds] = await Promise.allSettled([fetchHN(),fetchArxiv(),fetchHFPapers(),fetchFeeds()]);
 
     const system = `You are an AI engineering coach. ${ctx()}
-Give a fresh angle — pick a DIFFERENT specific sub-concept from what was shown earlier. Return valid JSON only — no markdown.`;
+Give a fresh angle — pick a DIFFERENT specific sub-concept from what was shown earlier. Return valid JSON only — no markdown. CRITICAL: never use literal newlines inside JSON string values; keep every string value on a single line.`;
 
     const hnText   = (hn.value||[]).map(s=>`  - "${s.title}" | ${s.url}`).join('\n')||'(none)';
     const axText   = (ax.value||[]).map(p=>`  - ${p.title}\n    ${p.abstract}\n    URL: ${p.url}`).join('\n')||'(none)';
