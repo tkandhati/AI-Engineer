@@ -12,32 +12,39 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   font-size: 15px;
   line-height: 1.65;
-  color: #111;
-  background: #fafafa;
-  max-width: 760px;
+  color: #1e293b;
+  background: #f8fafc;
+  max-width: 780px;
   margin: 0 auto;
-  padding: 32px 20px 80px;
+  padding: 36px 24px 100px;
 }
 
 h2 {
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #999;
-  margin-bottom: 14px;
+  color: #94a3b8;
+  margin-bottom: 16px;
 }
 
-hr { border: none; border-top: 1px solid #ebebeb; margin: 32px 0; }
+hr { border: none; border-top: 1px solid #e2e8f0; margin: 36px 0; }
 
 /* Header */
-.hdr { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 28px; }
-.hdr-title { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
-.hdr-sub { font-size: 13px; color: #888; margin-top: 3px; }
-.hdr-date { font-size: 13px; color: #aaa; text-align: right; line-height: 1.4; }
+.hdr {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 32px; padding-bottom: 24px; border-bottom: 2px solid #0f172a;
+}
+.hdr-title { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: #0f172a; }
+.hdr-sub { font-size: 12.5px; color: #64748b; margin-top: 4px; font-weight: 500; }
+.hdr-date { font-size: 12.5px; color: #94a3b8; text-align: right; line-height: 1.5; }
 
 /* Loading */
-#loading { padding: 80px 0; text-align: center; color: #aaa; font-size: 14px; }
+#loading { padding: 100px 0; text-align: center; }
+.load-brand { font-size: 24px; font-weight: 800; color: #111; letter-spacing: -0.5px; margin-bottom: 6px; }
+.load-sub { font-size: 13px; color: #aaa; margin-bottom: 20px; }
+.load-status { font-size: 12.5px; color: #888; margin-bottom: 16px; min-height: 18px; transition: opacity 0.3s; }
+.load-dots { color: #ccc; font-size: 13px; letter-spacing: 4px; }
 .dot { display: inline-block; animation: blink 1.4s infinite; }
 .dot:nth-child(2) { animation-delay: 0.2s; }
 .dot:nth-child(3) { animation-delay: 0.4s; }
@@ -48,78 +55,85 @@ hr { border: none; border-top: 1px solid #ebebeb; margin: 32px 0; }
 /* ── Brief ── */
 .brief-card {
   background: #fff;
-  border: 1px solid #e5e5e5;
-  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
   overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
 .brief-topbar {
-  background: #111; color: #fff;
-  padding: 13px 18px;
-  display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #fff;
+  padding: 18px 20px;
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
 }
-.brief-topic { font-size: 14px; font-weight: 700; line-height: 1.4; flex: 1; }
-.brief-topbar a { font-size: 12px; color: #aaa; text-decoration: none; white-space: nowrap; }
-.brief-topbar a:hover { color: #fff; }
+.brief-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: #64748b; margin-bottom: 6px; }
+.brief-topic { font-size: 17px; font-weight: 800; line-height: 1.35; flex: 1; letter-spacing: -0.2px; }
+.brief-topbar a { font-size: 11px; color: #64748b; text-decoration: none; white-space: nowrap; border: 1px solid #334155; border-radius: 4px; padding: 3px 8px; margin-top: 2px; flex-shrink: 0; }
+.brief-topbar a:hover { color: #94a3b8; border-color: #475569; }
 .brief-why {
-  font-size: 12.5px; color: #666; background: #f9f9f9;
-  padding: 9px 18px; border-bottom: 1px solid #eee; line-height: 1.5;
-  font-style: italic;
+  font-size: 13px; color: #1e40af; background: #eff6ff;
+  padding: 10px 20px; border-bottom: 1px solid #dbeafe; line-height: 1.6;
+  font-weight: 500;
 }
-.brief-body { padding: 16px 18px; }
+.brief-body { padding: 18px 20px; }
 .brief-label {
-  font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
-  text-transform: uppercase; color: #bbb; margin-bottom: 8px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.14em;
+  text-transform: uppercase; color: #94a3b8; margin-bottom: 10px; margin-top: 18px;
 }
-.brief-points { list-style: none; margin-bottom: 16px; }
+.brief-label:first-child { margin-top: 0; }
+.brief-points { list-style: none; margin-bottom: 4px; }
 .brief-points li {
-  font-size: 13.5px; line-height: 1.7; color: #222;
-  padding: 6px 0 6px 18px; position: relative;
-  border-bottom: 1px solid #f5f5f5;
+  font-size: 14px; line-height: 1.7; color: #1e293b;
+  padding: 8px 0 8px 22px; position: relative;
+  border-bottom: 1px solid #f1f5f9;
 }
 .brief-points li:last-child { border-bottom: none; }
-.brief-points li::before { content: '◆'; position: absolute; left: 0; color: #d0d0d0; font-size: 8px; top: 11px; }
+.brief-points li::before { content: ''; position: absolute; left: 0; top: 17px; width: 8px; height: 8px; border-radius: 50%; background: #2563eb; opacity: 0.25; }
 .brief-synthesis {
-  font-size: 13.5px; line-height: 1.75; color: #333;
-  background: #f7f9ff; border-radius: 5px; padding: 12px 14px;
-  border-left: 3px solid #2563eb; margin-bottom: 16px;
+  font-size: 14px; line-height: 1.8; color: #1e293b;
+  background: #f8faff; border-radius: 7px; padding: 14px 16px;
+  border-left: 4px solid #2563eb; margin-bottom: 4px;
+  font-style: italic;
 }
-.brief-links { display: flex; flex-direction: column; gap: 6px; }
+.brief-links { display: flex; flex-direction: column; gap: 8px; }
 .brief-links a {
   font-size: 13px; color: #2563eb; text-decoration: none;
-  display: flex; align-items: center; gap: 6px;
+  display: flex; align-items: center; gap: 8px; padding: 6px 10px;
+  border-radius: 5px; background: #f8faff; transition: background 0.12s;
 }
-.brief-links a:hover { text-decoration: underline; }
-.brief-links a::before { content: '↗'; font-size: 11px; color: #aaa; }
+.brief-links a:hover { background: #eff6ff; text-decoration: none; }
+.brief-links a::before { content: '↗'; font-size: 11px; color: #93c5fd; }
 
 /* ── Lab card ── */
 .lab {
   background: #fff;
-  border: 1px solid #e5e5e5;
-  border-radius: 7px;
-  padding: 16px 18px;
-  margin-bottom: 12px;
-  transition: border-color 0.15s;
+  border: 1px solid #e8e8e8;
+  border-radius: 10px;
+  padding: 18px 20px;
+  margin-bottom: 14px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
-.lab.inprogress { border-color: #2563eb; border-left-width: 3px; }
-.lab.done { opacity: 0.6; }
+.lab:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.lab.inprogress { border-color: #2563eb; border-left: 4px solid #2563eb; background: #fafcff; }
+.lab.done { opacity: 0.55; }
 .lab-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
-.lab-title { font-weight: 600; font-size: 14.5px; flex: 1; line-height: 1.4; }
-.lab-meta { font-size: 11px; color: #bbb; white-space: nowrap; padding-top: 2px; }
+.lab-title { font-weight: 700; font-size: 15px; flex: 1; line-height: 1.35; color: #0f172a; }
+.lab-meta { font-size: 11px; color: #94a3b8; white-space: nowrap; padding-top: 3px; background: #f8fafc; border-radius: 4px; padding: 3px 8px; }
 .lab-badge {
-  display: inline-block; font-size: 11px; padding: 2px 8px;
-  border-radius: 10px; font-weight: 600; margin-bottom: 7px;
+  display: inline-block; font-size: 11px; padding: 2px 10px;
+  border-radius: 10px; font-weight: 700; margin-bottom: 8px; letter-spacing: 0.03em;
 }
 .badge-ip { background: #dbeafe; color: #1d4ed8; }
 .badge-done { background: #dcfce7; color: #15803d; }
-.lab-why { font-size: 13px; color: #666; margin: 5px 0; line-height: 1.55; }
-.lab-infra { font-size: 12px; color: #999; margin-bottom: 5px; }
-.lab-plats { font-size: 12px; margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+.lab-why { font-size: 13.5px; color: #475569; margin: 6px 0 2px; line-height: 1.6; }
+.lab-infra { font-size: 12px; color: #94a3b8; }
+.lab-plats { font-size: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
 .lab-plats a {
   color: #2563eb; text-decoration: none;
-  background: #eff6ff; border-radius: 4px; padding: 2px 8px;
+  background: #eff6ff; border-radius: 4px; padding: 3px 10px; border: 1px solid #bfdbfe;
 }
 .lab-plats a:hover { background: #dbeafe; }
-.lab-actions { display: flex; gap: 8px; margin-top: 8px; }
+.lab-actions { display: flex; gap: 8px; margin-top: 10px; }
 
 /* Buttons */
 button {
@@ -152,23 +166,44 @@ textarea.qta:focus { outline: none; border-color: #2563eb; background: #fff; }
 .eval-score { font-weight: 700; font-size: 17px; margin-bottom: 6px; color: #111; }
 
 /* Lab extras */
-.lab-section { margin-top: 10px; padding-top: 10px; border-top: 1px solid #f2f2f2; }
+.lab-section { margin-top: 14px; padding-top: 14px; border-top: 1px solid #f1f5f9; }
 .lab-section-label {
-  font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
-  text-transform: uppercase; color: #bbb; margin-bottom: 6px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+  text-transform: uppercase; color: #94a3b8; margin-bottom: 8px;
 }
 .prereq-list { list-style: none; display: flex; flex-wrap: wrap; gap: 5px; }
 .prereq-list li {
-  font-size: 11.5px; background: #f5f5f5; border-radius: 4px;
-  padding: 2px 8px; color: #555;
+  font-size: 12px; background: #f1f5f9; border-radius: 5px;
+  padding: 3px 10px; color: #475569; border: 1px solid #e2e8f0;
+}
+/* Steps as guided checklist */
+ol.prereq-list {
+  display: block; counter-reset: step-counter;
+}
+ol.prereq-list li {
+  counter-increment: step-counter;
+  display: flex; align-items: flex-start; gap: 10px;
+  background: none; border: none; padding: 7px 0; border-bottom: 1px solid #f1f5f9;
+  border-radius: 0; font-size: 13.5px; color: #1e293b; line-height: 1.55;
+}
+ol.prereq-list li:last-child { border-bottom: none; }
+ol.prereq-list li::before {
+  content: counter(step-counter);
+  min-width: 22px; height: 22px; border-radius: 50%;
+  background: #2563eb; color: #fff; font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 1px;
 }
 .ref-list { list-style: none; }
-.ref-list li { margin-bottom: 4px; }
-.ref-list a { font-size: 12.5px; color: #2563eb; text-decoration: none; }
+.ref-list li { margin-bottom: 5px; }
+.ref-list a {
+  font-size: 13px; color: #2563eb; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 5px;
+}
 .ref-list a:hover { text-decoration: underline; }
 .llm-note {
-  font-size: 12.5px; color: #555; background: #f0fdf4;
-  border-radius: 4px; padding: 7px 10px; line-height: 1.5;
+  font-size: 13px; color: #166534; background: #f0fdf4;
+  border-radius: 6px; padding: 8px 12px; line-height: 1.55;
   border-left: 3px solid #16a34a;
 }
 
@@ -229,7 +264,10 @@ code { font-family: 'Courier New', monospace; font-size: 12px; background: #f0f0
 </div>
 
 <div id="loading">
-  Researching<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>
+  <div class="load-brand">AI Engineer Daily</div>
+  <div class="load-sub">Month <span id="loadMonth">—</span> of 18 · RAG for Regulated Industries</div>
+  <div class="load-status" id="loadStatus">Starting up…</div>
+  <div class="load-dots"><span class="dot">●</span><span class="dot">●</span><span class="dot">●</span></div>
 </div>
 
 <div id="main">
@@ -246,17 +284,19 @@ code { font-family: 'Courier New', monospace; font-size: 12px; background: #f0f0
     <button onclick="runWeeklyEval()">Synthesize now</button>
   </div>
 
-  <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px">
-    <h2 style="margin-bottom:0">Today's Brief</h2>
-    <button id="briefRefreshBtn" onclick="refreshBrief()" style="font-size:12px;padding:3px 10px;color:#888;border-color:#e0e0e0">↻ Refresh</button>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+    <h2 style="margin-bottom:0">Today's Deep Brief</h2>
+    <button id="briefRefreshBtn" onclick="refreshBrief()" style="font-size:12px;padding:4px 12px;color:#64748b;border-color:#e2e8f0">↻ New angle</button>
   </div>
   <div class="brief-card" id="briefEl"></div>
 
   <hr>
 
-  <h2>Today's Labs</h2>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+    <h2 style="margin-bottom:0">Lab Challenges</h2>
+    <button style="font-size:12px;padding:4px 12px;color:#64748b;border-color:#e2e8f0" id="refreshBtn" onclick="refreshLabs()">↻ Refresh open labs</button>
+  </div>
   <div id="labsEl"></div>
-  <button style="font-size:13px;margin-top:6px" id="refreshBtn" onclick="refreshLabs()">Refresh open labs</button>
 
   <hr>
 
@@ -988,22 +1028,23 @@ function renderBrief() {
     const srcLink = b.source_url && !b.source_url.includes('...')
       ? `<a href="${b.source_url}" target="_blank" rel="noopener">source ↗</a>` : '';
 
+    const srcCount = S.sources ? `${(S.sources.feeds||0)+(S.sources.hf||0)+(S.sources.ax||0)+(S.sources.hn||0)} sources scanned` : '';
     el.innerHTML = `
       <div class="brief-topbar">
-        <div class="brief-topic">${b.topic}</div>
+        <div style="flex:1">
+          <div class="brief-eyebrow">Concept of the Day${srcCount ? ' · ' + srcCount : ''}</div>
+          <div class="brief-topic">${b.topic}</div>
+        </div>
         ${srcLink}
       </div>
-      ${b.why_you ? `<div class="brief-why">${b.why_you}</div>` : ''}
+      ${b.why_you ? `<div class="brief-why">💡 ${b.why_you}</div>` : ''}
       <div class="brief-body">
-        ${points ? `<div class="brief-label">Key points</div>
+        ${points ? `<div class="brief-label">What you need to know</div>
           <ul class="brief-points">${points}</ul>` : ''}
-        ${b.synthesis ? `<div class="brief-label">Observed</div>
+        ${b.synthesis ? `<div class="brief-label">Key insight</div>
           <div class="brief-synthesis">${b.synthesis}</div>` : ''}
-        ${links ? `<div class="brief-label">Study further</div>
+        ${links ? `<div class="brief-label">Go deeper</div>
           <div class="brief-links">${links}</div>` : ''}
-        ${S.sources ? `<div style="font-size:11px;color:#ccc;margin-top:14px">
-          ${S.sources.hf} HF papers · ${S.sources.ax} arXiv · ${S.sources.hn} HN discussions
-        </div>` : ''}
       </div>`;
   } else {
     // Legacy fallback
@@ -1263,6 +1304,9 @@ async function init() {
 
   load(); checkWeekReset(); tickStreak();
 
+  const setStatus = t => { const el=document.getElementById('loadStatus'); if(el) el.textContent=t; };
+  const mEl = document.getElementById('loadMonth'); if(mEl) mEl.textContent = planMonth();
+
   const today = isoToday();
   const cached = S.labsDate===today && S.brief?.date===today && S.labs.length>0;
 
@@ -1273,7 +1317,9 @@ async function init() {
   }
 
   try {
+    setStatus('Reading 26 AI writers, arXiv & Hacker News…');
     const [hn,ax,hf,feeds] = await Promise.allSettled([fetchHN(),fetchArxiv(),fetchHFPapers(),fetchFeeds()]);
+    setStatus('Synthesizing with Claude — finding what matters for you today…');
     const result = await analyze(hn.value||[], ax.value||[], hf.value||[], feeds.value||[]);
 
     if (result.brief && result.brief.topic) {
