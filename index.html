@@ -239,7 +239,10 @@ code { font-family: 'Courier New', monospace; font-size: 12px; background: #f0f0
     <button onclick="runWeeklyEval()">Synthesize now</button>
   </div>
 
-  <h2>Today's Brief</h2>
+  <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px">
+    <h2 style="margin-bottom:0">Today's Brief</h2>
+    <button id="briefRefreshBtn" onclick="refreshBrief()" style="font-size:12px;padding:3px 10px;color:#888;border-color:#e0e0e0">↻ Refresh</button>
+  </div>
   <div class="brief-card" id="briefEl"></div>
 
   <hr>
@@ -928,6 +931,45 @@ async function runWeeklyEval() {
     </div>`;
     sync();
   } catch(e){ banner.innerHTML='<span class="err">Failed. <button onclick="runWeeklyEval()">Retry</button></span>'; }
+}
+
+// ── Brief refresh ─────────────────────────────────────────────────────────────
+
+async function refreshBrief() {
+  const btn = document.getElementById('briefRefreshBtn');
+  btn.disabled = true; btn.textContent = '↻ Fetching…';
+  document.getElementById('briefEl').innerHTML = '<div class="brief-body" style="color:#aaa;font-size:13px">Researching…</div>';
+
+  try {
+    const [hn,ax,hf] = await Promise.allSettled([fetchHN(),fetchArxiv(),fetchHFPapers()]);
+
+    const system = `You are an AI engineering coach. ${ctx()}
+Give a fresh angle on today's AI landscape for this engineer. Different emphasis from what they may have seen before. Return valid JSON only — no markdown.`;
+
+    const hnText = (hn.value||[]).map(s=>`  - "${s.title}" | ${s.url}`).join('\n')||'(none)';
+    const axText = (ax.value||[]).map(p=>`  - ${p.title}\n    ${p.abstract}\n    URL: ${p.url}`).join('\n')||'(none)';
+    const hfText = (hf.value||[]).map(p=>`  - ${p.title} (${p.upvotes} upvotes)\n    ${p.abstract}\n    URL: ${p.url}`).join('\n')||'(none)';
+
+    const raw = await claude(system,
+`HN: ${hnText}\narXiv: ${axText}\nHF daily papers: ${hfText}
+
+Return JSON:
+{
+  "headline": "A different sharp insight — not the obvious one, a less-noticed signal",
+  "signals": ["Signal 1 with specific source","Signal 2","Signal 3"],
+  "watch": "Specific paper or thread with URL"
+}`, 800);
+
+    const b = parseJSON(raw);
+    S.brief = { date: isoToday(), ...b };
+    S.sources = { hn:(hn.value||[]).length, ax:(ax.value||[]).length, hf:(hf.value||[]).length };
+    save();
+    renderBrief();
+  } catch(e) {
+    document.getElementById('briefEl').innerHTML = `<div class="brief-body"><span class="err">Refresh failed: ${e.message}</span></div>`;
+  }
+
+  btn.disabled = false; btn.textContent = '↻ Refresh';
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
