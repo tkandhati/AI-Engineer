@@ -141,6 +141,27 @@ textarea.qta:focus { outline: none; border-color: #2563eb; background: #fff; }
 }
 .eval-score { font-weight: 700; font-size: 17px; margin-bottom: 6px; color: #111; }
 
+/* Lab extras */
+.lab-section { margin-top: 10px; padding-top: 10px; border-top: 1px solid #f2f2f2; }
+.lab-section-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: #bbb; margin-bottom: 6px;
+}
+.prereq-list { list-style: none; display: flex; flex-wrap: wrap; gap: 5px; }
+.prereq-list li {
+  font-size: 11.5px; background: #f5f5f5; border-radius: 4px;
+  padding: 2px 8px; color: #555;
+}
+.ref-list { list-style: none; }
+.ref-list li { margin-bottom: 4px; }
+.ref-list a { font-size: 12.5px; color: #2563eb; text-decoration: none; }
+.ref-list a:hover { text-decoration: underline; }
+.llm-note {
+  font-size: 12.5px; color: #555; background: #f0fdf4;
+  border-radius: 4px; padding: 7px 10px; line-height: 1.5;
+  border-left: 3px solid #16a34a;
+}
+
 /* Blog assessment */
 .blog-card {
   background: #fff; border: 1px solid #e5e5e5; border-radius: 7px; padding: 18px;
@@ -393,8 +414,15 @@ Return this exact JSON shape:
       "time": "2h",
       "diff": "easy|medium|hard",
       "why": "One sentence: why this lab for this engineer at Month ${planMonth()}",
-      "infra": "Specific tools and compute",
+      "infra": "Specific tools and compute needed",
       "platforms": ["colab"],
+      "prerequisites": ["Python 3.10+", "specific prior knowledge or tool needed"],
+      "llm_note": "Which LLM to use and how to get it free — prefer Claude API (user has key), Groq free tier, or Colab GPU. Avoid local GPU unless truly necessary.",
+      "references": [
+        {"title": "Primary reference — doc, tutorial, or paper", "url": "https://..."},
+        {"title": "Secondary reference", "url": "https://..."},
+        {"title": "Optional deeper read", "url": "https://..."}
+      ],
       "steps": ["step 1","step 2","step 3","step 4","step 5"]
     }
   ]
@@ -634,6 +662,24 @@ function labCard(lab, idx) {
       quiz = `<div class="quiz" id="qload-${lab.id}"><button onclick="loadQuiz('${lab.id}')">Load reflection questions</button></div>`;
     }
   }
+  const prereqHtml = (lab.prerequisites||[]).length
+    ? `<div class="lab-section">
+        <div class="lab-section-label">Prerequisites</div>
+        <ul class="prereq-list">${(lab.prerequisites||[]).map(p=>`<li>${p}</li>`).join('')}</ul>
+      </div>` : '';
+
+  const refsHtml = (lab.references||[]).length
+    ? `<div class="lab-section">
+        <div class="lab-section-label">References</div>
+        <ul class="ref-list">${(lab.references||[]).map(r=>`<li><a href="${r.url}" target="_blank" rel="noopener">↗ ${r.title}</a></li>`).join('')}</ul>
+      </div>` : '';
+
+  const llmHtml = lab.llm_note
+    ? `<div class="lab-section">
+        <div class="lab-section-label">LLM / Compute</div>
+        <div class="llm-note">${lab.llm_note}</div>
+      </div>` : '';
+
   return `<div class="lab ${lab.status}" id="lab-${lab.id}">
     ${badge}
     <div class="lab-top">
@@ -641,8 +687,11 @@ function labCard(lab, idx) {
       <div class="lab-meta">${lab.time||'2h'} · ${lab.diff||'medium'}</div>
     </div>
     <div class="lab-why">${lab.why||''}</div>
-    ${lab.infra?`<div class="lab-infra">Infra: ${lab.infra}</div>`:''}
-    ${plats?`<div class="lab-plats">${plats}</div>`:''}
+    ${prereqHtml}
+    ${lab.infra?`<div class="lab-section"><div class="lab-section-label">Infra</div><div class="lab-infra" style="margin:0">${lab.infra}</div></div>`:''}
+    ${llmHtml}
+    ${plats?`<div class="lab-plats" style="margin-top:8px">${plats}</div>`:''}
+    ${refsHtml}
     ${actions?`<div class="lab-actions">${actions}</div>`:''}
     ${quiz}
   </div>`;
