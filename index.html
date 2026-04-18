@@ -737,7 +737,7 @@ async function runWeeklyEval() {
 // ── Init ──────────────────────────────────────────────────────────────────────
 
 async function init() {
-  if (window.__configMissing || !window.CONFIG?.PROXY_URL) {
+  if (window.__configMissing || !window.CONFIG) {
     document.getElementById('loading').style.display='none';
     document.getElementById('setup').style.display='block';
     return;
