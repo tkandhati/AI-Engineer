@@ -1,73 +1,181 @@
 # Technical Design — AI Engineer Daily
+Last updated: 2026-04
 
 ## What it is
-Single-page personal tool. Fetches AI news + papers on load, passes them to Claude with the user's 18-month plan context, and returns a synthesized brief + 5 tailored lab recommendations. Tracks learning via Claude-generated quiz questions after each lab.
+Personal daily page. On load it fetches AI news and papers from 3 sources, passes them to Claude with an 18-month plan context and a curated tool registry, and returns a structured brief + 5 grounded lab recommendations. Tracks learning through Claude-generated quizzes. Syncs journal to GitHub.
+
+---
 
 ## Files
 | File | Purpose |
 |---|---|
-| `index.html` | Everything — markup, styles, logic in one file |
-| `config.js` | Local secrets (gitignored, never pushed) |
+| `index.html` | Everything — markup, styles, all JS in one file |
+| `proxy.py` | Local Python proxy — holds Anthropic API key, forwards requests with CORS headers |
+| `start.bat` | Frees ports, starts proxy + page server, opens browser |
+| `stop.bat` | Kills processes on ports 5001 and 8080 |
+| `apikey.txt` | Anthropic API key — gitignored, read by start.bat |
+| `config.js` | Local config — gitignored, never pushed |
 | `config.template.js` | Template to copy → `config.js` |
 | `learning_journal/YYYY-MM-DD.md` | Daily entry auto-committed to GitHub |
 | `progress_summary.md` | Running score ledger, auto-updated |
 
+---
+
+## Local run architecture
+```
+start.bat
+  ├── stop.bat (free ports 5001, 8080)
+  ├── proxy.py → localhost:5001  (holds ANTHROPIC_KEY, forwards to api.anthropic.com)
+  ├── python -m http.server 8080 (serves index.html)
+  └── opens http://localhost:8080/index.html
+```
+Why proxy: Anthropic org policy blocks browser-direct API calls (CORS). Proxy is pure Python stdlib, zero pip installs.
+
+---
+
 ## Data flow on page load
 ```
-fetchHN() + fetchArxiv()  →  parallel fetch
-         ↓
-analyze(hn, arxiv)        →  Claude call with plan context
-         ↓
-{ brief, labs[5] }        →  stored in localStorage + rendered
+fetchHN()      ──┐
+fetchArxiv()   ──┼──  parallel fetch
+fetchHFPapers()──┘
+                 ↓
+         analyze(hn, ax, hf)   →  Claude call (plan ctx + curated registry)
+                 ↓
+     { brief{headline,signals,watch}, labs[5] }
+                 ↓
+         localStorage + render
 ```
-Cached by date. One Claude call per day unless manually refreshed.
+Cached by date — one Claude call per day. Cache key: `S.labsDate === isoToday()`.
+
+---
+
+## Data sources
+| Source | API | What it gives |
+|---|---|---|
+| Hacker News | Firebase public API | Top AI discussions with real URLs + score |
+| arXiv | Public XML API | cs.IR/LG/CL papers with abstracts + arxiv URLs |
+| HuggingFace daily papers | `huggingface.co/api/daily_papers` | Community-curated best papers with upvotes + arxiv URLs |
+
+Labs are grounded in today's fetched sources. Reference URLs come from fetched content or the curated registry — never invented.
+
+---
+
+## Curated source registry (`CURATED` constant)
+Updated monthly in `index.html`. Contains per-dimension:
+- **tools**: authoritative tool list (e.g. RAG: LangChain, LlamaIndex, RAGAS, Qdrant, presidio)
+- **refs**: stable doc URLs (LangChain docs, vLLM docs, etc.)
+- **regulated** (RAG only): HIPAA patterns, PII detection, audit logging, citation enforcement
+- **free_llm**: Claude API, Groq free tier, Kaggle P100, Colab T4 — with notes
+
+Passed to Claude via `curatedCtx()` on every call. Ensures labs reference the right tools even on slow news days.
+
+**To update monthly:** edit the `CURATED` object in `index.html`, update `updated: 'YYYY-MM'`, push to git.
+
+---
+
+## Claude calls
+| When | Function | Input | Output | Tokens |
+|---|---|---|---|---|
+| Page load (daily) | `analyze()` | 3 sources + plan ctx + curated registry | Structured brief + 5 labs with refs/prereqs/llm_note | 3500 |
+| Brief refresh button | `refreshBrief()` | Re-fetched sources | New brief angle only (labs unchanged) | 800 |
+| Lab marked done | `genQuestions()` | Lab title + steps + user history | 4 quiz questions | 500 |
+| Quiz submitted | `evalAnswers()` | Questions + answers + lab context | Score, feedback, dimension delta | 350 |
+| Blog/article submitted | `assessBlog()` | Post content (up to 6000 chars) | Score, strong, gaps, niche fit, suggestion, delta | 500 |
+| Weekly eval | `weekSynth()` | Labs done this week | 4–5 sentence synthesis | 350 |
+
+Model: `claude-sonnet-4-6`. All calls routed through `proxy.py`.
+
+---
+
+## Lab structure
+```js
+{
+  id, title, dim, time, diff,
+  why,           // why this lab for this engineer at Month N
+  infra,         // exact tools and compute needed
+  platforms[],   // keys into PLAT dict
+  prerequisites[], // concrete prerequisites as strings
+  llm_note,      // specific free LLM recommendation
+  references[],  // [{title, url}] — real URLs only
+  steps[],       // 5 concrete steps
+  status,        // 'todo' | 'inprogress' | 'done'
+  quiz[],        // [{id, text}] — generated by Claude after done
+  eval,          // {score, feedback, delta} — after quiz submitted
+  startedAt, doneAt
+}
+```
+
+---
 
 ## Lab lifecycle
 ```
-todo → [Start] → inprogress → [Mark done] → done → [quiz loads] → submitted
+todo → [Start] → inprogress → [Mark done] → done → [quiz auto-loads] → [Submit] → evaluated
 ```
-- `inprogress` labs survive page refresh and daily reset
-- `todo` labs replaced on daily reset; `done` labs preserved
-- `doneIds` prevents repeating completed labs
+- `inprogress` labs survive daily reset and page refresh
+- `todo` labs replaced on daily reset
+- `doneIds` prevents repeating completed labs across days
+- `Swap` button removes a `todo` lab from the list
 
-## Claude calls
-| When | Input | Output |
-|---|---|---|
-| Page load (daily) | HN stories + arXiv papers + plan context | Brief paragraph + 5 labs |
-| Lab marked done | Lab title + steps + user history | 4 quiz questions |
-| Quiz submitted | Questions + user answers | Score (0-100), feedback, dimension delta |
-| Weekly eval | Labs done this week | 4-5 sentence synthesis |
-
-Model: `claude-sonnet-4-6`. Header required: `anthropic-dangerous-direct-browser-access: true`.
+---
 
 ## State (localStorage key: `aigrow_v5`)
 ```js
 {
-  scores: { rag, eval, finetune, inference, k8s, obs, voice, design }, // 0–100 each
-  labs: [{ id, title, dim, status, why, infra, platforms, steps, quiz, eval }],
-  doneIds: [],        // all-time completed lab IDs
-  weekDoneIds: [],    // this week only, resets on week boundary
+  v: 5,
+  scores: { rag, eval, finetune, inference, k8s, obs, voice, design }, // 0–100
+  labs: [...],
+  doneIds: [],        // all-time
+  weekDoneIds: [],    // resets each week
   weekStart: 'ISO',
   streak: N,
   lastActive: 'ISO',
-  brief: { date, content },
-  labsDate: 'ISO',   // date labs were last generated
+  brief: { date, headline, signals[], watch },  // structured
+  labsDate: 'ISO',
+  sources: { hn, ax, hf },   // item counts from last fetch
   lastSync: 'ISO',
   lastWeekEval: 'ISO'
 }
 ```
 
+---
+
 ## GitHub sync
-Uses GitHub Contents API (`PUT /repos/{owner}/{repo}/contents/{path}`). Called after quiz submission and weekly eval. Writes two files: `learning_journal/YYYY-MM-DD.md` and `progress_summary.md`. Requires `repo` scope PAT in `config.js`.
+GitHub Contents API (`PUT /repos/{owner}/{repo}/contents/{path}`). Called after quiz submission and weekly eval. Writes:
+- `learning_journal/YYYY-MM-DD.md` — daily entry with brief, lab scores, feedback
+- `progress_summary.md` — running dimension score table
 
-## Dimensions
-`rag`, `eval`, `finetune`, `inference`, `k8s`, `obs`, `voice`, `design`
+Requires GitHub PAT with `repo` scope in `config.js`.
 
-## Compute platforms
-`colab`, `kaggle`, `runpod`, `vastai`, `lambda`, `local`, `kind`, `ollama` — defined in `PLAT` dict with name, cost string, URL.
+---
 
-## To add a new data source
-Add an async fetch function returning `string[]` (one bullet per item). Add it to `Promise.allSettled([fetchHN(), fetchArxiv(), yourFn()])` in `init()` and `refreshLabs()`. Pass the results into `analyze()` and update the prompt.
+## Key functions
+| Function | What it does |
+|---|---|
+| `init()` | Load state, check cache, fetch sources, call analyze, render |
+| `analyze(hn,ax,hf)` | Main Claude call — brief + 5 grounded labs |
+| `refreshBrief()` | Re-fetch sources, new brief only, labs untouched |
+| `refreshLabs()` | Re-fetch sources, new todo labs only, inprogress/done preserved |
+| `ctx()` | Builds Claude system prompt from plan + scores + curated registry |
+| `curatedCtx()` | Serializes CURATED registry into prompt text |
+| `renderBrief()` | Renders structured brief card (headline / signals / watch) |
+| `labCard(lab,idx)` | Renders one lab card with prereqs, infra, llm_note, refs, quiz |
+| `assessBlog()` | Takes pasted blog post, evaluates against plan, updates voice score |
+| `sync()` | Commits learning journal + progress summary to GitHub |
 
-## To change the plan context
-Edit the `ctx()` function. It builds the system prompt context string from `CONFIG.PLAN_START`, `S.scores`, and hardcoded career details.
+---
+
+## To extend
+
+**Add a data source:**
+1. Write `fetchX()` returning `[{title, abstract, url}]`
+2. Add to `Promise.allSettled([fetchHN(), fetchArxiv(), fetchHFPapers(), fetchX()])` in `init()` and `refreshLabs()` and `refreshBrief()`
+3. Pass to `analyze()`, add to prompt text
+
+**Update curated registry (monthly):**
+Edit `CURATED` in `index.html`. Update `updated` field. Push to git.
+
+**Change plan context:**
+Edit `ctx()` — hardcoded career details, or `CONFIG.PLAN_START` for month calculation.
+
+**Change model:**
+Replace `claude-sonnet-4-6` in the `claude()` function. Use `claude-haiku-4-5-20251001` to reduce cost.
