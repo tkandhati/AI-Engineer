@@ -52,34 +52,44 @@ hr { border: none; border-top: 1px solid #ebebeb; margin: 32px 0; }
   border-radius: 8px;
   overflow: hidden;
 }
-.brief-headline {
-  background: #111;
-  color: #fff;
-  padding: 14px 18px;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.45;
+.brief-topbar {
+  background: #111; color: #fff;
+  padding: 13px 18px;
+  display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+}
+.brief-topic { font-size: 14px; font-weight: 700; line-height: 1.4; flex: 1; }
+.brief-topbar a { font-size: 12px; color: #aaa; text-decoration: none; white-space: nowrap; }
+.brief-topbar a:hover { color: #fff; }
+.brief-why {
+  font-size: 12.5px; color: #666; background: #f9f9f9;
+  padding: 9px 18px; border-bottom: 1px solid #eee; line-height: 1.5;
+  font-style: italic;
 }
 .brief-body { padding: 16px 18px; }
-.brief-section { margin-bottom: 14px; }
-.brief-section:last-child { margin-bottom: 0; }
 .brief-label {
-  font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
-  text-transform: uppercase; color: #aaa; margin-bottom: 6px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+  text-transform: uppercase; color: #bbb; margin-bottom: 8px;
 }
-.brief-signals { list-style: none; }
-.brief-signals li {
-  font-size: 13.5px; line-height: 1.6; color: #333;
-  padding: 4px 0 4px 16px; position: relative;
+.brief-points { list-style: none; margin-bottom: 16px; }
+.brief-points li {
+  font-size: 13.5px; line-height: 1.7; color: #222;
+  padding: 6px 0 6px 18px; position: relative;
   border-bottom: 1px solid #f5f5f5;
 }
-.brief-signals li:last-child { border-bottom: none; }
-.brief-signals li::before { content: '→'; position: absolute; left: 0; color: #bbb; font-size: 12px; }
-.brief-watch {
-  font-size: 13.5px; line-height: 1.6; color: #555;
-  background: #f9f9f9; border-radius: 5px; padding: 10px 12px;
-  border-left: 3px solid #d0d0d0;
+.brief-points li:last-child { border-bottom: none; }
+.brief-points li::before { content: '◆'; position: absolute; left: 0; color: #d0d0d0; font-size: 8px; top: 11px; }
+.brief-synthesis {
+  font-size: 13.5px; line-height: 1.75; color: #333;
+  background: #f7f9ff; border-radius: 5px; padding: 12px 14px;
+  border-left: 3px solid #2563eb; margin-bottom: 16px;
 }
+.brief-links { display: flex; flex-direction: column; gap: 6px; }
+.brief-links a {
+  font-size: 13px; color: #2563eb; text-decoration: none;
+  display: flex; align-items: center; gap: 6px;
+}
+.brief-links a:hover { text-decoration: underline; }
+.brief-links a::before { content: '↗'; font-size: 11px; color: #aaa; }
 
 /* ── Lab card ── */
 .lab {
@@ -542,16 +552,26 @@ ${hfText}
 
 Valid compute platform keys: colab, kaggle, runpod, vastai, lambda, local, kind, ollama
 
-Return this exact JSON — all reference URLs must come from the sources above:
+Return this exact JSON — all URLs must come from the sources above or the curated registry:
 {
   "brief": {
-    "headline": "The single sharpest insight for this engineer from today's sources",
-    "signals": [
-      "Signal tied to a specific paper or discussion above — name it",
-      "Signal 2 — same",
-      "Signal 3 — same"
+    "topic": "Short title of the most interesting topic from today's sources — specific, not generic",
+    "source_title": "Exact title of the paper or article that inspired this",
+    "source_url": "Real URL from sources above",
+    "why_you": "1–2 sentences: why this topic matters for this engineer at Month ${planMonth()} targeting regulated-industry RAG",
+    "points": [
+      "Substantive point that teaches something — not a headline, a real insight",
+      "Point 2 — explain a mechanism, a tradeoff, a technique",
+      "Point 3",
+      "Point 4",
+      "Point 5 — practical implication for RAG or evals or inference"
     ],
-    "watch": "One specific paper or thread from today worth tracking this week — name it with its URL"
+    "synthesis": "2–3 sentences of your own observation: what's novel here, what the field is missing, what this implies for production RAG in regulated industries",
+    "links": [
+      {"title": "Primary source", "url": "real URL from sources above"},
+      {"title": "Go deeper — related tool or paper", "url": "real URL from sources or curated registry"},
+      {"title": "Apply it — tutorial or docs", "url": "real URL from curated registry"}
+    ]
   },
   "labs": [
     {
@@ -758,26 +778,32 @@ function renderBrief() {
   const b = S.brief;
   if (!b) { el.innerHTML = '<div class="brief-body" style="color:#aaa;font-size:13px">Brief unavailable.</div>'; return; }
 
-  // Structured brief (new format)
-  if (b.headline) {
-    const signals = (b.signals||[]).map(s=>`<li>${s}</li>`).join('');
+  if (b.topic) {
+    const points = (b.points||[]).map(p=>`<li>${p}</li>`).join('');
+    const links  = (b.links||[]).filter(l=>l.url&&!l.url.includes('...')).map(l=>
+      `<a href="${l.url}" target="_blank" rel="noopener">${l.title}</a>`).join('');
+    const srcLink = b.source_url && !b.source_url.includes('...')
+      ? `<a href="${b.source_url}" target="_blank" rel="noopener">source ↗</a>` : '';
+
     el.innerHTML = `
-      <div class="brief-headline">${b.headline}</div>
+      <div class="brief-topbar">
+        <div class="brief-topic">${b.topic}</div>
+        ${srcLink}
+      </div>
+      ${b.why_you ? `<div class="brief-why">${b.why_you}</div>` : ''}
       <div class="brief-body">
-        ${signals ? `<div class="brief-section">
-          <div class="brief-label">For your plan today</div>
-          <ul class="brief-signals">${signals}</ul>
-        </div>` : ''}
-        ${b.watch ? `<div class="brief-section">
-          <div class="brief-label">Watch this week</div>
-          <div class="brief-watch">${b.watch}</div>
-        </div>` : ''}
-        ${S.sources ? `<div style="font-size:11px;color:#ccc;margin-top:10px">
-          Sources: ${S.sources.hf} HF daily papers · ${S.sources.ax} arXiv · ${S.sources.hn} HN discussions
+        ${points ? `<div class="brief-label">Key points</div>
+          <ul class="brief-points">${points}</ul>` : ''}
+        ${b.synthesis ? `<div class="brief-label">Observed</div>
+          <div class="brief-synthesis">${b.synthesis}</div>` : ''}
+        ${links ? `<div class="brief-label">Study further</div>
+          <div class="brief-links">${links}</div>` : ''}
+        ${S.sources ? `<div style="font-size:11px;color:#ccc;margin-top:14px">
+          ${S.sources.hf} HF papers · ${S.sources.ax} arXiv · ${S.sources.hn} HN discussions
         </div>` : ''}
       </div>`;
   } else {
-    // Legacy plain text fallback
+    // Legacy fallback
     el.innerHTML = `<div class="brief-body">${(b.content||'').split('\n').filter(Boolean).map(p=>`<p style="margin-bottom:8px">${p}</p>`).join('')}</div>`;
   }
 }
@@ -953,15 +979,24 @@ Give a fresh angle on today's AI landscape for this engineer. Different emphasis
     const raw = await claude(system,
 `HN: ${hnText}\narXiv: ${axText}\nHF daily papers: ${hfText}
 
-Return JSON:
+Pick a DIFFERENT topic from what was shown earlier today. Return JSON:
 {
-  "headline": "A different sharp insight — not the obvious one, a less-noticed signal",
-  "signals": ["Signal 1 with specific source","Signal 2","Signal 3"],
-  "watch": "Specific paper or thread with URL"
-}`, 800);
+  "topic": "Specific topic title",
+  "source_title": "Exact paper or article title",
+  "source_url": "Real URL from sources",
+  "why_you": "Why this matters for Month ${planMonth()} regulated-industry RAG",
+  "points": ["Insight 1","Insight 2","Insight 3","Insight 4","Insight 5"],
+  "synthesis": "Your own 2-3 sentence observation on what this means for production RAG",
+  "links": [
+    {"title": "Primary source", "url": "real URL"},
+    {"title": "Go deeper", "url": "real URL"},
+    {"title": "Apply it", "url": "real URL from curated registry"}
+  ]
+}`, 900);
 
     const b = parseJSON(raw);
     S.brief = { date: isoToday(), ...b };
+    S.sources = { hn:(hn.value||[]).length, ax:(ax.value||[]).length, hf:(hf.value||[]).length };
     S.sources = { hn:(hn.value||[]).length, ax:(ax.value||[]).length, hf:(hf.value||[]).length };
     save();
     renderBrief();
