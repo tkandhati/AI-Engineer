@@ -381,6 +381,38 @@ const CURATED = {
     {name:'Kaggle GPU (P100)',        url:'https://www.kaggle.com/code',         note:'Free 30hr/week GPU, no session timeout'},
   ],
 
+  // ── Writers & blogs to follow (fetched via proxy RSS) ───────────────────────
+  feeds: [
+    // Individual writers — highest signal for AI engineering
+    {name:'Sebastian Raschka',    url:'https://magazine.sebastianraschka.com/feed',              dims:['finetune','inference']},
+    {name:'Eugene Yan',           url:'https://eugeneyan.com/atom.xml',                          dims:['rag','eval','design']},
+    {name:'Chip Huyen',           url:'https://huyenchip.com/feed.xml',                          dims:['inference','design']},
+    {name:'Jason Liu (jxnl)',     url:'https://jxnl.co/writing/feed.xml',                        dims:['rag','eval']},
+    {name:'Hamel Husain',         url:'https://hamel.dev/feed.rss',                              dims:['eval','finetune']},
+    {name:'Nathan Lambert',       url:'https://www.interconnects.ai/feed',                       dims:['finetune','inference']},
+    {name:'Simon Willison',       url:'https://simonwillison.net/atom/everything/',               dims:['rag','design']},
+    {name:'Lilian Weng',          url:'https://lilianweng.github.io/index.xml',                  dims:['finetune','design']},
+    {name:'Shreya Shankar',       url:'https://www.shreya-shankar.com/rss.xml',                  dims:['eval','obs']},
+    {name:'Vicki Boykis',         url:'https://vickiboykis.com/index.xml',                       dims:['inference','design']},
+    {name:'Apoorv Nandan',        url:'https://keras.io/examples/feed.rss',                      dims:['finetune']},
+    // Tool & company blogs — direct signal on what's shipping
+    {name:'LangChain Blog',       url:'https://blog.langchain.dev/rss/',                         dims:['rag']},
+    {name:'LlamaIndex Blog',      url:'https://medium.com/feed/llamaindex',                      dims:['rag']},
+    {name:'Hugging Face Blog',    url:'https://huggingface.co/blog/feed.xml',                    dims:['finetune','inference']},
+    {name:'Weaviate Blog',        url:'https://weaviate.io/blog/feed.xml',                       dims:['rag']},
+    {name:'Qdrant Blog',          url:'https://qdrant.tech/blog/index.xml',                      dims:['rag']},
+    {name:'Weights & Biases',     url:'https://wandb.ai/fully-connected/feed',                   dims:['eval','obs']},
+    {name:'Anyscale (Ray)',        url:'https://www.anyscale.com/blog/rss.xml',                   dims:['inference','k8s']},
+    {name:'Modal Blog',           url:'https://modal.com/blog/feed',                             dims:['inference']},
+    {name:'Evidently AI',         url:'https://www.evidentlyai.com/blog/rss.xml',                dims:['obs','eval']},
+    {name:'Arize AI',             url:'https://arize.com/blog/feed/',                            dims:['obs']},
+    {name:'Langfuse Blog',        url:'https://langfuse.com/blog/feed.xml',                      dims:['obs']},
+    {name:'BentoML Blog',         url:'https://medium.com/feed/bentoml',                         dims:['inference']},
+    {name:'vLLM Blog',            url:'https://blog.vllm.ai/feed.xml',                           dims:['inference']},
+    {name:'Cohere Blog',          url:'https://cohere.com/blog/rss',                             dims:['rag','inference']},
+    {name:'Deeplearning.ai',      url:'https://www.deeplearning.ai/blog/feed/',                  dims:['finetune','design']},
+  ],
+
   // ── Progression ladders — where the engineer is and where to take them ───────
   progression: {
     inference: {
@@ -581,9 +613,31 @@ async function fetchHFPapers() {
   } catch(e){ return []; }
 }
 
+async function fetchFeeds() {
+  const proxy = window.CONFIG.PROXY_URL || 'http://localhost:5001';
+  const results = await Promise.allSettled(
+    CURATED.feeds.map(async feed => {
+      try {
+        const url = `${proxy}/rss?url=${encodeURIComponent(feed.url)}`;
+        const text = await fetch(url).then(r => r.text());
+        const doc  = new DOMParser().parseFromString(text, 'text/xml');
+        return Array.from(doc.querySelectorAll('item, entry')).slice(0, 2).map(el => {
+          const title = el.querySelector('title')?.textContent?.trim() || '';
+          const link  = el.querySelector('link')?.textContent?.trim()
+                     || el.querySelector('link')?.getAttribute('href') || '';
+          const desc  = (el.querySelector('description,summary,content\\:encoded,content')
+                          ?.textContent?.trim() || '').replace(/<[^>]*>/g,'').slice(0,180);
+          return title ? { source: feed.name, dims: feed.dims, title, url: link, desc } : null;
+        }).filter(Boolean);
+      } catch(e) { return []; }
+    })
+  );
+  return results.flatMap(r => r.status === 'fulfilled' ? r.value : []);
+}
+
 // ── Daily analysis ────────────────────────────────────────────────────────────
 
-async function analyze(hn, ax, hf) {
+async function analyze(hn, ax, hf, feeds=[]) {
   const system = `You are an AI engineering coach doing deep daily research. ${ctx()}
 
 Your job: given today's actual AI papers and discussions, identify what is genuinely relevant to this engineer's plan and build labs directly from those sources. Labs must be grounded in today's real content — not generic exercises.
@@ -597,18 +651,22 @@ Rules:
 
 Return valid JSON only — no markdown, no extra text.`;
 
-  const hnText = hn.length ? hn.map(s=>`  - "${s.title}" | score:${s.score} | ${s.url}`).join('\n') : '  (none fetched)';
-  const axText = ax.length ? ax.map(p=>`  - TITLE: ${p.title}\n    ABSTRACT: ${p.abstract}\n    URL: ${p.url}`).join('\n') : '  (none fetched)';
-  const hfText = hf.length ? hf.map(p=>`  - TITLE: ${p.title} (${p.upvotes} upvotes)\n    ABSTRACT: ${p.abstract}\n    URL: ${p.url}`).join('\n') : '  (none fetched)';
+  const hnText   = hn.length    ? hn.map(s=>`  - "${s.title}" | score:${s.score} | ${s.url}`).join('\n') : '  (none)';
+  const axText   = ax.length    ? ax.map(p=>`  - ${p.title}\n    ${p.abstract}\n    URL: ${p.url}`).join('\n') : '  (none)';
+  const hfText   = hf.length    ? hf.map(p=>`  - ${p.title} (${p.upvotes} upvotes)\n    ${p.abstract}\n    URL: ${p.url}`).join('\n') : '  (none)';
+  const feedText = feeds.length ? feeds.map(f=>`  - [${f.source}] ${f.title}\n    ${f.desc}\n    URL: ${f.url}`).join('\n') : '  (none)';
 
-  const user = `=== HACKER NEWS AI DISCUSSIONS TODAY ===
+  const user = `=== HACKER NEWS ===
 ${hnText}
 
-=== ARXIV PAPERS TODAY (cs.IR / cs.LG / cs.CL) ===
+=== ARXIV PAPERS (cs.IR / cs.LG / cs.CL) ===
 ${axText}
 
-=== HUGGINGFACE DAILY PAPERS (community top picks) ===
+=== HUGGINGFACE DAILY PAPERS ===
 ${hfText}
+
+=== BLOGS & NEWSLETTERS (${feeds.length} articles from ${CURATED.feeds.length} writers) ===
+${feedText}
 
 Valid compute platform keys: colab, kaggle, runpod, vastai, lambda, local, kind, ollama
 
@@ -1015,8 +1073,8 @@ async function refreshLabs() {
   try {
     const keep=S.labs.filter(l=>l.status!=='todo');
     const excl=[...S.doneIds,...keep.map(l=>l.id)];
-    const [hn,ax,hf]=await Promise.allSettled([fetchHN(),fetchArxiv(),fetchHFPapers()]);
-    const result=await analyze(hn.value||[],ax.value||[],hf.value||[]);
+    const [hn,ax,hf,feeds]=await Promise.allSettled([fetchHN(),fetchArxiv(),fetchHFPapers(),fetchFeeds()]);
+    const result=await analyze(hn.value||[],ax.value||[],hf.value||[],feeds.value||[]);
     const fresh=result.labs.filter(l=>!excl.includes(l.id)).map(l=>({...l,status:'todo'}));
     S.labs=[...keep,...fresh].slice(0,5);
     save(); renderAll();
@@ -1048,17 +1106,21 @@ async function refreshBrief() {
   document.getElementById('briefEl').innerHTML = '<div class="brief-body" style="color:#aaa;font-size:13px">Researching…</div>';
 
   try {
-    const [hn,ax,hf] = await Promise.allSettled([fetchHN(),fetchArxiv(),fetchHFPapers()]);
+    const [hn,ax,hf,feeds] = await Promise.allSettled([fetchHN(),fetchArxiv(),fetchHFPapers(),fetchFeeds()]);
 
     const system = `You are an AI engineering coach. ${ctx()}
-Give a fresh angle on today's AI landscape for this engineer. Different emphasis from what they may have seen before. Return valid JSON only — no markdown.`;
+Give a fresh angle — pick a DIFFERENT specific sub-concept from what was shown earlier. Return valid JSON only — no markdown.`;
 
-    const hnText = (hn.value||[]).map(s=>`  - "${s.title}" | ${s.url}`).join('\n')||'(none)';
-    const axText = (ax.value||[]).map(p=>`  - ${p.title}\n    ${p.abstract}\n    URL: ${p.url}`).join('\n')||'(none)';
-    const hfText = (hf.value||[]).map(p=>`  - ${p.title} (${p.upvotes} upvotes)\n    ${p.abstract}\n    URL: ${p.url}`).join('\n')||'(none)';
+    const hnText   = (hn.value||[]).map(s=>`  - "${s.title}" | ${s.url}`).join('\n')||'(none)';
+    const axText   = (ax.value||[]).map(p=>`  - ${p.title}\n    ${p.abstract}\n    URL: ${p.url}`).join('\n')||'(none)';
+    const hfText   = (hf.value||[]).map(p=>`  - ${p.title} (${p.upvotes} upvotes)\n    ${p.abstract}\n    URL: ${p.url}`).join('\n')||'(none)';
+    const feedText = (feeds.value||[]).map(f=>`  - [${f.source}] ${f.title}\n    ${f.desc}\n    URL: ${f.url}`).join('\n')||'(none)';
 
     const raw = await claude(system,
 `HN: ${hnText}\narXiv: ${axText}\nHF daily papers: ${hfText}
+
+=== BLOGS & NEWSLETTERS (${(feeds.value||[]).length} articles from ${CURATED.feeds.length} writers) ===
+${feedText}
 
 Pick a DIFFERENT specific sub-concept from what was shown earlier. Not a broad topic — a precise mechanism or technique. Examples of the right level: "How RAGAS computes faithfulness using NLI", "GRPO's group relative baseline vs PPO critic", "HNSW ef_construction tradeoffs for filtered RAG". Wrong level: "RAG evaluation", "fine-tuning methods".
 
@@ -1117,15 +1179,14 @@ async function init() {
   }
 
   try {
-    const [hn,ax,hf] = await Promise.allSettled([fetchHN(),fetchArxiv(),fetchHFPapers()]);
-    const result = await analyze(hn.value||[], ax.value||[], hf.value||[]);
+    const [hn,ax,hf,feeds] = await Promise.allSettled([fetchHN(),fetchArxiv(),fetchHFPapers(),fetchFeeds()]);
+    const result = await analyze(hn.value||[], ax.value||[], hf.value||[], feeds.value||[]);
 
-    // brief may be structured {headline,signals,watch} or plain string
     S.brief = typeof result.brief === 'string'
       ? { date:today, content:result.brief }
       : { date:today, ...result.brief };
     S.labsDate = today;
-    S.sources = { hn:(hn.value||[]).length, ax:(ax.value||[]).length, hf:(hf.value||[]).length };
+    S.sources = { hn:(hn.value||[]).length, ax:(ax.value||[]).length, hf:(hf.value||[]).length, feeds:(feeds.value||[]).length };
 
     const keep = S.labs.filter(l=>l.status==='inprogress'||l.status==='done');
     const keepIds = keep.map(l=>l.id);
