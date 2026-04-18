@@ -573,16 +573,27 @@ async function claude(system, user, maxTokens=1800) {
   return (await r.json()).content[0].text;
 }
 
+function repairJSON(s) {
+  // Character-by-character scan: replace literal newlines inside JSON strings with space.
+  // Much more reliable than regex for detecting string vs non-string positions.
+  let out = '', inStr = false, esc = false;
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (esc)           { out += c; esc = false; continue; }
+    if (c === '\\' && inStr) { out += c; esc = true; continue; }
+    if (c === '"')     { inStr = !inStr; out += c; continue; }
+    if (inStr && (c === '\n' || c === '\r')) { out += ' '; continue; }
+    out += c;
+  }
+  return out;
+}
+
 function parseJSON(raw) {
   const s = raw.replace(/^```[a-z]*\n?/,'').replace(/\n?```$/,'').trim();
-  try {
-    return JSON.parse(s);
-  } catch(e) {
-    // Claude sometimes writes literal newlines inside JSON string values (invalid JSON).
-    // Replace newlines that appear inside quoted strings with a space.
-    const fixed = s.replace(/"((?:[^"\\]|\\.)*)"/g,
-      (m, inner) => '"' + inner.replace(/\r?\n/g,' ') + '"');
-    return JSON.parse(fixed);
+  try { return JSON.parse(s); } catch(e) {
+    try { return JSON.parse(repairJSON(s)); } catch(e2) {
+      throw new Error(e.message); // throw original error for clarity
+    }
   }
 }
 
@@ -1143,9 +1154,13 @@ function labCard(lab, idx) {
     }
   }
 
-  // Source blog — the original article/paper this lab is based on
-  const blog = lab.source_blog;
-  const blogHtml = (blog?.url && !blog.url.includes('...'))
+  // Source blog — original article/paper. Fall back to references[0] if missing.
+  const blog = lab.source_blog?.url && !lab.source_blog.url.includes('...')
+    ? lab.source_blog
+    : (lab.references||[]).find(r=>r.url&&!r.url.includes('...'))
+      ? { title:(lab.references[0].title||''), url:lab.references[0].url, author:'' }
+      : null;
+  const blogHtml = blog
     ? `<a href="${blog.url}" target="_blank" rel="noopener" class="lab-source-link">
         📖 ${blog.title}${blog.author ? ` <span style="font-weight:400;opacity:0.7">· ${blog.author}</span>` : ''}
       </a>` : '';
@@ -1339,39 +1354,43 @@ async function init() {
   }
 
   try {
-    // Phase 1: fetch all sources + run progress analysis in parallel
+    // Phase 1: fetch all sources (independent, always succeeds via allSettled)
     setStatus('Reading 26 AI writers, arXiv & Hacker News…');
-    const [[hn,ax,hf,feeds], dimAnalysis] = await Promise.all([
-      Promise.allSettled([fetchHN(),fetchArxiv(),fetchHFPapers(),fetchFeeds()]),
-      analyzeProgress()
-    ]);
-    const src = { hn:hn.value||[], ax:ax.value||[], hf:hf.value||[], feeds:feeds.value||[] };
+    const [hnR,axR,hfR,feedsR] = await Promise.allSettled([fetchHN(),fetchArxiv(),fetchHFPapers(),fetchFeeds()]);
+    const src = { hn:hnR.value||[], ax:axR.value||[], hf:hfR.value||[], feeds:feedsR.value||[] };
     S.sources = { hn:src.hn.length, ax:src.ax.length, hf:src.hf.length, feeds:src.feeds.length };
 
-    // Phase 2: brief synthesis + lab generation in parallel
-    setStatus('Agent 1: synthesizing today\'s concept… Agent 2: building your labs…');
+    // Progress analysis — silent fallback if it fails
+    const dimAnalysis = await analyzeProgress().catch(()=>({ focus_dims:['rag','eval'], gap:'', week_goal:'' }));
+
+    // Phase 2: brief + labs in parallel, independent error handling
+    setStatus('Synthesizing today\'s best concept and building your labs…');
     const keep = S.labs.filter(l=>l.status==='inprogress'||l.status==='done');
     const excludeIds = [...(S.doneIds||[]), ...keep.map(l=>l.id)];
-    const [brief, labs] = await Promise.all([
+
+    const [briefR, labsR] = await Promise.allSettled([
       synthesizeBrief(src.hn, src.ax, src.hf, src.feeds),
       generateLabs(src.hn, src.ax, src.hf, src.feeds, dimAnalysis, excludeIds)
     ]);
 
-    S.brief = { date:today, ...brief };
+    if (briefR.status === 'fulfilled' && briefR.value?.topic) {
+      S.brief = { date:today, ...briefR.value };
+    }
     S.labsDate = today;
-    const fresh = labs.filter(l=>!excludeIds.includes(l.id)).map(l=>({...l,status:'todo'}));
-    S.labs = [...keep, ...fresh].slice(0,5);
-    if (!S.labs.length) S.labs = fresh.slice(0,5);
+    const freshLabs = (labsR.status === 'fulfilled' ? labsR.value||[] : [])
+      .filter(l=>!excludeIds.includes(l.id)).map(l=>({...l,status:'todo'}));
+    S.labs = [...keep, ...freshLabs].slice(0,5);
+    if (!S.labs.length) S.labs = freshLabs.slice(0,5);
     save();
   } catch(e) {
     console.error('Init error:', e);
-    // leave S.brief null so renderBrief() auto-triggers refreshBrief()
   }
 
+  // Always show the page — partial results beat a stuck loading screen
   document.getElementById('loading').style.display='none';
   document.getElementById('main').style.display='block';
   renderAll();
-  archiveToday(); // silently commit archive/YYYY-MM-DD.md to GitHub
+  archiveToday();
 }
 
 init();
