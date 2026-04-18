@@ -908,7 +908,13 @@ function renderAll() {
 function renderBrief() {
   const el = document.getElementById('briefEl');
   const b = S.brief;
-  if (!b) { el.innerHTML = '<div class="brief-body" style="color:#aaa;font-size:13px">Brief unavailable.</div>'; return; }
+  if (!b || (!b.topic && !b.content)) {
+    if (!window._briefFetching) {
+      el.innerHTML = '<div class="brief-body" style="color:#aaa;font-size:13px">Loading today\'s brief…</div>';
+      refreshBrief();
+    }
+    return;
+  }
 
   if (b.topic) {
     const points = (b.points||[]).map(p=>`<li>${p}</li>`).join('');
@@ -1101,6 +1107,7 @@ async function runWeeklyEval() {
 // ── Brief refresh ─────────────────────────────────────────────────────────────
 
 async function refreshBrief() {
+  window._briefFetching = true;
   const btn = document.getElementById('briefRefreshBtn');
   btn.disabled = true; btn.textContent = '↻ Fetching…';
   document.getElementById('briefEl').innerHTML = '<div class="brief-body" style="color:#aaa;font-size:13px">Researching…</div>';
@@ -1155,6 +1162,7 @@ Return JSON:
     document.getElementById('briefEl').innerHTML = `<div class="brief-body"><span class="err">Refresh failed: ${e.message}</span></div>`;
   }
 
+  window._briefFetching = false;
   btn.disabled = false; btn.textContent = '↻ Refresh';
 }
 
