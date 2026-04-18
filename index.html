@@ -436,7 +436,7 @@ const CURATED = {
 
   // ── Writers & blogs to follow (fetched via proxy RSS) ───────────────────────
   feeds: [
-    // Individual writers — highest signal for AI engineering
+    // ── Top individual writers (blogs) ────────────────────────────────────────
     {name:'Sebastian Raschka',    url:'https://magazine.sebastianraschka.com/feed',              dims:['finetune','inference']},
     {name:'Eugene Yan',           url:'https://eugeneyan.com/atom.xml',                          dims:['rag','eval','design']},
     {name:'Chip Huyen',           url:'https://huyenchip.com/feed.xml',                          dims:['inference','design']},
@@ -447,8 +447,20 @@ const CURATED = {
     {name:'Lilian Weng',          url:'https://lilianweng.github.io/index.xml',                  dims:['finetune','design']},
     {name:'Shreya Shankar',       url:'https://www.shreya-shankar.com/rss.xml',                  dims:['eval','obs']},
     {name:'Vicki Boykis',         url:'https://vickiboykis.com/index.xml',                       dims:['inference','design']},
-    {name:'Apoorv Nandan',        url:'https://keras.io/examples/feed.rss',                      dims:['finetune']},
-    // Tool & company blogs — direct signal on what's shipping
+    {name:'Maxime Labonne',       url:'https://mlabonne.github.io/blog/feed.xml',                dims:['finetune','inference']},
+    {name:'Philipp Schmid (HF)',  url:'https://www.philschmid.de/feed.xml',                      dims:['finetune','inference']},
+    // ── Substacks — must-read AI engineering newsletters ─────────────────────
+    {name:'Latent Space (swyx)',  url:'https://www.latent.space/feed',                           dims:['inference','design']},
+    {name:'Import AI (J.Clark)',  url:'https://importai.substack.com/feed',                      dims:['finetune','design']},
+    {name:'Decoding ML',          url:'https://decodingml.substack.com/feed',                    dims:['rag','obs','inference']},
+    {name:'Cameron Wolfe (DL)',   url:'https://cameronrwolfe.substack.com/feed',                 dims:['finetune','inference']},
+    {name:'The Gradient',         url:'https://thegradient.pub/rss/',                            dims:['finetune','design']},
+    {name:'NLP News (S.Ruder)',   url:'https://nlpnews.substack.com/feed',                       dims:['rag','finetune']},
+    {name:'The Batch (Andrew Ng)',url:'https://www.deeplearning.ai/the-batch/feed/',             dims:['design','finetune']},
+    {name:'Last Week in AI',      url:'https://lastweekin.ai/feed',                              dims:['design','inference']},
+    {name:'Algorithmic Bridge',   url:'https://thealgorithmicbridge.substack.com/feed',          dims:['design','finetune']},
+    {name:'Davis Blalock',        url:'https://dblalock.substack.com/feed',                      dims:['inference','finetune']},
+    // ── Tool & company blogs — direct signal on what's shipping ───────────────
     {name:'LangChain Blog',       url:'https://blog.langchain.dev/rss/',                         dims:['rag']},
     {name:'LlamaIndex Blog',      url:'https://medium.com/feed/llamaindex',                      dims:['rag']},
     {name:'Hugging Face Blog',    url:'https://huggingface.co/blog/feed.xml',                    dims:['finetune','inference']},
@@ -460,9 +472,9 @@ const CURATED = {
     {name:'Evidently AI',         url:'https://www.evidentlyai.com/blog/rss.xml',                dims:['obs','eval']},
     {name:'Arize AI',             url:'https://arize.com/blog/feed/',                            dims:['obs']},
     {name:'Langfuse Blog',        url:'https://langfuse.com/blog/feed.xml',                      dims:['obs']},
-    {name:'BentoML Blog',         url:'https://medium.com/feed/bentoml',                         dims:['inference']},
     {name:'vLLM Blog',            url:'https://blog.vllm.ai/feed.xml',                           dims:['inference']},
     {name:'Cohere Blog',          url:'https://cohere.com/blog/rss',                             dims:['rag','inference']},
+    {name:'Mistral Blog',         url:'https://mistral.ai/news/rss',                             dims:['inference','finetune']},
     {name:'Deeplearning.ai',      url:'https://www.deeplearning.ai/blog/feed/',                  dims:['finetune','design']},
   ],
 
