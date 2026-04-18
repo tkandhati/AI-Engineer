@@ -460,7 +460,8 @@ function defaults() {
     scores: { rag:40, eval:30, finetune:28, inference:20, k8s:32, obs:33, voice:18, design:42 },
     labs: [], doneIds: [], weekDoneIds: [],
     weekStart: isoToday(), streak: 0, lastActive: null,
-    brief: null, labsDate: null, lastSync: null, lastWeekEval: null
+    brief: null, labsDate: null, lastSync: null, lastWeekEval: null,
+    evidence: []   // [{date, dim, lab, score, text}] — high-level proof of skills
   };
 }
 
@@ -668,9 +669,9 @@ Generate 4 questions for someone who just completed this lab. Must only make sen
 
 async function evalAnswers(lab, questions, answers) {
   const system = `You are an AI engineering coach. ${ctx()}
-Evaluate these answers honestly. Score 0–100. Give 3–4 sentences of specific feedback: what they got right, the gap, what to revisit. Return valid JSON only.`;
-  const user = `Lab: "${lab.title}" (${DIMS[lab.dim]})\n\n${questions.map((q,i)=>`Q${i+1}: ${q.text}\nA: ${answers[i]||'(blank)'}`).join('\n\n')}\n\nReturn: {"score":72,"feedback":"...","delta":8}`;
-  return parseJSON(await claude(system, user, 350));
+Evaluate these answers honestly. Score 0–100. Give 3–4 sentences of specific feedback. Also write one evidence sentence — a precise statement of what was demonstrably understood, suitable for a skills portfolio. Return valid JSON only.`;
+  const user = `Lab: "${lab.title}" (${DIMS[lab.dim]})\n\n${questions.map((q,i)=>`Q${i+1}: ${q.text}\nA: ${answers[i]||'(blank)'}`).join('\n\n')}\n\nReturn: {"score":72,"feedback":"...","delta":8,"evidence":"Demonstrated understanding of X by correctly explaining Y — specific and verifiable"}`;
+  return parseJSON(await claude(system, user, 400));
 }
 
 async function weekSynth(labs) {
@@ -757,39 +758,53 @@ async function ghCommit(path, content, msg) {
 }
 
 function journalEntry() {
+  // Archive-level detail — stored in learning_journal/, not the primary artifact
   const today = isoToday();
-  const b = S.brief;
-  let md = `## ${today} | Month ${planMonth()}\n\n`;
-  if (b?.headline) {
-    md += `**Brief:** ${b.headline}\n`;
-    if (b.signals) md += b.signals.map(s=>`- ${s}`).join('\n') + '\n';
-    if (b.watch) md += `Watch: ${b.watch}\n`;
-    md += '\n';
-  } else if (b?.content) {
-    md += `**Brief:** ${b.content}\n\n`;
-  }
+  let md = `## ${today} | Month ${planMonth()}\n`;
   S.labs.filter(l=>l.status==='done').forEach(l=>{
-    md += `**${l.title}** (${DIMS[l.dim]})\n`;
-    if (l.eval) md += `Score: ${l.eval.score}/100 — ${l.eval.feedback}\n`;
-    md += '\n';
+    md += `\n**${l.title}** (${DIMS[l.dim]}) — ${l.eval?.score||'?'}/100\n`;
+    if (l.eval?.feedback) md += `${l.eval.feedback}\n`;
+    if (l.quiz && l.answers) {
+      l.quiz.forEach((q,i)=>{ md += `\nQ: ${q.text}\nA: ${l.answers?.[i]||'(blank)'}\n`; });
+    }
   });
-  md += `**Scores:** ${Object.entries(S.scores).map(([k,v])=>`${DIMS[k]}:${v}`).join(' | ')}\n`;
-  md += `**Streak:** ${S.streak}d\n`;
+  md += `\nScores: ${Object.entries(S.scores).map(([k,v])=>`${k}:${v}`).join(' ')}\n`;
   return md;
 }
 
-function progressSummary() {
-  let md = `# Progress Summary\nUpdated: ${isoToday()} | Month: ${planMonth()}/18\n\n## Scores\n\n|Dimension|Score|\n|---|---|\n`;
-  Object.entries(S.scores).forEach(([k,v])=>{ md+=`|${DIMS[k]}|${v}|\n`; });
-  md += `\n## Stats\n- Labs done: ${S.doneIds.length}\n- Streak: ${S.streak}d\n`;
+function evidenceSummary() {
+  // Primary artifact — high-level proof of skills by dimension
+  const ev = S.evidence || [];
+  let md = `# Skills Evidence\nUpdated: ${isoToday()} | Month ${planMonth()}/18 | Streak: ${S.streak}d\n\n`;
+
+  // Group by dimension
+  const byDim = {};
+  ev.forEach(e => { (byDim[e.dim]=byDim[e.dim]||[]).push(e); });
+
+  Object.entries(DIMS).forEach(([k, name]) => {
+    const items = byDim[k] || [];
+    const score = S.scores[k] || 0;
+    const lvl = levelFor(score);
+    md += `## ${name} — ${score}/100 (${lvl})\n`;
+    if (items.length) {
+      items.slice(-5).forEach(e => { md += `- **${e.date}** (${e.score}/100) ${e.text}\n`; });
+    } else {
+      md += `- No evidence yet\n`;
+    }
+    md += '\n';
+  });
+
+  md += `## Stats\n- Labs completed: ${S.doneIds.length}\n- Evidence items: ${ev.length}\n`;
+  const prog = CURATED.progression?.inference;
+  if (prog) md += `- Inference goal: ${prog.goal}\n`;
   return md;
 }
 
 async function sync() {
   const today = isoToday();
   await Promise.allSettled([
-    ghCommit(`learning_journal/${today}.md`, journalEntry(), `Journal: ${today}`),
-    ghCommit('progress_summary.md', progressSummary(), `Progress: ${today}`)
+    ghCommit('evidence_summary.md', evidenceSummary(), `Evidence: ${today}`),           // primary
+    ghCommit(`learning_journal/${today}.md`, journalEntry(), `Archive: ${today}`),      // archive
   ]);
 }
 
@@ -983,6 +998,10 @@ async function submitQuiz(id) {
   try {
     l.eval=await evalAnswers(l,l.quiz,answers);
     S.scores[l.dim]=Math.min(100,S.scores[l.dim]+(l.eval.delta||5));
+    if(l.eval.evidence){
+      if(!S.evidence) S.evidence=[];
+      S.evidence.push({date:isoToday(),dim:l.dim,lab:l.title,score:l.eval.score,text:l.eval.evidence});
+    }
     save(); renderAll(); sync();
   } catch(e){
     if(btn){btn.disabled=false;btn.textContent='Submit reflection';}
