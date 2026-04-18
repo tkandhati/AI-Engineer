@@ -357,78 +357,110 @@ async function fetchHN() {
     'observ','openai','anthropic','model','benchmark','dataset','diffusion'];
   try {
     const ids = await fetch('https://hacker-news.firebaseio.com/v0/topstories.json').then(r=>r.json());
-    const items = await Promise.allSettled(ids.slice(0,40).map(id=>
+    const items = await Promise.allSettled(ids.slice(0,50).map(id=>
       fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`).then(r=>r.json())
     ));
     return items
       .filter(r=>r.status==='fulfilled'&&r.value?.title)
       .map(r=>r.value)
       .filter(s=>KW.some(k=>s.title.toLowerCase().includes(k)))
-      .slice(0,14)
-      .map(s=>`• ${s.title} (${s.score||0} pts)`);
+      .slice(0,12)
+      .map(s=>({ title:s.title, url:s.url||`https://news.ycombinator.com/item?id=${s.id}`, score:s.score||0 }));
   } catch(e){ return []; }
 }
 
 async function fetchArxiv() {
   try {
-    const q = 'search_query=cat:cs.IR+OR+cat:cs.LG+OR+cat:cs.CL&sortBy=submittedDate&sortOrder=descending&max_results=12';
+    const q = 'search_query=cat:cs.IR+OR+cat:cs.LG+OR+cat:cs.CL&sortBy=submittedDate&sortOrder=descending&max_results=15';
     const text = await fetch(`https://export.arxiv.org/api/query?${q}`).then(r=>r.text());
     const doc = new DOMParser().parseFromString(text,'text/xml');
     return Array.from(doc.querySelectorAll('entry')).slice(0,10).map(e=>{
-      const t = e.querySelector('title')?.textContent?.trim().replace(/\s+/g,' ')||'';
-      const s = e.querySelector('summary')?.textContent?.trim().slice(0,130)||'';
-      return `• ${t} — ${s}`;
+      const title = e.querySelector('title')?.textContent?.trim().replace(/\s+/g,' ')||'';
+      const abstract = e.querySelector('summary')?.textContent?.trim().replace(/\s+/g,' ').slice(0,220)||'';
+      const rawId = e.querySelector('id')?.textContent?.trim()||'';
+      const url = rawId.replace('http://','https://').replace('/abs/','/abs/');
+      return { title, abstract, url };
     });
+  } catch(e){ return []; }
+}
+
+async function fetchHFPapers() {
+  try {
+    const papers = await fetch('https://huggingface.co/api/daily_papers').then(r=>r.json());
+    return (Array.isArray(papers)?papers:[]).slice(0,8).map(p=>({
+      title: p.paper?.title||'',
+      abstract: (p.paper?.summary||'').replace(/\s+/g,' ').slice(0,220),
+      url: `https://arxiv.org/abs/${p.paper?.id||''}`,
+      upvotes: p.totalUpvotes||0
+    })).filter(p=>p.title);
   } catch(e){ return []; }
 }
 
 // ── Daily analysis ────────────────────────────────────────────────────────────
 
-async function analyze(hn, ax) {
-  const system = `You are an AI engineering coach. ${ctx()}
+async function analyze(hn, ax, hf) {
+  const system = `You are an AI engineering coach doing deep daily research. ${ctx()}
 
-Analyze today's AI news and papers. Return structured JSON only — no markdown, no extra text.`;
+Your job: given today's actual AI papers and discussions, identify what is genuinely relevant to this engineer's plan and build labs directly from those sources. Labs must be grounded in today's real content — not generic exercises.
 
-  const user = `HN stories: ${hn.length?hn.join('\n'):'(none)'}
+Rules:
+- Every lab must be inspired by or directly tied to one of the sources provided below
+- Reference URLs must only come from the sources provided — never invent URLs
+- Prefer HuggingFace daily papers (community-curated best of day) and high-score HN items
+- Discard anything not relevant to: RAG, evals, inference, fine-tuning, K8s, observability
+- For LLM access: recommend Claude API (user already has key), Groq free tier (llama3/mixtral, very fast, free), or Colab T4 free GPU. Never recommend local GPU unless the lab cannot work otherwise.
 
-arXiv papers (cs.IR/LG/CL): ${ax.length?ax.join('\n'):'(none)'}
+Return valid JSON only — no markdown, no extra text.`;
 
-Valid platform keys: colab, kaggle, runpod, vastai, lambda, local, kind, ollama
+  const hnText = hn.length ? hn.map(s=>`  - "${s.title}" | score:${s.score} | ${s.url}`).join('\n') : '  (none fetched)';
+  const axText = ax.length ? ax.map(p=>`  - TITLE: ${p.title}\n    ABSTRACT: ${p.abstract}\n    URL: ${p.url}`).join('\n') : '  (none fetched)';
+  const hfText = hf.length ? hf.map(p=>`  - TITLE: ${p.title} (${p.upvotes} upvotes)\n    ABSTRACT: ${p.abstract}\n    URL: ${p.url}`).join('\n') : '  (none fetched)';
 
-Return this exact JSON shape:
+  const user = `=== HACKER NEWS AI DISCUSSIONS TODAY ===
+${hnText}
+
+=== ARXIV PAPERS TODAY (cs.IR / cs.LG / cs.CL) ===
+${axText}
+
+=== HUGGINGFACE DAILY PAPERS (community top picks) ===
+${hfText}
+
+Valid compute platform keys: colab, kaggle, runpod, vastai, lambda, local, kind, ollama
+
+Return this exact JSON — all reference URLs must come from the sources above:
 {
   "brief": {
-    "headline": "One sharp sentence — the single most important thing for this engineer today",
+    "headline": "The single sharpest insight for this engineer from today's sources",
     "signals": [
-      "Signal 1 — specific, implementable, tied to their plan",
+      "Signal tied to a specific paper or discussion above — name it",
       "Signal 2 — same",
       "Signal 3 — same"
     ],
-    "watch": "One thing to track or experiment with this week"
+    "watch": "One specific paper or thread from today worth tracking this week — name it with its URL"
   },
   "labs": [
     {
       "id": "unique-slug",
-      "title": "Lab title",
+      "title": "Specific lab title — derived from today's sources",
       "dim": "rag|eval|finetune|inference|k8s|obs|voice|design",
       "time": "2h",
       "diff": "easy|medium|hard",
-      "why": "One sentence: why this lab for this engineer at Month ${planMonth()}",
-      "infra": "Specific tools and compute needed",
+      "why": "Why this lab for Month ${planMonth()} — reference the specific source that inspired it",
+      "infra": "Exact tools, libraries, versions needed",
       "platforms": ["colab"],
-      "prerequisites": ["Python 3.10+", "specific prior knowledge or tool needed"],
-      "llm_note": "Which LLM to use and how to get it free — prefer Claude API (user has key), Groq free tier, or Colab GPU. Avoid local GPU unless truly necessary.",
+      "prerequisites": ["concrete prerequisite 1", "concrete prerequisite 2"],
+      "llm_note": "Specific LLM recommendation with free access method",
       "references": [
-        {"title": "Primary reference — doc, tutorial, or paper", "url": "https://..."},
-        {"title": "Secondary reference", "url": "https://..."},
-        {"title": "Optional deeper read", "url": "https://..."}
+        {"title": "The source that inspired this lab", "url": "real URL from sources above"},
+        {"title": "Official docs or tutorial", "url": "real URL — only if you are certain it exists"},
+        {"title": "Related tool or paper", "url": "real URL from sources above or well-known stable doc URL"}
       ],
-      "steps": ["step 1","step 2","step 3","step 4","step 5"]
+      "steps": ["Concrete step 1","Concrete step 2","Concrete step 3","Concrete step 4","Concrete step 5"]
     }
   ]
 }`;
 
-  return parseJSON(await claude(system, user, 2800));
+  return parseJSON(await claude(system, user, 3500));
 }
 
 // ── Quiz ──────────────────────────────────────────────────────────────────────
@@ -625,6 +657,9 @@ function renderBrief() {
           <div class="brief-label">Watch this week</div>
           <div class="brief-watch">${b.watch}</div>
         </div>` : ''}
+        ${S.sources ? `<div style="font-size:11px;color:#ccc;margin-top:10px">
+          Sources: ${S.sources.hf} HF daily papers · ${S.sources.ax} arXiv · ${S.sources.hn} HN discussions
+        </div>` : ''}
       </div>`;
   } else {
     // Legacy plain text fallback
@@ -758,8 +793,8 @@ async function refreshLabs() {
   try {
     const keep=S.labs.filter(l=>l.status!=='todo');
     const excl=[...S.doneIds,...keep.map(l=>l.id)];
-    const [hn,ax]=await Promise.allSettled([fetchHN(),fetchArxiv()]);
-    const result=await analyze(hn.value||[],ax.value||[]);
+    const [hn,ax,hf]=await Promise.allSettled([fetchHN(),fetchArxiv(),fetchHFPapers()]);
+    const result=await analyze(hn.value||[],ax.value||[],hf.value||[]);
     const fresh=result.labs.filter(l=>!excl.includes(l.id)).map(l=>({...l,status:'todo'}));
     S.labs=[...keep,...fresh].slice(0,5);
     save(); renderAll();
@@ -804,14 +839,15 @@ async function init() {
   }
 
   try {
-    const [hn,ax] = await Promise.allSettled([fetchHN(),fetchArxiv()]);
-    const result = await analyze(hn.value||[], ax.value||[]);
+    const [hn,ax,hf] = await Promise.allSettled([fetchHN(),fetchArxiv(),fetchHFPapers()]);
+    const result = await analyze(hn.value||[], ax.value||[], hf.value||[]);
 
     // brief may be structured {headline,signals,watch} or plain string
     S.brief = typeof result.brief === 'string'
       ? { date:today, content:result.brief }
       : { date:today, ...result.brief };
     S.labsDate = today;
+    S.sources = { hn:(hn.value||[]).length, ax:(ax.value||[]).length, hf:(hf.value||[]).length };
 
     const keep = S.labs.filter(l=>l.status==='inprogress'||l.status==='done');
     const keepIds = keep.map(l=>l.id);
