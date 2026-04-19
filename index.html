@@ -450,10 +450,13 @@ code { font-family: 'Courier New', monospace; font-size: 12px; background: #f0f0
       <div class="tf-panel">
         <div class="tf-panel-header">
           <span class="tf-panel-title">Quick Check — T / F</span>
-          <span class="tf-score-chip" id="tfScoreChip">—</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="tf-score-chip" id="tfScoreChip">—</span>
+            <button onclick="resetTF()" style="font-size:11px;padding:2px 8px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#94a3b8;border-radius:4px;cursor:pointer" title="New set of questions">↻</button>
+          </div>
         </div>
         <div id="tfBody">
-          <div class="tf-generating">Loading today's concept first…<br><span style="font-size:11px;color:#cbd5e1">Questions generate after brief loads</span></div>
+          <div class="tf-generating">Loads after today's brief…</div>
         </div>
       </div>
 
@@ -1592,12 +1595,18 @@ async function runWeeklyEval() {
 // ── True / False quick check ─────────────────────────────────────────────────
 
 async function generateTrueFalse(brief) {
+  if (!brief?.topic) return [];
+  const tfBody = document.getElementById('tfBody');
+  if (tfBody) tfBody.innerHTML = '<div class="tf-generating">Generating questions…</div>';
   const system = `You are an AI engineering quiz generator. Create concise True/False questions that test real conceptual understanding — not trivia, not definitions. Each statement should require the reader to think. Return valid JSON only. CRITICAL: no literal newlines inside JSON string values.`;
   const user = `Topic: "${brief.topic}"\nKey points: ${(brief.points||[]).join(' | ')}\nSynthesis: ${brief.synthesis||''}\n\nGenerate 5 True/False statements. Mix true and false roughly 50/50. Each must be unambiguous — a knowledgeable engineer would agree on the correct answer. Avoid obvious facts. Test subtleties, common misconceptions, and edge cases.\n\nReturn JSON: {"questions":[{"id":"tf1","text":"A clear statement to evaluate as true or false","answer":true,"explanation":"One specific sentence: why this is true/false"}]}`;
   try {
     const result = parseJSON(await claude(system, user, 600));
     return result.questions || [];
-  } catch(e) { return []; }
+  } catch(e) {
+    if (tfBody) tfBody.innerHTML = `<div class="tf-empty">Failed to load. <button onclick="resetTF()" style="font-size:12px;margin-left:8px">Retry</button></div>`;
+    return [];
+  }
 }
 
 let _tfAnswered = 0, _tfCorrect = 0;
@@ -1615,10 +1624,11 @@ function renderTrueFalse(questions) {
   updateTfScore();
 
   const conceptLabel = S.brief?.topic
-    ? `<div style="font-size:11px;color:#94a3b8;padding:10px 16px 0;line-height:1.4">Based on: <span style="color:#2563eb;font-weight:600">${S.brief.topic}</span><br><span style="color:#cbd5e1">Read the brief on the left first</span></div>`
+    ? `<div style="font-size:11px;color:#94a3b8;padding-bottom:10px;border-bottom:1px solid #f1f5f9;margin-bottom:4px;line-height:1.5">Based on: <span style="color:#2563eb;font-weight:600">${S.brief.topic}</span><br><span style="color:#cbd5e1;font-size:10.5px">Read the concept on the left first</span></div>`
     : '';
 
-  body.innerHTML = `${conceptLabel}<div class="tf-body">
+  body.innerHTML = `<div class="tf-body">
+    ${conceptLabel}
     ${pool.map((q, i) => `
       <div class="tf-q" id="tfq-${i}">
         <div class="tf-q-text"><span style="color:#94a3b8;font-size:11px;margin-right:5px">Q${i+1}</span>${q.text}</div>
@@ -1628,7 +1638,6 @@ function renderTrueFalse(questions) {
         </div>
         <div class="tf-explanation" id="tfexp-${i}"></div>
       </div>`).join('')}
-    <button class="tf-btn tf-reset" onclick="resetTF()">↻ New set</button>
   </div>`;
 }
 
