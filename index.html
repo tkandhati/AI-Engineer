@@ -116,6 +116,8 @@ hr { border: none; border-top: 1px solid #e2e8f0; margin: 36px 0; }
 .lab:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
 .lab.inprogress { border-color: #2563eb; border-left: 4px solid #2563eb; background: #fafcff; }
 .lab.done { opacity: 0.55; }
+.lab.locked { opacity: 0.38; pointer-events: none; filter: grayscale(0.2); }
+.lab.locked .lab-actions { display: none; }
 .lab-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
 .lab-title { font-weight: 700; font-size: 15px; flex: 1; line-height: 1.35; color: #0f172a; }
 .lab-meta { font-size: 11px; color: #94a3b8; white-space: nowrap; padding-top: 3px; background: #f8fafc; border-radius: 4px; padding: 3px 8px; }
@@ -206,6 +208,16 @@ ol.prereq-list li::before {
   border-radius: 6px; padding: 8px 12px; line-height: 1.55;
   border-left: 3px solid #16a34a;
 }
+.priority-must {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 10px;
+  background: #fef3c7; color: #92400e; border: 1px solid #fde68a; margin-bottom: 6px;
+}
+.priority-nice {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 10px;
+  background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; margin-bottom: 6px;
+}
 .lab-source-link {
   display: block; margin-top: 8px; margin-bottom: 2px;
   font-size: 12.5px; font-weight: 600; color: #1e40af;
@@ -242,7 +254,20 @@ ol.prereq-list li::before {
 /* Footer */
 .footer { font-size: 12px; color: #ccc; margin-top: 28px; display: flex; gap: 18px; flex-wrap: wrap; }
 
-/* Weekly banner */
+/* Weekly theme card */
+.week-theme-card {
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+  border-radius: 10px; padding: 20px 22px; margin-bottom: 24px;
+  color: #fff; display: none;
+}
+.week-theme-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: #60a5fa; margin-bottom: 6px; }
+.week-theme-title { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; margin-bottom: 6px; }
+.week-theme-desc { font-size: 13px; color: #93c5fd; line-height: 1.6; }
+.week-progress-bar { background: rgba(255,255,255,0.15); border-radius: 4px; height: 6px; margin-top: 14px; overflow: hidden; }
+.week-progress-fill { height: 100%; background: #60a5fa; border-radius: 4px; transition: width 0.4s; }
+.week-progress-label { font-size: 11.5px; color: #93c5fd; margin-top: 6px; }
+
+/* Weekly synthesis banner */
 .wk-banner {
   background: #fffbeb; border: 1px solid #fde68a; border-radius: 7px;
   padding: 14px 16px; font-size: 14px; display: flex;
@@ -292,6 +317,10 @@ code { font-family: 'Courier New', monospace; font-size: 12px; background: #f0f0
     <div class="hdr-date" id="dateTag"></div>
   </div>
 
+  <!-- Weekly theme card — persistent for the week -->
+  <div class="week-theme-card" id="weekThemeEl"></div>
+
+  <!-- Weekly synthesis banner — shown when 3+ done -->
   <div class="wk-banner" id="wkBanner" style="display:none">
     <span>Weekly synthesis ready — <strong id="wkCount">0</strong> labs done this week</span>
     <button onclick="runWeeklyEval()">Synthesize now</button>
@@ -306,8 +335,8 @@ code { font-family: 'Courier New', monospace; font-size: 12px; background: #f0f0
   <hr>
 
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-    <h2 style="margin-bottom:0">Lab Challenges</h2>
-    <button style="font-size:12px;padding:4px 12px;color:#64748b;border-color:#e2e8f0" id="refreshBtn" onclick="refreshLabs()">↻ Refresh open labs</button>
+    <h2 style="margin-bottom:0">This Week's Labs</h2>
+    <span id="weekLabsStatus" style="font-size:12px;color:#94a3b8"></span>
   </div>
   <div id="labsEl"></div>
 
@@ -476,6 +505,11 @@ const CURATED = {
     {name:'Cohere Blog',          url:'https://cohere.com/blog/rss',                             dims:['rag','inference']},
     {name:'Mistral Blog',         url:'https://mistral.ai/news/rss',                             dims:['inference','finetune']},
     {name:'Deeplearning.ai',      url:'https://www.deeplearning.ai/blog/feed/',                  dims:['finetune','design']},
+    {name:'XDA Developers',       url:'https://www.xda-developers.com/feed/',                    dims:['inference','design']},
+    {name:'Towards Data Science', url:'https://towardsdatascience.com/feed',                     dims:['rag','eval','finetune']},
+    {name:'The AI Edge (Aman)',   url:'https://theaiedge.substack.com/feed',                     dims:['inference','design']},
+    {name:'Ahead of AI (S.R.)',   url:'https://magazine.sebastianraschka.com/feed',              dims:['finetune','inference']},
+    {name:'Weights of Evidence',  url:'https://weightsofevidence.substack.com/feed',             dims:['eval','rag']},
   ],
 
   // ── Progression ladders — where the engineer is and where to take them ───────
@@ -551,20 +585,44 @@ const PLAT = {
 
 // ── State ─────────────────────────────────────────────────────────────────────
 
+function weekStartISO() {
+  const d = new Date();
+  const day = d.getDay();
+  // Monday start: subtract days since Monday (0=Sun→6, 1=Mon→0, ..., 6=Sat→5)
+  d.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
+  return d.toISOString().slice(0,10);
+}
+
 function defaults() {
   return {
-    v: 5,
+    v: 6,
     scores: { rag:40, eval:30, finetune:28, inference:20, k8s:32, obs:33, voice:18, design:42 },
-    labs: [], doneIds: [], weekDoneIds: [],
-    weekStart: isoToday(), streak: 0, lastActive: null,
-    brief: null, labsDate: null, lastSync: null, lastWeekEval: null,
-    dimAnalysis: null,  // Agent 1 output: focus_dims, gap, week_goal
-    evidence: []   // [{date, dim, lab, score, text}] — high-level proof of skills
+    // Weekly plan — constant for the week
+    weekTheme: null,   // { title, description, dim }
+    weekLabs: [],      // 5 progressive labs for the week
+    weekGenDate: null, // ISO week-start date when labs were generated
+    weekDoneIds: [],   // labs completed this week
+    // All-time
+    doneIds: [],
+    streak: 0, lastActive: null,
+    // Daily brief — refreshes every day
+    brief: null, briefDate: null,
+    sources: {},
+    lastSync: null, lastWeekEval: null,
+    dimAnalysis: null,
+    evidence: []
   };
 }
 
 let S;
-function load() { try { const r=localStorage.getItem(KEY); S=r?JSON.parse(r):defaults(); } catch(e){ S=defaults(); } }
+function load() {
+  try {
+    const r = localStorage.getItem(KEY);
+    const parsed = r ? JSON.parse(r) : null;
+    // Version migration: v5 → v6 resets to clean state
+    S = (parsed && parsed.v === 6) ? parsed : defaults();
+  } catch(e) { S = defaults(); }
+}
 function save() { localStorage.setItem(KEY, JSON.stringify(S)); }
 function isoToday() { return new Date().toISOString().slice(0,10); }
 
@@ -733,7 +791,7 @@ function sourceText(hn, ax, hf, feeds) {
   const axText   = ax.length    ? ax.map(p=>`[arXiv] ${p.title}\n  ${p.abstract}\n  ${p.url}`).join('\n') : '(none)';
   const hfText   = hf.length    ? hf.map(p=>`[HF ${p.upvotes}↑] ${p.title}\n  ${p.abstract}\n  ${p.url}`).join('\n') : '(none)';
   const feedText = feeds.length ? feeds.map(f=>`[${f.source}] ${f.title}\n  ${f.desc}\n  ${f.url}`).join('\n') : '(none)';
-  return `=== HACKER NEWS ===\n${hnText}\n\n=== ARXIV ===\n${axText}\n\n=== HUGGINGFACE DAILY ===\n${hfText}\n\n=== BLOGS & NEWSLETTERS (${feeds.length} articles / ${CURATED.feeds.length} writers) ===\n${feedText}`;
+  return `=== HACKER NEWS ===\n${hnText}\n\n=== ARXIV ===\n${axText}\n\n=== HUGGINGFACE DAILY ===\n${hfText}\n\n=== BLOGS & NEWSLETTERS (${feeds.length} articles from ${CURATED.feeds.length} writers incl. Latent Space, Import AI, Decoding ML, Cameron Wolfe, Sebastian Raschka, Eugene Yan, XDA, Towards Data Science) ===\n${feedText}`;
 }
 
 // Agent 1 — Progress analyzer
@@ -797,6 +855,28 @@ Return JSON:
 
   const result = parseJSON(await claude(system, user, 4000));
   return result.labs || [];
+}
+
+// Agent: Weekly plan — one focused theme + 5 progressive labs for the whole week
+async function generateWeeklyPlan(src, dimAnalysis) {
+  const focusDims = (dimAnalysis?.focus_dims||['rag','eval']).join(', ');
+  const gap = dimAnalysis?.gap || '';
+
+  const system = `You are an AI engineering curriculum designer. Design ONE focused week-long learning theme with 5 progressive labs that build on each other. The engineer completes Labs 1-3 first (unlocked), then Labs 4-5 unlock. Labs must progress from beginner-runnable (Lab 1: ~1hr, easy) to advanced (Lab 5: ~3-4hr, hard). All labs must be on the SAME theme and directly buildable — real code, real tools, real outputs. Lab 1 MUST start with a guided, structured resource — pick the best one available: short courses (fast.ai, DeepLearning.ai, Google ML Crash Course, HuggingFace courses, Cohere LLM University, Weights & Biases courses, Lightning AI courses), canonical blog tutorials (Lilian Weng, Sebastian Raschka, Andrej Karpathy, Simon Willison, Eugene Yan), or official quickstart docs. The source_blog for Lab 1 must be that exact resource. Labs 2-5 shift to hands-on building. INFERENCE is a priority dimension — if the theme touches serving, deployment, or optimization, go deep on vLLM/TGI/SGLang/Ollama specifics. ${ctx()} Return valid JSON only. CRITICAL: no literal newlines inside JSON string values.`;
+
+  const user = `${sourceText(src.hn, src.ax, src.hf, src.feeds)}
+
+Engineer focus: ${focusDims}. Gap: ${gap}. Month: ${planMonth()}/18.
+
+Labs 1-3 = "must_know" (core career skills). Labs 4-5 = "nice_to_know" (stretch / advanced). Add a "priority" field to each lab: "must_know" or "nice_to_know". Add a "priority_reason" field: 1 sentence explaining why — e.g. "Core to regulated RAG interviews at Month 12" or "Advanced optimization — valuable but not blocking your goals right now".
+
+Pick ONE specific weekly theme from today's sources — something hands-on and buildable in a week. Examples: "Production RAG with RAGAS Evaluation", "Fine-tuning Llama-3 with LoRA on Colab", "LLM Observability with Langfuse", "Inference Optimization with vLLM". Make it concrete, not broad.
+
+Return JSON:
+{"theme":{"title":"Week theme — specific and motivating","description":"2 sentences: what you will build this week and why it matters for Month ${planMonth()} career goals","dim":"primary dimension"},"labs":[{"id":"kebab-slug-1","order":1,"title":"Lab 1 title — easiest entry point to the theme","dim":"rag|eval|finetune|inference|k8s|obs|voice|design","time":"1h","diff":"easy","why":"Why start here — what foundation this builds","source_blog":{"title":"Blog/paper title","url":"real URL from sources","author":"Author"},"prerequisites":["Only 2-3 things — keep low barrier for Lab 1"],"setup":"pip install minimal-packages","best_platform":"colab","platform_note":"Why Colab — free T4, no setup","platforms":["colab"],"llm_note":"Free LLM option","steps":["1. Open Colab and run setup","2. Concrete action","3. Concrete action","4. Measure or evaluate something","5. Note what you learned"],"references":[{"title":"Primary source","url":"real URL"},{"title":"Docs","url":"real stable URL"}]},{"id":"kebab-slug-2","order":2,"title":"Lab 2 — builds on Lab 1","time":"2h","diff":"medium","why":"...","dim":"...","source_blog":{"title":"...","url":"...","author":"..."},"prerequisites":["Completed Lab 1"],"setup":"pip install ...","best_platform":"colab","platform_note":"...","platforms":["colab"],"llm_note":"...","steps":["1....","2....","3....","4....","5...."],"references":[{"title":"...","url":"..."}]},{"id":"kebab-slug-3","order":3,"title":"Lab 3 — integrates Labs 1+2","time":"2h","diff":"medium","why":"...","dim":"...","source_blog":{"title":"...","url":"...","author":"..."},"prerequisites":["Completed Labs 1 and 2"],"setup":"pip install ...","best_platform":"colab","platform_note":"...","platforms":["colab"],"llm_note":"...","steps":["1....","2....","3....","4....","5...."],"references":[{"title":"...","url":"..."}]},{"id":"kebab-slug-4","order":4,"title":"Lab 4 — advanced, unlocks after 3 done","time":"3h","diff":"hard","why":"...","dim":"...","source_blog":{"title":"...","url":"...","author":"..."},"prerequisites":["Completed Labs 1, 2, and 3"],"setup":"pip install ...","best_platform":"colab","platform_note":"...","platforms":["colab"],"llm_note":"...","steps":["1....","2....","3....","4....","5...."],"references":[{"title":"...","url":"..."}]},{"id":"kebab-slug-5","order":5,"title":"Lab 5 — capstone: production-ready output","time":"4h","diff":"hard","why":"...","dim":"...","source_blog":{"title":"...","url":"...","author":"..."},"prerequisites":["Completed all previous labs"],"setup":"pip install ...","best_platform":"colab","platform_note":"...","platforms":["colab"],"llm_note":"...","steps":["1....","2....","3....","4....","5...."],"references":[{"title":"...","url":"..."}]}]}`;
+
+  const result = parseJSON(await claude(system, user, 6000));
+  return result;
 }
 
 // ── Quiz ──────────────────────────────────────────────────────────────────────
@@ -899,10 +979,9 @@ async function ghCommit(path, content, msg) {
 }
 
 function journalEntry() {
-  // Archive-level detail — stored in learning_journal/, not the primary artifact
   const today = isoToday();
   let md = `## ${today} | Month ${planMonth()}\n`;
-  S.labs.filter(l=>l.status==='done').forEach(l=>{
+  (S.weekLabs||[]).filter(l=>l.status==='done').forEach(l=>{
     md += `\n**${l.title}** (${DIMS[l.dim]}) — ${l.eval?.score||'?'}/100\n`;
     if (l.eval?.feedback) md += `${l.eval.feedback}\n`;
     if (l.quiz && l.answers) {
@@ -970,8 +1049,9 @@ function dailyArchiveMd() {
   }
 
   // Labs
-  md += `## Today's Labs\n\n`;
-  S.labs.forEach((l, i) => {
+  md += `## This Week's Labs\n\n`;
+  if (S.weekTheme) md += `**Theme:** ${S.weekTheme.title}\n\n`;
+  (S.weekLabs||[]).forEach((l, i) => {
     const status = l.status === 'done' ? '✅' : l.status === 'inprogress' ? '🔄' : '⬜';
     md += `### ${status} Lab ${i+1}: ${l.title}\n`;
     md += `**Dimension:** ${DIMS[l.dim] || l.dim} | **Time:** ${l.time} | **Difficulty:** ${l.diff}\n\n`;
@@ -1047,11 +1127,30 @@ function tickStreak() {
   S.lastActive = today; save();
 }
 
+function isNewWeek() {
+  return S.weekGenDate !== weekStartISO();
+}
+
+function weekLabsDoneCount() {
+  return (S.weekLabs||[]).filter(l => (S.weekDoneIds||[]).includes(l.id) || l.status==='done').length;
+}
+
 function checkWeekReset() {
-  const d = new Date(), ws = new Date(d);
-  ws.setDate(d.getDate()-d.getDay());
-  const wsISO = ws.toISOString().slice(0,10);
-  if (S.weekStart!==wsISO) { S.weekStart=wsISO; S.weekDoneIds=[]; save(); }
+  if (isNewWeek()) {
+    // New week: clear done IDs so locking resets; labs regenerated by init()
+    S.weekDoneIds = [];
+  }
+}
+
+function getWeekLabs() {
+  // Apply live statuses + locking logic
+  const doneCount = weekLabsDoneCount();
+  return (S.weekLabs||[]).map((l, i) => {
+    if (S.doneIds?.includes(l.id) || l.status==='done') return {...l, status:'done'};
+    if (l.status==='inprogress') return l;
+    if (i >= 3 && doneCount < 3) return {...l, status:'locked'};
+    return {...l, status: l.status||'todo'};
+  });
 }
 
 // ── Render ────────────────────────────────────────────────────────────────────
@@ -1062,7 +1161,18 @@ function renderAll() {
     {weekday:'long',year:'numeric',month:'long',day:'numeric'}).replace(',','<br>');
 
   renderBrief();
-  document.getElementById('labsEl').innerHTML = S.labs.map((l,i)=>labCard(l,i)).join('');
+  renderWeekTheme();
+
+  const labs = getWeekLabs();
+  document.getElementById('labsEl').innerHTML = labs.length
+    ? labs.map((l,i) => labCard(l,i)).join('')
+    : '<div style="color:#aaa;font-size:13px;padding:20px 0">No labs yet — loading this week\'s plan…</div>';
+
+  const done = weekLabsDoneCount();
+  const total = (S.weekLabs||[]).length;
+  const wkStatus = document.getElementById('weekLabsStatus');
+  if (wkStatus) wkStatus.textContent = total ? `${done}/${total} done this week` : '';
+
   renderScores();
 
   document.getElementById('streakEl').textContent = `Streak: ${S.streak} day${S.streak!==1?'s':''}`;
@@ -1070,10 +1180,38 @@ function renderAll() {
 
   const daysSince = S.lastWeekEval ? Math.floor((Date.now()-new Date(S.lastWeekEval).getTime())/86400000) : 999;
   const wk = document.getElementById('wkBanner');
-  if (S.weekDoneIds.length>=3 && daysSince>=7) {
-    document.getElementById('wkCount').textContent = S.weekDoneIds.length;
+  const weekDone = S.weekDoneIds||[];
+  if (weekDone.length >= 3 && daysSince >= 7) {
+    document.getElementById('wkCount').textContent = weekDone.length;
     wk.style.display = 'flex';
   } else { wk.style.display = 'none'; }
+}
+
+function renderWeekTheme() {
+  const el = document.getElementById('weekThemeEl');
+  if (!el) return;
+  const t = S.weekTheme;
+  if (!t?.title) { el.style.display = 'none'; return; }
+  const done = weekLabsDoneCount();
+  const total = (S.weekLabs||[]).length || 5;
+  const pct = Math.round((done / total) * 100);
+  const wk = weekStartISO();
+  const weekNum = Math.ceil((new Date(wk) - new Date(window.CONFIG?.PLAN_START||'2025-04-01')) / (7*86400000));
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px">
+      <div style="flex:1">
+        <div class="week-theme-eyebrow">Week ${weekNum > 0 ? weekNum : ''} Focus · ${(DIMS[t.dim]||t.dim||'').toUpperCase()}</div>
+        <div class="week-theme-title">${t.title}</div>
+        <div class="week-theme-desc">${t.description||''}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:22px;font-weight:800;color:#fff">${done}<span style="font-size:14px;font-weight:400;color:#60a5fa">/${total}</span></div>
+        <div style="font-size:11px;color:#60a5fa">labs done</div>
+      </div>
+    </div>
+    <div class="week-progress-bar"><div class="week-progress-fill" style="width:${pct}%"></div></div>
+    <div class="week-progress-label">${done < 3 ? `Complete ${3-done} more to unlock advanced labs` : done === total ? '🎉 All labs done — great week!' : `${total-done} lab${total-done!==1?'s':''} remaining`}</div>`;
 }
 
 function renderBrief() {
@@ -1129,8 +1267,25 @@ function renderScores() {
 }
 
 function labCard(lab, idx) {
+  // Locked labs — minimal card, just title + unlock hint
+  if (lab.status === 'locked') {
+    return `<div class="lab locked" id="lab-${lab.id}">
+      <div class="lab-top">
+        <div class="lab-title" style="color:#94a3b8">${idx+1}. ${lab.title}</div>
+        <div class="lab-meta">${lab.time||'3h'} · ${lab.diff||'hard'}</div>
+      </div>
+      <div style="font-size:13px;color:#94a3b8;margin-top:8px">🔒 Complete the first 3 labs to unlock</div>
+    </div>`;
+  }
+
   const badge = lab.status==='inprogress' ? '<span class="lab-badge badge-ip">In progress</span>'
     : lab.status==='done' ? '<span class="lab-badge badge-done">Done</span>' : '';
+
+  const priorityHtml = lab.priority === 'must_know'
+    ? `<span class="priority-must">⭐ Must Know${lab.priority_reason ? ` · <span style="font-weight:400">${lab.priority_reason}</span>` : ''}</span>`
+    : lab.priority === 'nice_to_know'
+    ? `<span class="priority-nice">💡 Nice to Know${lab.priority_reason ? ` · <span style="font-weight:400">${lab.priority_reason}</span>` : ''}</span>`
+    : '';
 
   // Best platform — show recommended prominently, rest as alternatives
   const bestKey = lab.best_platform || (lab.platforms||[])[0];
@@ -1213,6 +1368,7 @@ function labCard(lab, idx) {
       <div class="lab-title">${idx+1}. ${lab.title}</div>
       <div class="lab-meta">${lab.time||'2h'} · ${lab.diff||'medium'}</div>
     </div>
+    ${priorityHtml}
     <div class="lab-why">${lab.why||''}</div>
     ${blogHtml}
     ${prereqHtml}
@@ -1237,29 +1393,29 @@ function quizForm(lab) {
 
 // ── Lab actions ───────────────────────────────────────────────────────────────
 
+function labById(id) {
+  return (S.weekLabs||[]).find(l=>l.id===id);
+}
+
 function startLab(id) {
-  const l=S.labs.find(l=>l.id===id); if(!l||l.status!=='todo') return;
+  const l=labById(id); if(!l||l.status!=='todo') return;
   l.status='inprogress'; l.startedAt=new Date().toISOString();
   tickStreak(); save(); renderAll();
 }
 
-function swapLab(id) {
-  const idx=S.labs.findIndex(l=>l.id===id);
-  if(idx===-1||S.labs[idx].status!=='todo') return;
-  S.labs.splice(idx,1); save(); renderAll();
-}
-
 async function markDone(id) {
-  const l=S.labs.find(l=>l.id===id); if(!l||l.status!=='inprogress') return;
+  const l=labById(id); if(!l||l.status!=='inprogress') return;
   l.status='done'; l.doneAt=new Date().toISOString();
+  if(!S.weekDoneIds) S.weekDoneIds=[];
   if(!S.weekDoneIds.includes(id)) S.weekDoneIds.push(id);
+  if(!S.doneIds) S.doneIds=[];
   if(!S.doneIds.includes(id)) S.doneIds.push(id);
   tickStreak(); save(); renderAll();
   await loadQuiz(id);
 }
 
 async function loadQuiz(id) {
-  const l=S.labs.find(l=>l.id===id); if(!l) return;
+  const l=labById(id); if(!l) return;
   const el=document.getElementById(`qload-${id}`);
   if(el) el.innerHTML='<span style="color:#aaa;font-size:13px">Generating questions…</span>';
   try { l.quiz=await genQuestions(l); save(); renderAll(); }
@@ -1267,7 +1423,7 @@ async function loadQuiz(id) {
 }
 
 async function submitQuiz(id) {
-  const l=S.labs.find(l=>l.id===id); if(!l?.quiz) return;
+  const l=labById(id); if(!l?.quiz) return;
   const answers=l.quiz.map((_,i)=>(document.getElementById(`qa-${id}-${i}`)?.value||'').trim());
   const btn=document.querySelector(`#lab-${id} .primary`);
   if(btn){btn.disabled=true;btn.textContent='Evaluating…';}
@@ -1307,7 +1463,8 @@ async function runWeeklyEval() {
   const banner=document.getElementById('wkBanner');
   banner.innerHTML='<span style="color:#999">Synthesizing your week…</span>';
   try {
-    const labs=S.labs.filter(l=>S.weekDoneIds.includes(l.id));
+    const weekDone = S.weekDoneIds||[];
+    const labs=(S.weekLabs||[]).filter(l=>weekDone.includes(l.id)||l.status==='done');
     const text=await weekSynth(labs);
     S.lastWeekEval=isoToday(); save();
     banner.innerHTML=`<div style="width:100%">
@@ -1325,7 +1482,7 @@ async function refreshBrief() {
   window._briefFetching = true;
   const btn = document.getElementById('briefRefreshBtn');
   btn.disabled = true; btn.textContent = '↻ Synthesizing…';
-  document.getElementById('briefEl').innerHTML = '<div class="brief-body" style="color:#aaa;font-size:13px">Synthesizing today\'s best concept from 26 writers + arXiv + HuggingFace…</div>';
+  document.getElementById('briefEl').innerHTML = `<div class="brief-body" style="color:#aaa;font-size:13px">Synthesizing today's best concept from ${CURATED.feeds.length} writers + arXiv + HuggingFace…</div>`;
 
   try {
     const [hn,ax,hf,feeds] = await Promise.allSettled([fetchHN(),fetchArxiv(),fetchHFPapers(),fetchFeeds()]);
@@ -1357,48 +1514,55 @@ async function init() {
   const mEl = document.getElementById('loadMonth'); if(mEl) mEl.textContent = planMonth();
 
   const today = isoToday();
-  const cached = S.labsDate===today && S.brief?.date===today && S.labs.length>0;
+  const briefCached = S.brief?.date === today;
+  const weekCached  = !isNewWeek() && (S.weekLabs||[]).length >= 3;
 
-  if (cached) {
+  // Full cache hit — show immediately
+  if (briefCached && weekCached) {
     document.getElementById('loading').style.display='none';
     document.getElementById('main').style.display='block';
     renderAll(); return;
   }
 
   try {
-    // Phase 1: fetch all sources (independent, always succeeds via allSettled)
-    setStatus('Reading 26 AI writers, arXiv & Hacker News…');
+    // Phase 1: fetch all sources in parallel
+    const feedCount = CURATED.feeds.length;
+    setStatus(`Reading ${feedCount} AI writers, arXiv & Hacker News…`);
     const [hnR,axR,hfR,feedsR] = await Promise.allSettled([fetchHN(),fetchArxiv(),fetchHFPapers(),fetchFeeds()]);
     const src = { hn:hnR.value||[], ax:axR.value||[], hf:hfR.value||[], feeds:feedsR.value||[] };
     S.sources = { hn:src.hn.length, ax:src.ax.length, hf:src.hf.length, feeds:src.feeds.length };
 
-    // Progress analysis — silent fallback if it fails
-    const dimAnalysis = await analyzeProgress().catch(()=>({ focus_dims:['rag','eval'], gap:'', week_goal:'' }));
+    // Progress analysis — silent fallback
+    const dimAnalysis = await analyzeProgress().catch(()=>({ focus_dims:['rag','inference'], gap:'', week_goal:'' }));
 
-    // Phase 2: brief + labs in parallel, independent error handling
-    setStatus('Synthesizing today\'s best concept and building your labs…');
-    const keep = S.labs.filter(l=>l.status==='inprogress'||l.status==='done');
-    const excludeIds = [...(S.doneIds||[]), ...keep.map(l=>l.id)];
-
-    const [briefR, labsR] = await Promise.allSettled([
-      synthesizeBrief(src.hn, src.ax, src.hf, src.feeds),
-      generateLabs(src.hn, src.ax, src.hf, src.feeds, dimAnalysis, excludeIds)
-    ]);
-
-    if (briefR.status === 'fulfilled' && briefR.value?.topic) {
-      S.brief = { date:today, ...briefR.value };
+    // Phase 2: weekly plan OR brief — not both running the heavy plan call when not needed
+    if (isNewWeek()) {
+      // One Claude call per week — generates theme + 5 progressive labs
+      setStatus('Planning your week — theme and 5 progressive labs…');
+      const planR = await Promise.allSettled([generateWeeklyPlan(src, dimAnalysis)]);
+      const plan = planR[0].status === 'fulfilled' ? planR[0].value : null;
+      if (plan?.theme && plan?.labs?.length >= 3) {
+        S.weekTheme   = plan.theme;
+        S.weekLabs    = plan.labs.map(l => ({...l, status:'todo'}));
+        S.weekGenDate = weekStartISO();
+        S.weekDoneIds = [];
+      }
     }
-    S.labsDate = today;
-    const freshLabs = (labsR.status === 'fulfilled' ? labsR.value||[] : [])
-      .filter(l=>!excludeIds.includes(l.id)).map(l=>({...l,status:'todo'}));
-    S.labs = [...keep, ...freshLabs].slice(0,5);
-    if (!S.labs.length) S.labs = freshLabs.slice(0,5);
+
+    // Daily brief — fresh every day
+    if (!briefCached) {
+      setStatus('Synthesizing today\'s best concept…');
+      const briefR = await Promise.allSettled([synthesizeBrief(src.hn, src.ax, src.hf, src.feeds)]);
+      const brief = briefR[0].status === 'fulfilled' ? briefR[0].value : null;
+      if (brief?.topic) S.brief = { date:today, ...brief };
+    }
+
     save();
   } catch(e) {
     console.error('Init error:', e);
   }
 
-  // Always show the page — partial results beat a stuck loading screen
+  // Always show — partial results beat a stuck loading screen
   document.getElementById('loading').style.display='none';
   document.getElementById('main').style.display='block';
   renderAll();
