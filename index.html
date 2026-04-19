@@ -274,6 +274,41 @@ ol.prereq-list li::before {
 /* Footer */
 .footer { font-size: 12px; color: #ccc; margin-top: 28px; display: flex; gap: 18px; flex-wrap: wrap; }
 
+/* Lab ask bar */
+.lab-ask {
+  margin-top: 14px; padding-top: 14px; border-top: 1px solid #f1f5f9;
+}
+.lab-ask-row {
+  display: flex; gap: 8px; align-items: center;
+}
+.lab-ask-input {
+  flex: 1; font-size: 13px; padding: 7px 12px;
+  border: 1px solid #e2e8f0; border-radius: 6px;
+  font-family: inherit; background: #f8fafc; color: #1e293b;
+  outline: none; transition: border-color 0.15s;
+}
+.lab-ask-input:focus { border-color: #2563eb; background: #fff; }
+.lab-ask-input::placeholder { color: #94a3b8; }
+.lab-ask-btn {
+  font-size: 12px; padding: 7px 14px; border-radius: 6px;
+  border: 1px solid #2563eb; background: #2563eb; color: #fff;
+  cursor: pointer; white-space: nowrap; flex-shrink: 0;
+  transition: background 0.12s;
+}
+.lab-ask-btn:hover { background: #1d4ed8; }
+.lab-ask-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.lab-ask-answer {
+  margin-top: 10px; font-size: 13px; line-height: 1.65;
+  background: #f0f9ff; border-left: 3px solid #2563eb;
+  border-radius: 0 6px 6px 0; padding: 10px 14px; color: #1e293b;
+  display: none;
+}
+.lab-ask-answer.show { display: block; }
+.lab-ask-answer code {
+  background: #1e293b; color: #7dd3fc; padding: 1px 6px;
+  border-radius: 3px; font-size: 12px;
+}
+
 /* Weekly theme card */
 .week-theme-card {
   background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
@@ -1391,7 +1426,7 @@ function labCard(lab, idx) {
         <div class="lab-meta">${lab.time||'3h'} · ${lab.diff||'hard'}</div>
       </div>
       <div style="font-size:13px;color:#94a3b8;margin-top:8px">🔒 Complete the first 3 labs to unlock</div>
-    </div>`;
+    </div>`; // locked labs have no ask bar
   }
 
   const badge = lab.status==='inprogress' ? '<span class="lab-badge badge-ip">In progress</span>'
@@ -1495,6 +1530,15 @@ function labCard(lab, idx) {
     ${refsHtml}
     ${actions?`<div class="lab-actions">${actions}</div>`:''}
     ${quiz}
+    <div class="lab-ask">
+      <div class="lab-ask-row">
+        <input class="lab-ask-input" id="ask-${lab.id}" type="text"
+          placeholder="Ask anything about this lab — setup, errors, steps…"
+          onkeydown="if(event.key==='Enter')askLab('${lab.id}')">
+        <button class="lab-ask-btn" id="askbtn-${lab.id}" onclick="askLab('${lab.id}')">Ask</button>
+      </div>
+      <div class="lab-ask-answer" id="askans-${lab.id}"></div>
+    </div>
   </div>`;
 }
 
@@ -1590,6 +1634,50 @@ async function runWeeklyEval() {
     </div>`;
     sync();
   } catch(e){ banner.innerHTML='<span class="err">Failed. <button onclick="runWeeklyEval()">Retry</button></span>'; }
+}
+
+// ── Lab ask bar ───────────────────────────────────────────────────────────────
+
+async function askLab(id) {
+  const lab = labById(id);
+  if (!lab) return;
+
+  const input = document.getElementById(`ask-${id}`);
+  const btn   = document.getElementById(`askbtn-${id}`);
+  const ansEl = document.getElementById(`askans-${id}`);
+  if (!input || !ansEl) return;
+
+  const question = input.value.trim();
+  if (!question) { input.focus(); return; }
+
+  btn.disabled = true; btn.textContent = '…';
+  ansEl.className = 'lab-ask-answer show';
+  ansEl.textContent = 'Thinking…';
+
+  const system = `You are a hands-on AI engineering mentor helping someone complete a lab right now. Answer ONLY the question asked. Be specific, short, and actionable — like a senior engineer sitting next to them. If it's a command or code, give the exact command. No preamble, no "great question", no padding. If you don't know, say so.`;
+
+  const user = `Lab: "${lab.title}"
+Dimension: ${DIMS[lab.dim]||lab.dim}
+Platform: ${lab.best_platform||'colab'}
+Setup: ${lab.setup||''}
+Steps: ${(lab.steps||[]).join(' → ')}
+Tools: ${lab.infra||''}
+
+Question: ${question}`;
+
+  try {
+    const answer = await claude(system, user, 400);
+    // Format inline code blocks
+    ansEl.innerHTML = answer
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/\n\n/g, '<br><br>')
+      .replace(/\n/g, '<br>');
+    input.value = '';
+  } catch(e) {
+    ansEl.textContent = `Failed: ${e.message}`;
+  }
+
+  btn.disabled = false; btn.textContent = 'Ask';
 }
 
 // ── True / False quick check ─────────────────────────────────────────────────
