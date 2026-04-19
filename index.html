@@ -14,9 +14,24 @@ body {
   line-height: 1.65;
   color: #1e293b;
   background: #f8fafc;
-  max-width: 780px;
+  max-width: 1180px;
   margin: 0 auto;
   padding: 36px 24px 100px;
+}
+
+/* Two-column layout */
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 32px;
+  align-items: start;
+}
+.left-col { min-width: 0; }
+.right-col { position: sticky; top: 24px; }
+
+@media (max-width: 860px) {
+  .main-grid { grid-template-columns: 1fr; }
+  .right-col { position: static; }
 }
 
 h2 {
@@ -285,6 +300,61 @@ ol.prereq-list li::before {
 }
 code { font-family: 'Courier New', monospace; font-size: 12px; background: #f0f0f0; padding: 1px 5px; border-radius: 3px; }
 .err { color: #dc2626; font-size: 13px; }
+
+/* ── Right panel — True/False Quick Check ── */
+.tf-panel {
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+  overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  margin-bottom: 20px;
+}
+.tf-panel-header {
+  background: #0f172a; color: #fff;
+  padding: 14px 16px; display: flex; justify-content: space-between; align-items: center;
+}
+.tf-panel-title { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+.tf-score-chip { font-size: 11px; background: rgba(255,255,255,0.12); border-radius: 10px; padding: 2px 10px; color: #94a3b8; }
+.tf-body { padding: 14px 16px; }
+.tf-q {
+  border-bottom: 1px solid #f1f5f9; padding: 11px 0;
+}
+.tf-q:last-child { border-bottom: none; }
+.tf-q-text { font-size: 13px; color: #1e293b; line-height: 1.5; margin-bottom: 8px; font-weight: 500; }
+.tf-buttons { display: flex; gap: 8px; }
+.tf-btn {
+  font-size: 12px; font-weight: 600; padding: 4px 16px; border-radius: 5px;
+  border: 1.5px solid #e2e8f0; background: #f8fafc; cursor: pointer;
+  transition: all 0.12s; color: #475569;
+}
+.tf-btn:hover { border-color: #94a3b8; background: #f1f5f9; }
+.tf-btn.correct { background: #dcfce7; border-color: #16a34a; color: #15803d; }
+.tf-btn.wrong   { background: #fee2e2; border-color: #dc2626; color: #dc2626; }
+.tf-btn.neutral { opacity: 0.4; }
+.tf-explanation {
+  font-size: 12px; color: #475569; line-height: 1.5; margin-top: 7px;
+  background: #f8fafc; border-radius: 5px; padding: 7px 10px;
+  border-left: 3px solid #e2e8f0; display: none;
+}
+.tf-explanation.show { display: block; }
+.tf-explanation.correct-exp { border-color: #16a34a; }
+.tf-explanation.wrong-exp   { border-color: #dc2626; }
+.tf-empty { padding: 20px 16px; font-size: 13px; color: #aaa; text-align: center; }
+.tf-generating { padding: 20px 16px; font-size: 13px; color: #aaa; text-align: center; }
+.tf-reset { width: 100%; margin-top: 12px; font-size: 12px; color: #64748b; border-color: #e2e8f0; }
+
+/* Scores panel in sidebar */
+.scores-panel {
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+  padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.scores-panel h2 { margin-bottom: 14px; }
+.score-row {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 9px;
+}
+.score-row:last-child { margin-bottom: 0; }
+.score-row-name { font-size: 12px; color: #64748b; flex: 1; }
+.score-row-bar { flex: 2; height: 5px; background: #f1f5f9; border-radius: 3px; overflow: hidden; }
+.score-row-fill { height: 100%; border-radius: 3px; transition: width 0.5s; }
+.score-row-val { font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; width: 28px; text-align: right; }
 </style>
 </head>
 <body>
@@ -317,44 +387,68 @@ code { font-family: 'Courier New', monospace; font-size: 12px; background: #f0f0
     <div class="hdr-date" id="dateTag"></div>
   </div>
 
-  <!-- Weekly theme card — persistent for the week -->
+  <!-- Weekly theme card — spans full width above grid -->
   <div class="week-theme-card" id="weekThemeEl"></div>
 
-  <!-- Weekly synthesis banner — shown when 3+ done -->
+  <!-- Weekly synthesis banner -->
   <div class="wk-banner" id="wkBanner" style="display:none">
     <span>Weekly synthesis ready — <strong id="wkCount">0</strong> labs done this week</span>
     <button onclick="runWeeklyEval()">Synthesize now</button>
   </div>
 
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-    <h2 style="margin-bottom:0">Today's Deep Brief</h2>
-    <button id="briefRefreshBtn" onclick="refreshBrief()" style="font-size:12px;padding:4px 12px;color:#64748b;border-color:#e2e8f0">↻ New angle</button>
-  </div>
-  <div class="brief-card" id="briefEl"></div>
+  <div class="main-grid">
+    <!-- ── Left column ── -->
+    <div class="left-col">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <h2 style="margin-bottom:0">Today's Deep Brief</h2>
+        <button id="briefRefreshBtn" onclick="refreshBrief()" style="font-size:12px;padding:4px 12px;color:#64748b;border-color:#e2e8f0">↻ New angle</button>
+      </div>
+      <div class="brief-card" id="briefEl"></div>
 
-  <hr>
+      <hr>
 
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-    <h2 style="margin-bottom:0">This Week's Labs</h2>
-    <span id="weekLabsStatus" style="font-size:12px;color:#94a3b8"></span>
-  </div>
-  <div id="labsEl"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <h2 style="margin-bottom:0">This Week's Labs</h2>
+        <span id="weekLabsStatus" style="font-size:12px;color:#94a3b8"></span>
+      </div>
+      <div id="labsEl"></div>
 
-  <hr>
+      <hr>
 
-  <h2>Submit for Review</h2>
-  <div class="blog-card">
-    <p style="font-size:13px;color:#888;margin-bottom:12px">Paste a blog post, article draft, or any writing you did. Claude will assess it against your plan and update your Public Voice score.</p>
-    <textarea class="qta" id="blogInput" style="min-height:120px" placeholder="Paste your blog post or article here..."></textarea>
-    <button class="primary" onclick="assessBlog()">Assess my writing</button>
-    <div id="blogResult"></div>
-  </div>
+      <h2>Submit for Review</h2>
+      <div class="blog-card">
+        <p style="font-size:13px;color:#888;margin-bottom:12px">Paste a blog post, article draft, or any writing you did. Claude will assess it against your plan and update your Public Voice score.</p>
+        <textarea class="qta" id="blogInput" style="min-height:120px" placeholder="Paste your blog post or article here..."></textarea>
+        <button class="primary" onclick="assessBlog()">Assess my writing</button>
+        <div id="blogResult"></div>
+      </div>
 
-  <div class="footer">
-    <span id="streakEl"></span>
-    <span>·</span>
-    <div class="scores-strip" id="scoresEl"></div>
-    <span id="syncEl"></span>
+      <div class="footer">
+        <span id="streakEl"></span>
+        <span>·</span>
+        <span id="syncEl"></span>
+      </div>
+    </div>
+
+    <!-- ── Right column ── -->
+    <div class="right-col">
+      <!-- True / False quick check -->
+      <div class="tf-panel">
+        <div class="tf-panel-header">
+          <span class="tf-panel-title">Quick Check — T / F</span>
+          <span class="tf-score-chip" id="tfScoreChip">—</span>
+        </div>
+        <div id="tfBody">
+          <div class="tf-empty">Loads with today's brief</div>
+        </div>
+      </div>
+
+      <!-- Skill scores sidebar -->
+      <div class="scores-panel">
+        <h2>Skill Scores</h2>
+        <div id="scoresEl"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1257,12 +1351,17 @@ function renderBrief() {
 }
 
 function renderScores() {
-  document.getElementById('scoresEl').innerHTML = Object.entries(S.scores).map(([k,v])=>{
-    const c = v<=25?'low':v<=50?'mid':'hi';
+  const el = document.getElementById('scoresEl');
+  if (!el) return;
+  const colorFor = v => v <= 25 ? '#dc2626' : v <= 50 ? '#d97706' : '#16a34a';
+  el.innerHTML = Object.entries(S.scores).map(([k,v]) => {
     const lvl = levelFor(v);
-    const hasProg = CURATED.progression?.[k];
-    const label = hasProg ? `${k.toUpperCase()} <span style="font-weight:400;color:#ddd">${lvl}</span>` : k.toUpperCase();
-    return `<span class="score-chip"><span class="score-chip-name">${label}</span><span class="score-chip-val ${c}">${v}</span></span>`;
+    const color = colorFor(v);
+    return `<div class="score-row">
+      <div class="score-row-name">${DIMS[k]||k}<br><span style="font-size:10px;color:#b0bac5">${lvl}</span></div>
+      <div class="score-row-bar"><div class="score-row-fill" style="width:${v}%;background:${color}"></div></div>
+      <div class="score-row-val" style="color:${color}">${v}</div>
+    </div>`;
   }).join('');
 }
 
@@ -1476,6 +1575,96 @@ async function runWeeklyEval() {
   } catch(e){ banner.innerHTML='<span class="err">Failed. <button onclick="runWeeklyEval()">Retry</button></span>'; }
 }
 
+// ── True / False quick check ─────────────────────────────────────────────────
+
+async function generateTrueFalse(brief) {
+  const system = `You are an AI engineering quiz generator. Create concise True/False questions that test real conceptual understanding — not trivia, not definitions. Each statement should require the reader to think. Return valid JSON only. CRITICAL: no literal newlines inside JSON string values.`;
+  const user = `Topic: "${brief.topic}"\nKey points: ${(brief.points||[]).join(' | ')}\nSynthesis: ${brief.synthesis||''}\n\nGenerate 5 True/False statements. Mix true and false roughly 50/50. Each must be unambiguous — a knowledgeable engineer would agree on the correct answer. Avoid obvious facts. Test subtleties, common misconceptions, and edge cases.\n\nReturn JSON: {"questions":[{"id":"tf1","text":"A clear statement to evaluate as true or false","answer":true,"explanation":"One specific sentence: why this is true/false"}]}`;
+  try {
+    const result = parseJSON(await claude(system, user, 600));
+    return result.questions || [];
+  } catch(e) { return []; }
+}
+
+let _tfAnswered = 0, _tfCorrect = 0;
+
+function renderTrueFalse(questions) {
+  const body = document.getElementById('tfBody');
+  if (!body) return;
+  if (!questions || !questions.length) {
+    body.innerHTML = '<div class="tf-empty">No questions generated</div>';
+    return;
+  }
+  // Show 5 questions (shuffled each call for variety)
+  const pool = [...questions].sort(() => Math.random() - 0.5).slice(0, 5);
+  _tfAnswered = 0; _tfCorrect = 0; _tfTotal = pool.length;
+  updateTfScore();
+
+  body.innerHTML = `<div class="tf-body">
+    ${pool.map((q, i) => `
+      <div class="tf-q" id="tfq-${i}">
+        <div class="tf-q-text"><span style="color:#94a3b8;font-size:11px;margin-right:5px">Q${i+1}</span>${q.text}</div>
+        <div class="tf-buttons">
+          <button class="tf-btn" onclick="answerTF(${i}, true,  ${q.answer}, \`${(q.explanation||'').replace(/`/g,"'")}\`)">True</button>
+          <button class="tf-btn" onclick="answerTF(${i}, false, ${q.answer}, \`${(q.explanation||'').replace(/`/g,"'")}\`)">False</button>
+        </div>
+        <div class="tf-explanation" id="tfexp-${i}"></div>
+      </div>`).join('')}
+    <button class="tf-btn tf-reset" onclick="resetTF()">↻ New set</button>
+  </div>`;
+}
+
+let _tfTotal = 0;
+
+function answerTF(idx, userAnswer, correct, explanation) {
+  const qEl = document.getElementById(`tfq-${idx}`);
+  if (!qEl || qEl.dataset.answered) return;
+  qEl.dataset.answered = '1';
+
+  const isRight = userAnswer === correct;
+  if (isRight) _tfCorrect++;
+  _tfAnswered++;
+  updateTfScore();
+
+  const btns = qEl.querySelectorAll('.tf-btn');
+  btns.forEach(b => {
+    const bVal = b.textContent === 'True';
+    if (bVal === correct)                    b.classList.add('correct');
+    else if (bVal === userAnswer && !isRight) b.classList.add('wrong');
+    else                                     b.classList.add('neutral');
+    b.disabled = true;
+  });
+
+  const expEl = document.getElementById(`tfexp-${idx}`);
+  if (expEl) {
+    expEl.textContent = (isRight ? '✓ ' : '✗ ') + explanation;
+    expEl.className = `tf-explanation show ${isRight ? 'correct-exp' : 'wrong-exp'}`;
+  }
+
+  // Auto-refresh when all answered
+  if (_tfAnswered >= _tfTotal && _tfTotal > 0) {
+    setTimeout(() => {
+      if (!S.brief?.topic) return;
+      document.getElementById('tfBody').innerHTML = '<div class="tf-generating">Loading next set…</div>';
+      generateTrueFalse(S.brief).then(renderTrueFalse);
+    }, 1800);
+  }
+}
+
+function updateTfScore() {
+  const chip = document.getElementById('tfScoreChip');
+  if (!chip) return;
+  if (_tfAnswered === 0) { chip.textContent = '—'; return; }
+  chip.textContent = `${_tfCorrect}/${_tfAnswered} correct`;
+}
+
+function resetTF() {
+  if (S.brief?.topic) {
+    document.getElementById('tfBody').innerHTML = '<div class="tf-generating">Regenerating…</div>';
+    generateTrueFalse(S.brief).then(renderTrueFalse);
+  }
+}
+
 // ── Brief refresh (Agent 2 — synthesizer) ────────────────────────────────────
 
 async function refreshBrief() {
@@ -1491,6 +1680,10 @@ async function refreshBrief() {
     S.sources = { hn:(hn.value||[]).length, ax:(ax.value||[]).length, hf:(hf.value||[]).length, feeds:(feeds.value||[]).length };
     save();
     renderBrief();
+    // Generate T/F questions for today's concept
+    const tfBody = document.getElementById('tfBody');
+    if (tfBody) tfBody.innerHTML = '<div class="tf-generating">Generating questions…</div>';
+    generateTrueFalse(S.brief).then(renderTrueFalse);
   } catch(e) {
     document.getElementById('briefEl').innerHTML = `<div class="brief-body"><span class="err">Could not load brief: ${e.message}</span><br><button style="margin-top:10px" onclick="window._briefFetching=false;refreshBrief()">Retry</button></div>`;
   }
@@ -1517,11 +1710,13 @@ async function init() {
   const briefCached = S.brief?.date === today;
   const weekCached  = !isNewWeek() && (S.weekLabs||[]).length >= 3;
 
-  // Full cache hit — show immediately
+  // Full cache hit — show immediately, still generate fresh T/F
   if (briefCached && weekCached) {
     document.getElementById('loading').style.display='none';
     document.getElementById('main').style.display='block';
-    renderAll(); return;
+    renderAll();
+    if (S.brief?.topic) generateTrueFalse(S.brief).then(renderTrueFalse);
+    return;
   }
 
   try {
@@ -1566,6 +1761,7 @@ async function init() {
   document.getElementById('loading').style.display='none';
   document.getElementById('main').style.display='block';
   renderAll();
+  if (S.brief?.topic) generateTrueFalse(S.brief).then(renderTrueFalse);
   archiveToday();
 }
 
