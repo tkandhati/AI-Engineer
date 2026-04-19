@@ -1652,29 +1652,35 @@ async function askLab(id) {
 
   btn.disabled = true; btn.textContent = '…';
   ansEl.className = 'lab-ask-answer show';
-  ansEl.textContent = 'Thinking…';
+  ansEl.innerHTML = '<span style="color:#94a3b8">Thinking…</span>';
 
-  const system = `You are a hands-on AI engineering mentor helping someone complete a lab right now. Answer ONLY the question asked. Be specific, short, and actionable — like a senior engineer sitting next to them. If it's a command or code, give the exact command. No preamble, no "great question", no padding. If you don't know, say so.`;
+  // Every call is independent — no history, fresh context each time
+  const system = `You are an expert AI engineering mentor. The engineer is actively working on a lab and needs help to COMPLETE it. Your job: answer the exact question asked so they can unblock themselves and move forward. Rules: (1) Give the complete answer — never truncate, never say "let me know if you need more". (2) If the answer involves a command or code, write the exact runnable command. (3) If it is an error, give the fix — exact cause and exact fix. (4) If it is a concept question, explain just enough to complete the current step. (5) No preamble, no "great question", no padding. Start directly with the answer.`;
 
-  const user = `Lab: "${lab.title}"
+  const user = `## Lab context
+Title: "${lab.title}"
 Dimension: ${DIMS[lab.dim]||lab.dim}
-Platform: ${lab.best_platform||'colab'}
-Setup: ${lab.setup||''}
-Steps: ${(lab.steps||[]).join(' → ')}
-Tools: ${lab.infra||''}
+Platform: ${lab.best_platform||'colab'} — ${lab.platform_note||''}
+Setup command: ${lab.setup||'(none)'}
+Steps:
+${(lab.steps||[]).map((s,i)=>`${i+1}. ${s}`).join('\n')}
+Prerequisites: ${(lab.prerequisites||[]).join(', ')||'none'}
+LLM to use: ${lab.llm_note||''}
+Source: ${lab.source_blog?.title||''} ${lab.source_blog?.url||''}
 
-Question: ${question}`;
+## Question
+${question}`;
 
   try {
-    const answer = await claude(system, user, 400);
-    // Format inline code blocks
+    const answer = await claude(system, user, 1500);
     ansEl.innerHTML = answer
-      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/```(\w*)\n?([\s\S]*?)```/g, '<pre style="background:#1e293b;color:#e2e8f0;padding:10px 14px;border-radius:6px;font-size:12px;overflow-x:auto;margin:8px 0;font-family:\'Courier New\',monospace;white-space:pre-wrap">$2</pre>')
+      .replace(/`([^`\n]+)`/g, '<code>$1</code>')
       .replace(/\n\n/g, '<br><br>')
       .replace(/\n/g, '<br>');
     input.value = '';
   } catch(e) {
-    ansEl.textContent = `Failed: ${e.message}`;
+    ansEl.innerHTML = `<span style="color:#dc2626">Failed: ${e.message}</span>`;
   }
 
   btn.disabled = false; btn.textContent = 'Ask';
