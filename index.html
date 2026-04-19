@@ -1595,17 +1595,23 @@ async function runWeeklyEval() {
 // ── True / False quick check ─────────────────────────────────────────────────
 
 async function generateTrueFalse(brief) {
-  if (!brief?.topic) return [];
   const tfBody = document.getElementById('tfBody');
+  if (!brief?.topic) {
+    if (tfBody) tfBody.innerHTML = '<div class="tf-generating">Waiting for brief to load…</div>';
+    return null;
+  }
   if (tfBody) tfBody.innerHTML = '<div class="tf-generating">Generating questions…</div>';
   const system = `You are an AI engineering quiz generator. Create concise True/False questions that test real conceptual understanding — not trivia, not definitions. Each statement should require the reader to think. Return valid JSON only. CRITICAL: no literal newlines inside JSON string values.`;
-  const user = `Topic: "${brief.topic}"\nKey points: ${(brief.points||[]).join(' | ')}\nSynthesis: ${brief.synthesis||''}\n\nGenerate 5 True/False statements. Mix true and false roughly 50/50. Each must be unambiguous — a knowledgeable engineer would agree on the correct answer. Avoid obvious facts. Test subtleties, common misconceptions, and edge cases.\n\nReturn JSON: {"questions":[{"id":"tf1","text":"A clear statement to evaluate as true or false","answer":true,"explanation":"One specific sentence: why this is true/false"}]}`;
+  const user = `Topic: "${brief.topic}"\nKey points: ${(brief.points||[]).join(' | ')}\nSynthesis: ${brief.synthesis||''}\n\nGenerate 5 True/False statements. Mix true and false roughly 50/50. Each must be unambiguous. Avoid obvious facts. Test subtleties and common misconceptions.\n\nReturn JSON: {"questions":[{"id":"tf1","text":"Statement to evaluate","answer":true,"explanation":"Why in one sentence"}]}`;
   try {
     const result = parseJSON(await claude(system, user, 600));
-    return result.questions || [];
+    const qs = result.questions || [];
+    if (!qs.length) throw new Error('Empty questions array');
+    return qs;
   } catch(e) {
-    if (tfBody) tfBody.innerHTML = `<div class="tf-empty">Failed to load. <button onclick="resetTF()" style="font-size:12px;margin-left:8px">Retry</button></div>`;
-    return [];
+    console.error('T/F generation failed:', e.message);
+    if (tfBody) tfBody.innerHTML = `<div class="tf-empty" style="padding:16px">Failed: ${e.message}<br><button onclick="resetTF()" style="margin-top:8px;font-size:12px;padding:4px 12px">Retry</button></div>`;
+    return null;
   }
 }
 
@@ -1614,8 +1620,9 @@ let _tfAnswered = 0, _tfCorrect = 0;
 function renderTrueFalse(questions) {
   const body = document.getElementById('tfBody');
   if (!body) return;
-  if (!questions || !questions.length) {
-    body.innerHTML = '<div class="tf-empty">No questions generated</div>';
+  if (questions === null) return; // error already shown in generateTrueFalse
+  if (!questions.length) {
+    body.innerHTML = '<div class="tf-empty">No questions returned — try ↻ to retry</div>';
     return;
   }
   // Show 5 questions (shuffled each call for variety)
