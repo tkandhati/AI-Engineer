@@ -1601,10 +1601,10 @@ async function generateTrueFalse(brief) {
     return null;
   }
   if (tfBody) tfBody.innerHTML = '<div class="tf-generating">Generating questions…</div>';
-  const system = `You are an AI engineering quiz generator. Create concise True/False questions that test real conceptual understanding — not trivia, not definitions. Each statement should require the reader to think. Return valid JSON only. CRITICAL: no literal newlines inside JSON string values.`;
-  const user = `Topic: "${brief.topic}"\nKey points: ${(brief.points||[]).join(' | ')}\nSynthesis: ${brief.synthesis||''}\n\nGenerate 5 True/False statements. Mix true and false roughly 50/50. Each must be unambiguous. Avoid obvious facts. Test subtleties and common misconceptions.\n\nReturn JSON: {"questions":[{"id":"tf1","text":"Statement to evaluate","answer":true,"explanation":"Why in one sentence"}]}`;
+  const system = `You are an AI engineering quiz generator. Return valid JSON only. CRITICAL: no literal newlines inside JSON string values. Keep all strings short.`;
+  const user = `Topic: "${brief.topic}"\nKey points: ${(brief.points||[]).join(' | ').slice(0,400)}\n\nGenerate 5 True/False statements testing conceptual understanding. Mix true/false 50/50. Keep "text" under 20 words. Keep "explanation" under 15 words.\n\nReturn JSON only: {"questions":[{"id":"tf1","text":"Short statement","answer":true,"explanation":"Short reason why"}]}`;
   try {
-    const result = parseJSON(await claude(system, user, 600));
+    const result = parseJSON(await claude(system, user, 900));
     const qs = result.questions || [];
     if (!qs.length) throw new Error('Empty questions array');
     return qs;
