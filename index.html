@@ -1614,7 +1614,11 @@ function renderTrueFalse(questions) {
   _tfAnswered = 0; _tfCorrect = 0; _tfTotal = pool.length;
   updateTfScore();
 
-  body.innerHTML = `<div class="tf-body">
+  const conceptLabel = S.brief?.topic
+    ? `<div style="font-size:11px;color:#94a3b8;padding:10px 16px 0;line-height:1.4">Based on: <span style="color:#2563eb;font-weight:600">${S.brief.topic}</span><br><span style="color:#cbd5e1">Read the brief on the left first</span></div>`
+    : '';
+
+  body.innerHTML = `${conceptLabel}<div class="tf-body">
     ${pool.map((q, i) => `
       <div class="tf-q" id="tfq-${i}">
         <div class="tf-q-text"><span style="color:#94a3b8;font-size:11px;margin-right:5px">Q${i+1}</span>${q.text}</div>
