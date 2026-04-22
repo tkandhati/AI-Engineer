@@ -3,1896 +3,1909 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Engineer — Daily</title>
+<title>AI Engineer — Curriculum</title>
 <script src="config.js" onerror="window.__configMissing=true"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  font-size: 15px;
-  line-height: 1.65;
+  font-size: 14.5px;
+  line-height: 1.6;
   color: #1e293b;
   background: #f8fafc;
-  width: 100%;
-  margin: 0;
-  padding: 24px 3% 100px;
+  min-height: 100vh;
 }
 
-/* Two-column layout */
-.main-grid {
+.app {
   display: grid;
-  grid-template-columns: 1fr 38%;
-  gap: 28px;
-  align-items: start;
-  width: 100%;
+  grid-template-columns: 300px 1fr;
+  min-height: 100vh;
 }
-.left-col { min-width: 0; }
-.right-col {
+
+/* ─────── Sidebar ─────── */
+.sidebar {
+  background: #0f172a;
+  color: #cbd5e1;
+  padding: 22px 18px;
+  border-right: 1px solid #1e293b;
+  overflow-y: auto;
+  max-height: 100vh;
   position: sticky;
-  top: 20px;
-  min-width: 0;
+  top: 0;
+}
+.sidebar-brand {
+  font-size: 15px;
+  font-weight: 800;
+  color: #f8fafc;
+  letter-spacing: -0.3px;
+  margin-bottom: 2px;
+}
+.sidebar-tag {
+  font-size: 10.5px;
+  color: #64748b;
+  margin-bottom: 18px;
+  letter-spacing: 0.06em;
 }
 
-@media (max-width: 900px) {
-  .main-grid { grid-template-columns: 1fr; }
-  .right-col { position: static; }
+.cat { margin-bottom: 1px; }
+.cat-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #e2e8f0;
+  font-size: 12.5px;
+  font-weight: 600;
+  user-select: none;
+  gap: 8px;
 }
+.cat-head:hover { background: #1e293b; }
+.cat-name { flex: 1; display: flex; align-items: center; gap: 6px; min-width: 0; }
+.cat-chev { font-size: 8px; color: #64748b; transition: transform 0.15s; flex-shrink: 0; }
+.cat.open .cat-chev { transform: rotate(90deg); }
+.cat-count { font-size: 10px; color: #64748b; background: #1e293b; padding: 2px 7px; border-radius: 9px; font-weight: 500; flex-shrink: 0; }
+.cat-count.has-done { color: #22c55e; }
 
-h2 {
-  font-size: 11px;
+.subs { display: none; padding: 2px 0 6px 18px; }
+.cat.open .subs { display: block; }
+
+.sub {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  font-size: 12px;
+  color: #94a3b8;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-bottom: 1px;
+}
+.sub:hover { background: #1e293b; color: #cbd5e1; }
+.sub.active { background: #1d4ed8; color: #fff; }
+.sub.done { color: #22c55e; }
+.sub.inprogress { color: #fbbf24; }
+.sub-mark { width: 10px; flex-shrink: 0; font-size: 10px; text-align: center; }
+
+.sidebar-section { margin-top: 24px; border-top: 1px solid #1e293b; padding-top: 16px; }
+.sidebar-section h3 {
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+.src { font-size: 11px; padding: 2px 0; color: #94a3b8; line-height: 1.45; }
+.src a { color: #94a3b8; text-decoration: none; }
+.src a:hover { color: #cbd5e1; }
+.src-who { font-weight: 600; color: #cbd5e1; }
+
+/* ─────── Main ─────── */
+.main {
+  padding: 32px 40px 80px;
+  max-width: 880px;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.welcome { padding: 60px 0; text-align: center; }
+.welcome h1 { font-size: 30px; color: #0f172a; margin-bottom: 14px; letter-spacing: -0.5px; font-weight: 800; }
+.welcome p { color: #475569; font-size: 14.5px; max-width: 560px; margin: 0 auto 14px; }
+.welcome p.sub-tag { font-size: 12.5px; color: #94a3b8; margin-top: 22px; }
+
+.flow {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 20px 24px;
+  max-width: 560px;
+  margin: 30px auto 0;
+  text-align: left;
+}
+.flow h4 { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: #94a3b8; margin-bottom: 10px; }
+.flow ol { list-style: none; counter-reset: flow; }
+.flow ol li { counter-increment: flow; padding: 4px 0 4px 26px; position: relative; font-size: 13px; color: #334155; }
+.flow ol li::before {
+  content: counter(flow);
+  position: absolute; left: 0; top: 4px;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: #0f172a; color: #fff;
+  font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* Subtopic header */
+.sub-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 2px solid #0f172a;
+}
+.sub-breadcrumb { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #64748b; font-weight: 600; margin-bottom: 6px; }
+.sub-title { font-size: 26px; font-weight: 800; color: #0f172a; letter-spacing: -0.4px; margin-bottom: 4px; }
+.sub-desc { font-size: 14px; color: #475569; }
+.sub-actions { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+
+.btn {
+  font-size: 12.5px;
+  padding: 7px 14px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #1e293b;
+  cursor: pointer;
+  font-weight: 600;
+  font-family: inherit;
+}
+.btn:hover { background: #f1f5f9; }
+.btn-primary { background: #0f172a; color: #fff; border-color: #0f172a; }
+.btn-primary:hover { background: #1e293b; }
+.btn-ghost { background: transparent; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-sm { font-size: 11.5px; padding: 5px 10px; }
+
+/* Overview card */
+.sub-overview {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 18px 20px;
+  margin-bottom: 22px;
+}
+.ov-col { margin-bottom: 14px; }
+.ov-col:last-child { margin-bottom: 0; }
+.ov-label { font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: #94a3b8; margin-bottom: 8px; }
+.ov-list { list-style: none; }
+.ov-list li { font-size: 13.5px; color: #1e293b; padding: 3px 0 3px 18px; position: relative; }
+.ov-list li::before { content: '▸'; position: absolute; left: 0; color: #2563eb; font-size: 10px; top: 5px; }
+.ov-why { font-size: 13.5px; color: #1e40af; background: #eff6ff; padding: 10px 12px; border-radius: 6px; border-left: 3px solid #2563eb; line-height: 1.6; }
+
+/* Concept tabs */
+.concept-tabs {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 16px;
+  border-bottom: 2px solid #e2e8f0;
+  flex-wrap: wrap;
+}
+.c-tab {
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  user-select: none;
+}
+.c-tab:not(.locked):hover { color: #1e293b; }
+.c-tab.active { color: #0f172a; border-bottom-color: #0f172a; }
+.c-tab.locked { color: #cbd5e1; cursor: not-allowed; }
+.c-tab-mark { font-size: 11px; }
+.c-tab.done .c-tab-mark { color: #10b981; }
+.c-tab.active .c-tab-mark { color: #0f172a; }
+
+/* Concept card */
+.concept-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 22px 24px;
+  margin-bottom: 18px;
+}
+.concept-title { font-size: 20px; font-weight: 800; color: #0f172a; letter-spacing: -0.3px; margin-bottom: 6px; }
+.concept-summary { font-size: 14px; color: #475569; font-style: italic; margin-bottom: 18px; }
+
+.section-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
   color: #94a3b8;
+  margin: 22px 0 12px;
+}
+.section-label:first-of-type { margin-top: 0; }
+
+.kp { padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+.kp:last-child { border-bottom: none; }
+.kp-point { font-weight: 600; font-size: 13.5px; color: #0f172a; margin-bottom: 5px; }
+.kp-exp { font-size: 13px; color: #334155; line-height: 1.7; margin-bottom: 6px; }
+.kp-ex { font-size: 12.5px; color: #475569; background: #f8fafc; padding: 7px 10px; border-radius: 5px; border-left: 3px solid #94a3b8; line-height: 1.6; }
+.kp-ex-label { font-weight: 700; color: #64748b; letter-spacing: 0.1em; font-size: 10px; display: block; margin-bottom: 3px; }
+
+.pattern, .antipattern, .pitfall {
+  padding: 10px 12px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  line-height: 1.65;
+}
+.pattern { background: #ecfdf5; border-left: 3px solid #10b981; }
+.antipattern { background: #fef2f2; border-left: 3px solid #ef4444; }
+.pitfall { background: #fffbeb; border-left: 3px solid #f59e0b; }
+.p-head { font-weight: 700; color: #0f172a; margin-bottom: 4px; font-size: 12.5px; }
+.p-body { color: #334155; font-size: 12.5px; }
+.p-tag { display: inline-block; font-size: 10px; letter-spacing: 0.12em; font-weight: 700; margin-right: 6px; padding: 1px 6px; border-radius: 3px; }
+.p-tag.do { background: #d1fae5; color: #065f46; }
+.p-tag.dont { background: #fee2e2; color: #991b1b; }
+.p-tag.pit { background: #fef3c7; color: #92400e; }
+
+.src-list { display: flex; flex-direction: column; gap: 6px; }
+.src-item { font-size: 12.5px; line-height: 1.5; }
+.src-item a { color: #2563eb; text-decoration: none; font-weight: 600; }
+.src-item a:hover { text-decoration: underline; }
+.src-note { color: #64748b; font-size: 11.5px; display: block; margin-top: 2px; }
+
+/* Q&A */
+.qa-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 20px 22px;
+  margin-bottom: 18px;
+}
+.qa-head { font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: #475569; font-weight: 700; margin-bottom: 14px; }
+.qa-item { margin-bottom: 18px; }
+.qa-item:last-of-type { margin-bottom: 10px; }
+.qa-q { font-weight: 600; color: #0f172a; margin-bottom: 8px; font-size: 13.5px; line-height: 1.55; }
+.qa-a {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 70px;
+  line-height: 1.6;
+}
+.qa-a:focus { outline: none; border-color: #2563eb; }
+.qa-eval { background: #f8fafc; border-radius: 7px; padding: 14px 16px; margin-top: 16px; border: 1px solid #e2e8f0; }
+.qa-eval.passed { background: #ecfdf5; border-color: #a7f3d0; }
+.qa-eval.failed { background: #fef2f2; border-color: #fecaca; }
+.qa-score { font-size: 22px; font-weight: 800; color: #0f172a; margin-bottom: 4px; }
+.qa-score.passed { color: #059669; }
+.qa-score.failed { color: #dc2626; }
+.qa-verdict { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; color: #64748b; margin-bottom: 8px; }
+.qa-feedback { font-size: 13px; color: #334155; line-height: 1.7; white-space: pre-wrap; }
+.qa-actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+
+/* Lab */
+.lab-gate {
+  background: #fff7ed;
+  border: 1px dashed #fdba74;
+  border-radius: 10px;
+  padding: 16px 20px;
+  color: #9a3412;
+  font-size: 13px;
+  margin-top: 20px;
+  text-align: center;
+}
+.lab-gate b { color: #7c2d12; }
+
+.lab-card {
+  background: #fff;
+  border: 2px solid #0f172a;
+  border-radius: 12px;
+  padding: 24px 26px;
+  margin: 28px 0;
+}
+.lab-eyebrow { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: #dc2626; font-weight: 700; margin-bottom: 8px; }
+.lab-title { font-size: 22px; font-weight: 800; color: #0f172a; letter-spacing: -0.3px; margin-bottom: 8px; }
+.lab-build { font-size: 14px; color: #1e293b; margin-bottom: 8px; line-height: 1.6; }
+.lab-why { font-size: 13px; color: #1e40af; background: #eff6ff; padding: 9px 12px; border-radius: 6px; border-left: 3px solid #2563eb; margin-bottom: 14px; line-height: 1.6; }
+.lab-meta { display: flex; gap: 20px; font-size: 12px; color: #64748b; margin-bottom: 16px; flex-wrap: wrap; }
+.lab-meta span strong { color: #1e293b; font-weight: 600; }
+
+.lab-prereq {
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+  padding: 14px 16px;
   margin-bottom: 16px;
 }
+.lab-prereq .ov-label { color: #b45309; margin-bottom: 8px; }
+.lab-prereq ul { list-style: none; }
+.lab-prereq li { font-size: 13px; color: #78350f; padding: 3px 0 3px 20px; position: relative; line-height: 1.55; }
+.lab-prereq li::before { content: '☐'; position: absolute; left: 0; font-weight: 700; }
 
-hr { border: none; border-top: 1px solid #e2e8f0; margin: 36px 0; }
-
-/* Header */
-.hdr {
-  display: flex; justify-content: space-between; align-items: flex-start;
-  margin-bottom: 32px; padding-bottom: 24px; border-bottom: 2px solid #0f172a;
-}
-.hdr-title { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: #0f172a; }
-.hdr-sub { font-size: 12.5px; color: #64748b; margin-top: 4px; font-weight: 500; }
-.hdr-date { font-size: 12.5px; color: #94a3b8; text-align: right; line-height: 1.5; }
-
-/* Loading */
-#loading { padding: 100px 0; text-align: center; }
-.load-brand { font-size: 24px; font-weight: 800; color: #111; letter-spacing: -0.5px; margin-bottom: 6px; }
-.load-sub { font-size: 13px; color: #aaa; margin-bottom: 20px; }
-.load-status { font-size: 12.5px; color: #888; margin-bottom: 16px; min-height: 18px; transition: opacity 0.3s; }
-.load-dots { color: #ccc; font-size: 13px; letter-spacing: 4px; }
-.dot { display: inline-block; animation: blink 1.4s infinite; }
-.dot:nth-child(2) { animation-delay: 0.2s; }
-.dot:nth-child(3) { animation-delay: 0.4s; }
-@keyframes blink { 0%,80%,100%{opacity:0.15} 40%{opacity:1} }
-
-#main { display: none; }
-
-/* ── Brief ── */
-.brief-card {
+.lab-options { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+.opt-tab {
+  padding: 10px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
   background: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  flex: 1;
+  min-width: 200px;
+  text-align: center;
 }
-.brief-topbar {
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #fff;
-  padding: 18px 20px;
-  display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
-}
-.brief-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: #64748b; margin-bottom: 6px; }
-.brief-topic { font-size: 17px; font-weight: 800; line-height: 1.35; flex: 1; letter-spacing: -0.2px; }
-.brief-topbar a { font-size: 11px; color: #64748b; text-decoration: none; white-space: nowrap; border: 1px solid #334155; border-radius: 4px; padding: 3px 8px; margin-top: 2px; flex-shrink: 0; }
-.brief-topbar a:hover { color: #94a3b8; border-color: #475569; }
-.brief-why {
-  font-size: 13px; color: #1e40af; background: #eff6ff;
-  padding: 10px 20px; border-bottom: 1px solid #dbeafe; line-height: 1.6;
-  font-weight: 500;
-}
-.brief-body { padding: 18px 20px; }
-.brief-label {
-  font-size: 10px; font-weight: 700; letter-spacing: 0.14em;
-  text-transform: uppercase; color: #94a3b8; margin-bottom: 10px; margin-top: 18px;
-}
-.brief-label:first-child { margin-top: 0; }
-.brief-points { list-style: none; margin-bottom: 4px; }
-.brief-points li {
-  font-size: 14px; line-height: 1.7; color: #1e293b;
-  padding: 8px 0 8px 22px; position: relative;
-  border-bottom: 1px solid #f1f5f9;
-}
-.brief-points li:last-child { border-bottom: none; }
-.brief-points li::before { content: ''; position: absolute; left: 0; top: 17px; width: 8px; height: 8px; border-radius: 50%; background: #2563eb; opacity: 0.25; }
-.brief-synthesis {
-  font-size: 14px; line-height: 1.8; color: #1e293b;
-  background: #f8faff; border-radius: 7px; padding: 14px 16px;
-  border-left: 4px solid #2563eb; margin-bottom: 4px;
-  font-style: italic;
-}
-.brief-links { display: flex; flex-direction: column; gap: 8px; }
-.brief-links a {
-  font-size: 13px; color: #2563eb; text-decoration: none;
-  display: flex; align-items: center; gap: 8px; padding: 6px 10px;
-  border-radius: 5px; background: #f8faff; transition: background 0.12s;
-}
-.brief-links a:hover { background: #eff6ff; text-decoration: none; }
-.brief-links a::before { content: '↗'; font-size: 11px; color: #93c5fd; }
+.opt-tab:hover { color: #1e293b; }
+.opt-tab.active { background: #0f172a; color: #fff; border-color: #0f172a; }
 
-/* ── Lab card ── */
-.lab {
-  background: #fff;
-  border: 1px solid #e8e8e8;
-  border-radius: 10px;
-  padding: 18px 20px;
-  margin-bottom: 14px;
-  transition: border-color 0.15s, box-shadow 0.15s;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-}
-.lab:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-.lab.inprogress { border-color: #2563eb; border-left: 4px solid #2563eb; background: #fafcff; }
-.lab.done { opacity: 0.55; }
-.lab.locked { opacity: 0.38; pointer-events: none; filter: grayscale(0.2); }
-.lab.locked .lab-actions { display: none; }
-.lab-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
-.lab-title { font-weight: 700; font-size: 15px; flex: 1; line-height: 1.35; color: #0f172a; }
-.lab-meta { font-size: 11px; color: #94a3b8; white-space: nowrap; padding-top: 3px; background: #f8fafc; border-radius: 4px; padding: 3px 8px; }
-.lab-badge {
-  display: inline-block; font-size: 11px; padding: 2px 10px;
-  border-radius: 10px; font-weight: 700; margin-bottom: 8px; letter-spacing: 0.03em;
-}
-.badge-ip { background: #dbeafe; color: #1d4ed8; }
-.badge-done { background: #dcfce7; color: #15803d; }
-.lab-why { font-size: 13.5px; color: #475569; margin: 6px 0 2px; line-height: 1.6; }
-.lab-infra { font-size: 12px; color: #94a3b8; }
-.lab-plats { font-size: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
-.lab-plats a {
-  color: #2563eb; text-decoration: none;
-  background: #eff6ff; border-radius: 4px; padding: 3px 10px; border: 1px solid #bfdbfe;
-}
-.lab-plats a:hover { background: #dbeafe; }
-.lab-actions { display: flex; gap: 8px; margin-top: 10px; }
+.opt-meta { display: flex; gap: 18px; font-size: 11.5px; color: #64748b; margin-bottom: 10px; flex-wrap: wrap; }
+.opt-meta b { color: #1e293b; }
+.opt-tradeoff { font-size: 12.5px; color: #475569; background: #f8fafc; padding: 8px 12px; border-radius: 5px; border-left: 3px solid #64748b; margin-bottom: 14px; }
 
-/* Buttons */
-button {
-  font-size: 13px; padding: 6px 14px; border-radius: 5px;
-  border: 1px solid #d5d5d5; background: #fff; cursor: pointer;
-  color: #111; transition: background 0.12s, border-color 0.12s;
-}
-button:hover { background: #f5f5f5; }
-button.primary { background: #111; color: #fff; border-color: #111; }
-button.primary:hover { background: #2a2a2a; }
-button:disabled { opacity: 0.38; cursor: not-allowed; }
-.btn-green { border-color: #16a34a; color: #16a34a; }
-.btn-green:hover { background: #f0fdf4; }
+.setup-steps { list-style: none; margin-bottom: 16px; background: #f8fafc; padding: 12px 14px; border-radius: 6px; }
+.setup-steps li { font-size: 12.5px; color: #334155; padding: 3px 0 3px 18px; position: relative; line-height: 1.55; }
+.setup-steps li::before { content: '→'; position: absolute; left: 0; color: #64748b; font-weight: 700; }
 
-/* Quiz */
-.quiz { margin-top: 14px; border-top: 1px solid #eee; padding-top: 14px; }
-.quiz-q { font-size: 13.5px; font-weight: 600; margin-bottom: 5px; color: #222; line-height: 1.4; }
-.quiz-qn { font-size: 11px; color: #ccc; font-weight: 400; margin-right: 5px; }
-textarea.qta {
-  width: 100%; min-height: 72px; font-size: 13px; font-family: inherit;
-  border: 1px solid #e0e0e0; border-radius: 5px; padding: 8px 10px;
-  resize: vertical; margin-bottom: 12px; line-height: 1.55; background: #fafafa;
-  color: #222;
-}
-textarea.qta:focus { outline: none; border-color: #2563eb; background: #fff; }
-.eval-box {
-  background: #f7f8fa; border-radius: 5px; padding: 14px 16px;
-  font-size: 13px; margin-top: 10px; line-height: 1.65; color: #333;
-}
-.eval-score { font-weight: 700; font-size: 17px; margin-bottom: 6px; color: #111; }
-
-/* Lab extras */
-.lab-section { margin-top: 14px; padding-top: 14px; border-top: 1px solid #f1f5f9; }
-.lab-section-label {
-  font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
-  text-transform: uppercase; color: #94a3b8; margin-bottom: 8px;
-}
-.prereq-list { list-style: none; display: flex; flex-wrap: wrap; gap: 5px; }
-.prereq-list li {
-  font-size: 12px; background: #f1f5f9; border-radius: 5px;
-  padding: 3px 10px; color: #475569; border: 1px solid #e2e8f0;
-}
-/* Steps as guided checklist */
-ol.prereq-list {
-  display: block; counter-reset: step-counter;
-}
-ol.prereq-list li {
-  counter-increment: step-counter;
-  display: flex; align-items: flex-start; gap: 10px;
-  background: none; border: none; padding: 7px 0; border-bottom: 1px solid #f1f5f9;
-  border-radius: 0; font-size: 13.5px; color: #1e293b; line-height: 1.55;
-}
-ol.prereq-list li:last-child { border-bottom: none; }
-ol.prereq-list li::before {
-  content: counter(step-counter);
-  min-width: 22px; height: 22px; border-radius: 50%;
-  background: #2563eb; color: #fff; font-size: 11px; font-weight: 700;
+.step { display: flex; gap: 12px; padding: 11px 0; border-bottom: 1px solid #f1f5f9; }
+.step:last-of-type { border-bottom: none; }
+.step-n {
+  width: 24px; height: 24px; flex-shrink: 0;
+  border-radius: 50%; background: #0f172a; color: #fff;
+  font-size: 11.5px; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0; margin-top: 1px;
+  margin-top: 2px;
 }
-.ref-list { list-style: none; }
-.ref-list li { margin-bottom: 5px; }
-.ref-list a {
-  font-size: 13px; color: #2563eb; text-decoration: none;
-  display: inline-flex; align-items: center; gap: 5px;
+.step-body { flex: 1; min-width: 0; }
+.step-do { font-size: 13.5px; color: #0f172a; margin-bottom: 6px; line-height: 1.55; }
+.step-code {
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 12px;
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 10px 12px;
+  border-radius: 6px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin-bottom: 6px;
+  overflow-x: auto;
+  line-height: 1.5;
 }
-.ref-list a:hover { text-decoration: underline; }
-.llm-note {
-  font-size: 13px; color: #166534; background: #f0fdf4;
-  border-radius: 6px; padding: 8px 12px; line-height: 1.55;
-  border-left: 3px solid #16a34a;
-}
-.priority-must {
-  display: inline-flex; align-items: center; gap: 5px;
-  font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 10px;
-  background: #fef3c7; color: #92400e; border: 1px solid #fde68a; margin-bottom: 6px;
-}
-.priority-nice {
-  display: inline-flex; align-items: center; gap: 5px;
-  font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 10px;
-  background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; margin-bottom: 6px;
-}
-.lab-source-link {
-  display: block; margin-top: 8px; margin-bottom: 2px;
-  font-size: 12.5px; font-weight: 600; color: #1e40af;
-  background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px;
-  padding: 7px 12px; text-decoration: none; line-height: 1.4;
-}
-.lab-source-link:hover { background: #dbeafe; }
-.lab-setup-cmd {
-  display: block; font-family: 'Courier New', monospace; font-size: 12.5px;
-  background: #1e293b; color: #7dd3fc; border-radius: 6px;
-  padding: 9px 14px; margin-top: 4px; letter-spacing: 0.02em;
-  word-break: break-all;
-}
+.step-verify { font-size: 12px; color: #059669; padding-left: 10px; border-left: 2px solid #10b981; line-height: 1.5; }
+.step-verify::before { content: '✓ verify — '; font-weight: 700; letter-spacing: 0.06em; font-size: 10.5px; }
 
-/* Blog assessment */
-.blog-card {
-  background: #fff; border: 1px solid #e5e5e5; border-radius: 7px; padding: 18px;
-}
-.blog-result {
-  margin-top: 16px; border-top: 1px solid #eee; padding-top: 16px;
-}
-.blog-result-row { margin-bottom: 12px; font-size: 13.5px; line-height: 1.6; }
-.blog-result-label { font-weight: 600; color: #111; margin-bottom: 2px; }
-.blog-result-text { color: #444; }
-.blog-score { font-size: 20px; font-weight: 700; margin-bottom: 14px; }
+.lab-verify { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 14px 16px; margin-top: 16px; }
+.lab-verify .ov-label { color: #065f46; }
+.lab-verify ul { list-style: none; }
+.lab-verify li { font-size: 13px; color: #065f46; padding: 3px 0 3px 22px; position: relative; line-height: 1.55; }
+.lab-verify li::before { content: '✓'; position: absolute; left: 2px; font-weight: 700; color: #10b981; }
 
-/* Scores — compact strip */
-.scores-strip { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 12px; color: #999; }
-.score-chip { display: flex; align-items: center; gap: 4px; }
-.score-chip-name { color: #bbb; }
-.score-chip-val { font-weight: 700; font-variant-numeric: tabular-nums; }
-.low { color: #dc2626; } .mid { color: #d97706; } .hi { color: #16a34a; }
+.lab-output { background: #f1f5f9; border-radius: 6px; padding: 10px 12px; margin-top: 12px; font-size: 12.5px; color: #334155; line-height: 1.6; }
+.lab-output b { color: #0f172a; }
 
-/* Footer */
-.footer { font-size: 12px; color: #ccc; margin-top: 28px; display: flex; gap: 18px; flex-wrap: wrap; }
+.lab-stretch { background: #ede9fe; border-radius: 6px; padding: 10px 12px; margin-top: 10px; font-size: 12.5px; color: #4c1d95; line-height: 1.6; }
+.lab-stretch b { color: #312e81; }
 
-/* Lab ask bar */
-.lab-ask {
-  margin-top: 14px; padding-top: 14px; border-top: 1px solid #f1f5f9;
-}
-.lab-ask-row {
-  display: flex; gap: 8px; align-items: center;
-}
-.lab-ask-input {
-  flex: 1; font-size: 13px; padding: 7px 12px;
-  border: 1px solid #e2e8f0; border-radius: 6px;
-  font-family: inherit; background: #f8fafc; color: #1e293b;
-  outline: none; transition: border-color 0.15s;
-}
-.lab-ask-input:focus { border-color: #2563eb; background: #fff; }
-.lab-ask-input::placeholder { color: #94a3b8; }
-.lab-ask-btn {
-  font-size: 12px; padding: 7px 14px; border-radius: 6px;
-  border: 1px solid #2563eb; background: #2563eb; color: #fff;
-  cursor: pointer; white-space: nowrap; flex-shrink: 0;
-  transition: background 0.12s;
-}
-.lab-ask-btn:hover { background: #1d4ed8; }
-.lab-ask-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.lab-ask-answer {
-  margin-top: 10px; font-size: 13px; line-height: 1.65;
-  background: #f0f9ff; border-left: 3px solid #2563eb;
-  border-radius: 0 6px 6px 0; padding: 10px 14px; color: #1e293b;
-  display: none;
-}
-.lab-ask-answer.show { display: block; }
-.lab-ask-answer code {
-  background: #1e293b; color: #7dd3fc; padding: 1px 6px;
-  border-radius: 3px; font-size: 12px;
-}
+.lab-actions { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
 
-/* Weekly theme card */
-.week-theme-card {
-  background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
-  border-radius: 10px; padding: 20px 22px; margin-bottom: 24px;
-  color: #fff; display: none;
+/* Lab ask-bar */
+.ask-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 18px 20px;
+  margin-top: 16px;
 }
-.week-theme-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: #60a5fa; margin-bottom: 6px; }
-.week-theme-title { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; margin-bottom: 6px; }
-.week-theme-desc { font-size: 13px; color: #93c5fd; line-height: 1.6; }
-.week-progress-bar { background: rgba(255,255,255,0.15); border-radius: 4px; height: 6px; margin-top: 14px; overflow: hidden; }
-.week-progress-fill { height: 100%; background: #60a5fa; border-radius: 4px; transition: width 0.4s; }
-.week-progress-label { font-size: 11.5px; color: #93c5fd; margin-top: 6px; }
+.ask-head { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #475569; font-weight: 700; margin-bottom: 6px; }
+.ask-tag { font-size: 11.5px; color: #64748b; margin-bottom: 12px; }
+.ask-hist { max-height: 340px; overflow-y: auto; margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px; }
+.ask-msg { font-size: 13px; line-height: 1.65; padding: 8px 12px; border-radius: 8px; max-width: 92%; }
+.ask-msg.user { background: #dbeafe; color: #1e293b; align-self: flex-end; }
+.ask-msg.ai { background: #fff; color: #1e293b; border: 1px solid #e2e8f0; align-self: flex-start; white-space: pre-wrap; }
+.ask-row { display: flex; gap: 8px; }
+.ask-input {
+  flex: 1;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 9px 12px;
+  font-size: 13px;
+  font-family: inherit;
+}
+.ask-input:focus { outline: none; border-color: #2563eb; }
 
-/* Weekly synthesis banner */
-.wk-banner {
-  background: #fffbeb; border: 1px solid #fde68a; border-radius: 7px;
-  padding: 14px 16px; font-size: 14px; display: flex;
-  justify-content: space-between; align-items: center; margin-bottom: 24px; gap: 12px;
-}
+/* Loader / error */
+.loader { padding: 60px 0; text-align: center; color: #64748b; font-size: 13px; }
+.loader-dots { letter-spacing: 4px; color: #94a3b8; font-size: 20px; margin-top: 10px; }
+.loader-dot { display: inline-block; animation: blink 1.4s infinite; }
+.loader-dot:nth-child(2) { animation-delay: 0.2s; }
+.loader-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes blink { 0%,80%,100%{opacity:0.2} 40%{opacity:1} }
 
-/* Setup */
-#setup { max-width: 600px; padding: 60px 0; display: none; }
-#setup h1 { font-size: 18px; margin-bottom: 14px; font-weight: 700; }
-#setup p { font-size: 14px; color: #555; margin-bottom: 10px; line-height: 1.6; }
-#setup pre {
-  background: #f5f5f5; border-radius: 5px; padding: 16px;
-  font-size: 13px; font-family: 'Courier New', monospace; margin: 14px 0;
-  overflow-x: auto; line-height: 1.7;
+.error-card {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 16px 18px;
+  color: #7f1d1d;
+  font-size: 13px;
+  margin: 16px 0;
+  line-height: 1.6;
 }
-code { font-family: 'Courier New', monospace; font-size: 12px; background: #f0f0f0; padding: 1px 5px; border-radius: 3px; }
-.err { color: #dc2626; font-size: 13px; }
+.error-card b { color: #991b1b; }
+.error-card code { background: #fee2e2; padding: 1px 6px; border-radius: 3px; font-family: 'Consolas', monospace; font-size: 12px; }
+.error-card .lab-actions { margin-top: 10px; }
 
-/* ── Right panel — True/False Quick Check ── */
-.tf-panel {
-  background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-  margin-bottom: 20px; width: 100%;
+/* Write-up card (Substack + social) */
+.writeup-card {
+  background: #fff;
+  border: 2px solid #8b5cf6;
+  border-radius: 12px;
+  padding: 22px 24px;
+  margin: 28px 0;
 }
-.tf-panel-header {
-  background: #0f172a; color: #fff;
-  padding: 14px 16px; display: flex; justify-content: space-between; align-items: center;
-  border-radius: 10px 10px 0 0;
+.writeup-head {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #7c3aed;
+  font-weight: 700;
+  margin-bottom: 8px;
 }
-.tf-panel-title { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
-.tf-score-chip { font-size: 11px; background: rgba(255,255,255,0.12); border-radius: 10px; padding: 2px 10px; color: #94a3b8; }
-.tf-body {
-  padding: 0 16px 14px;
-  max-height: 62vh;
+.writeup-tag { font-size: 13px; color: #475569; margin-bottom: 14px; line-height: 1.6; }
+.writeup-section {
+  margin: 16px 0;
+  padding: 16px 18px;
+  background: #faf5ff;
+  border-radius: 8px;
+}
+.writeup-label {
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #7c3aed;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.writeup-title { font-size: 19px; font-weight: 800; color: #0f172a; margin-bottom: 10px; line-height: 1.35; letter-spacing: -0.2px; }
+.writeup-body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: #1e293b;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  background: #fff;
+  padding: 14px 16px;
+  border-radius: 6px;
+  border: 1px solid #e9d5ff;
+  max-height: 520px;
   overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: #e2e8f0 transparent;
+  margin: 0;
 }
-.tf-body::-webkit-scrollbar { width: 4px; }
-.tf-body::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 3px; }
-.tf-q {
-  border-bottom: 1px solid #f1f5f9; padding: 11px 0;
-}
-.tf-q:last-child { border-bottom: none; }
-.tf-q-text { font-size: 13px; color: #1e293b; line-height: 1.5; margin-bottom: 8px; font-weight: 500; }
-.tf-buttons { display: flex; gap: 8px; }
-.tf-btn {
-  font-size: 12px; font-weight: 600; padding: 4px 16px; border-radius: 5px;
-  border: 1.5px solid #e2e8f0; background: #f8fafc; cursor: pointer;
-  transition: all 0.12s; color: #475569;
-}
-.tf-btn:hover { border-color: #94a3b8; background: #f1f5f9; }
-.tf-btn.correct { background: #dcfce7; border-color: #16a34a; color: #15803d; }
-.tf-btn.wrong   { background: #fee2e2; border-color: #dc2626; color: #dc2626; }
-.tf-btn.neutral { opacity: 0.4; }
-.tf-explanation {
-  font-size: 12px; color: #475569; line-height: 1.5; margin-top: 7px;
-  background: #f8fafc; border-radius: 5px; padding: 7px 10px;
-  border-left: 3px solid #e2e8f0; display: none;
-}
-.tf-explanation.show { display: block; }
-.tf-explanation.correct-exp { border-color: #16a34a; }
-.tf-explanation.wrong-exp   { border-color: #dc2626; }
-.tf-empty { padding: 20px 16px; font-size: 13px; color: #aaa; text-align: center; }
-.tf-generating { padding: 20px 16px; font-size: 13px; color: #aaa; text-align: center; }
-.tf-reset { width: 100%; margin-top: 12px; font-size: 12px; color: #64748b; border-color: #e2e8f0; }
+.writeup-meta { font-size: 11.5px; color: #7c3aed; margin-top: 10px; }
 
-/* Scores panel in sidebar */
-.scores-panel {
-  background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
-  padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+.hide { display: none !important; }
+
+@media (max-width: 900px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar { position: static; max-height: none; }
+  .main { padding: 20px; }
 }
-.scores-panel h2 { margin-bottom: 14px; }
-.score-row {
-  display: flex; align-items: center; gap: 8px; margin-bottom: 9px;
-}
-.score-row:last-child { margin-bottom: 0; }
-.score-row-name { font-size: 12px; color: #64748b; flex: 1; }
-.score-row-bar { flex: 2; height: 5px; background: #f1f5f9; border-radius: 3px; overflow: hidden; }
-.score-row-fill { height: 100%; border-radius: 3px; transition: width 0.5s; }
-.score-row-val { font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; width: 28px; text-align: right; }
 </style>
 </head>
 <body>
-
-<div id="setup">
-  <h1>One-time setup</h1>
-  <p>Create <code>config.js</code> in the same folder (copy from <code>config.template.js</code>):</p>
-  <pre>window.CONFIG = {
-  PROXY_URL:    'http://localhost:5001',
-  GITHUB_TOKEN: 'ghp_...',
-  GITHUB_REPO:  'tkandhati/AI-Engineer',
-  PLAN_START:   '2025-04-01'
-};</pre>
-  <p>Run <code>start.bat</code> to launch proxy + page server. Your Anthropic key goes in <code>apikey.txt</code>.</p>
-</div>
-
-<div id="loading">
-  <div class="load-brand">AI Engineer Daily</div>
-  <div class="load-sub">Month <span id="loadMonth">—</span> of 18 · RAG for Regulated Industries</div>
-  <div class="load-status" id="loadStatus">Starting up…</div>
-  <div class="load-dots"><span class="dot">●</span><span class="dot">●</span><span class="dot">●</span></div>
-</div>
-
-<div id="main">
-  <div class="hdr">
-    <div>
-      <div class="hdr-title">AI Engineer</div>
-      <div class="hdr-sub" id="monthTag"></div>
-    </div>
-    <div class="hdr-date" id="dateTag"></div>
-  </div>
-
-  <!-- Weekly theme card — spans full width above grid -->
-  <div class="week-theme-card" id="weekThemeEl"></div>
-
-  <!-- Weekly synthesis banner -->
-  <div class="wk-banner" id="wkBanner" style="display:none">
-    <span>Weekly synthesis ready — <strong id="wkCount">0</strong> labs done this week</span>
-    <button onclick="runWeeklyEval()">Synthesize now</button>
-  </div>
-
-  <div class="main-grid">
-    <!-- ── Left column ── -->
-    <div class="left-col">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-        <h2 style="margin-bottom:0">Today's Deep Brief</h2>
-        <button id="briefRefreshBtn" onclick="refreshBrief()" style="font-size:12px;padding:4px 12px;color:#64748b;border-color:#e2e8f0">↻ New angle</button>
-      </div>
-      <div class="brief-card" id="briefEl"></div>
-
-      <hr>
-
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-        <h2 style="margin-bottom:0">This Week's Labs</h2>
-        <span id="weekLabsStatus" style="font-size:12px;color:#94a3b8"></span>
-      </div>
-      <div id="labsEl"></div>
-
-      <hr>
-
-      <h2>Submit for Review</h2>
-      <div class="blog-card">
-        <p style="font-size:13px;color:#888;margin-bottom:12px">Paste a blog post, article draft, or any writing you did. Claude will assess it against your plan and update your Public Voice score.</p>
-        <textarea class="qta" id="blogInput" style="min-height:120px" placeholder="Paste your blog post or article here..."></textarea>
-        <button class="primary" onclick="assessBlog()">Assess my writing</button>
-        <div id="blogResult"></div>
-      </div>
-
-      <div class="footer">
-        <span id="streakEl"></span>
-        <span>·</span>
-        <span id="syncEl"></span>
-      </div>
-    </div>
-
-    <!-- ── Right column ── -->
-    <div class="right-col">
-      <!-- True / False quick check -->
-      <div class="tf-panel">
-        <div class="tf-panel-header">
-          <span class="tf-panel-title">Quick Check — T / F</span>
-          <div style="display:flex;align-items:center;gap:8px">
-            <span class="tf-score-chip" id="tfScoreChip">—</span>
-            <button onclick="resetTF()" style="font-size:11px;padding:2px 8px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#94a3b8;border-radius:4px;cursor:pointer" title="New set of questions">↻</button>
-          </div>
-        </div>
-        <div id="tfBody">
-          <div class="tf-generating">Loads after today's brief…</div>
-        </div>
-      </div>
-
-      <!-- Skill scores sidebar -->
-      <div class="scores-panel">
-        <h2>Skill Scores</h2>
-        <div id="scoresEl"></div>
-      </div>
-    </div>
-  </div>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <main class="main" id="main"></main>
 </div>
 
 <script>
-// ── Constants ─────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════════════════════════════════════════
+const PROXY_URL = (window.CONFIG && window.CONFIG.PROXY_URL) || 'http://localhost:5001';
+const OPUS   = 'claude-opus-4-7';
+const SONNET = 'claude-sonnet-4-6';
+const STATE_KEY = 'aieng_v1';
 
-const KEY = 'aigrow_v5';
+// ═══════════════════════════════════════════════════════════════════════════
+//  CURRICULUM  —  8 categories × 5-6 subtopics
+// ═══════════════════════════════════════════════════════════════════════════
+const CURRICULUM = [
+  {
+    id: 'foundations',
+    name: 'Foundations of LLMs',
+    desc: 'Just enough mental models to build confidently — not research depth',
+    subtopics: [
+      { id: 'foundations.tokenization', name: 'Tokenization & BPE' },
+      { id: 'foundations.transformer',  name: 'Transformer & attention' },
+      { id: 'foundations.embeddings',   name: 'Embeddings & semantic space' },
+      { id: 'foundations.context-kv',   name: 'Context windows & KV cache' },
+      { id: 'foundations.sampling',     name: 'Sampling & decoding' },
+      { id: 'foundations.multimodal',   name: 'Multimodal models (VLMs)' },
+    ],
+  },
+  {
+    id: 'prompt',
+    name: 'Prompt & Context Engineering',
+    desc: 'Getting the most out of a model without training it',
+    subtopics: [
+      { id: 'prompt.patterns',       name: 'Prompt patterns (CoT, ReAct, few-shot)' },
+      { id: 'prompt.structured',     name: 'Structured outputs & tool use' },
+      { id: 'prompt.caching',        name: 'Prompt caching & cost tricks' },
+      { id: 'prompt.packing',        name: 'Context packing & budget' },
+      { id: 'prompt.injection',      name: 'Prompt injection defense' },
+    ],
+  },
+  {
+    id: 'rag',
+    name: 'RAG Systems',
+    desc: 'Retrieval-augmented generation — production patterns',
+    subtopics: [
+      { id: 'rag.parsing',     name: 'Document parsing & data prep' },
+      { id: 'rag.chunking',    name: 'Chunking strategies' },
+      { id: 'rag.retrieval',   name: 'Embeddings & hybrid retrieval' },
+      { id: 'rag.rerankers',   name: 'Rerankers' },
+      { id: 'rag.advanced',    name: 'Advanced RAG (HyDE, multi-query, parent-child)' },
+      { id: 'rag.agentic',     name: 'Agentic & graph RAG' },
+      { id: 'rag.evals',       name: 'RAG evaluation' },
+    ],
+  },
+  {
+    id: 'evals',
+    name: 'Evals & Quality',
+    desc: 'Measuring what matters — the hottest skill in AI',
+    subtopics: [
+      { id: 'evals.design',          name: 'Eval design & failure modes' },
+      { id: 'evals.judge',           name: 'LLM-as-judge' },
+      { id: 'evals.error-analysis',  name: 'Error analysis & manual review' },
+      { id: 'evals.golden-sets',     name: 'Golden datasets & regression suites' },
+      { id: 'evals.online',          name: 'Offline vs online evals' },
+      { id: 'evals.ab',              name: 'A/B testing in LLM products' },
+    ],
+  },
+  {
+    id: 'finetune',
+    name: 'Fine-tuning & Post-training',
+    desc: 'Teach the model what prompting cannot',
+    subtopics: [
+      { id: 'finetune.when',     name: 'When to fine-tune vs prompt' },
+      { id: 'finetune.sft-lora', name: 'SFT with LoRA / QLoRA' },
+      { id: 'finetune.synth',    name: 'Synthetic data generation' },
+      { id: 'finetune.dpo',      name: 'DPO & preference optimization' },
+      { id: 'finetune.grpo',     name: 'GRPO & reasoning training' },
+      { id: 'finetune.reward',   name: 'Reward modeling' },
+    ],
+  },
+  {
+    id: 'inference',
+    name: 'Inference & Serving',
+    desc: 'Fast, cheap, reliable at scale',
+    subtopics: [
+      { id: 'inference.engines',      name: 'Inference engines (vLLM, SGLang, TGI)' },
+      { id: 'inference.quantization', name: 'Quantization (GGUF, AWQ, GPTQ)' },
+      { id: 'inference.kv-paged',     name: 'KV cache & paged attention' },
+      { id: 'inference.batching',     name: 'Continuous batching' },
+      { id: 'inference.speculative',  name: 'Speculative decoding' },
+      { id: 'inference.cost',         name: 'Cost & latency optimization' },
+      { id: 'inference.local',        name: 'Small & local models (on-device)' },
+    ],
+  },
+  {
+    id: 'agents',
+    name: 'Agents & Orchestration',
+    desc: 'From single calls to multi-step reasoning',
+    subtopics: [
+      { id: 'agents.control-loops', name: 'Agent control loops (ReAct, plan-execute)' },
+      { id: 'agents.tool-use',      name: 'Tool use & function calling' },
+      { id: 'agents.memory',        name: 'Agent memory (short, long, episodic)' },
+      { id: 'agents.multi',         name: 'Multi-agent patterns' },
+      { id: 'agents.langgraph',     name: 'LangGraph & state machines' },
+      { id: 'agents.eval',          name: 'Agent evaluation' },
+      { id: 'agents.coding',        name: 'Coding agents & computer use' },
+    ],
+  },
+  {
+    id: 'llmops',
+    name: 'LLMOps & Production',
+    desc: 'Ship, watch, govern, survive incidents',
+    subtopics: [
+      { id: 'llmops.observability', name: 'Observability (tracing, Langfuse, Arize)' },
+      { id: 'llmops.guardrails',    name: 'Guardrails & safety' },
+      { id: 'llmops.cost',          name: 'Cost governance' },
+      { id: 'llmops.deployment',    name: 'Deployment (K8s, containers, serverless)' },
+      { id: 'llmops.rollouts',      name: 'Rollouts & canaries' },
+      { id: 'llmops.incidents',     name: 'Incident response for LLM apps' },
+      { id: 'llmops.streaming',     name: 'Streaming & UX patterns' },
+    ],
+  },
+];
 
-// ── Curated source registry (updated monthly) ─────────────────────────────────
-// Last updated: 2026-04
-
-const CURATED = {
-  rag: {
-    tools: ['LangChain','LlamaIndex','Haystack','RAGAS','ChromaDB','Qdrant','Weaviate','pgvector','txtai','DSPy'],
-    regulated: ['presidio (PII detection)','structured audit logging','citation enforcement','HIPAA-compliant chunking','metadata filtering','access-control-aware retrieval'],
-    refs: [
-      {t:'LangChain RAG tutorial',         u:'https://python.langchain.com/docs/tutorials/rag/'},
-      {t:'LlamaIndex RAG guide',           u:'https://docs.llamaindex.ai/en/stable/understanding/rag/'},
-      {t:'RAGAS evaluation framework',     u:'https://docs.ragas.io/'},
-      {t:'Weaviate hybrid search',         u:'https://weaviate.io/developers/weaviate/search/hybrid'},
-      {t:'Qdrant filtering guide',         u:'https://qdrant.tech/documentation/concepts/filtering/'},
-      {t:'Microsoft Presidio (PII)',       u:'https://microsoft.github.io/presidio/'},
-      {t:'DSPy (programmatic prompting)',  u:'https://dspy-docs.vercel.app/'},
-    ]
-  },
-  eval: {
-    tools: ['RAGAS','promptfoo','Braintrust','Arize Phoenix','DeepEval','TruLens','UpTrain','Langfuse evals'],
-    refs: [
-      {t:'promptfoo docs',                 u:'https://promptfoo.dev/docs/'},
-      {t:'DeepEval (confident-ai)',        u:'https://docs.confident-ai.com/'},
-      {t:'Braintrust eval guide',         u:'https://www.braintrustdata.com/docs'},
-      {t:'Arize Phoenix tracing+evals',   u:'https://docs.arize.com/phoenix'},
-      {t:'TruLens RAG evaluation',        u:'https://www.trulens.org/trulens_eval/'},
-      {t:'RAGAS metrics explained',       u:'https://docs.ragas.io/en/stable/concepts/metrics/'},
-    ]
-  },
-  finetune: {
-    tools: ['Unsloth','Axolotl','LLaMA-Factory','PEFT','TRL','QLoRA','GRPO','DPO'],
-    refs: [
-      {t:'Unsloth (fast fine-tuning)',     u:'https://github.com/unslothai/unsloth'},
-      {t:'HuggingFace PEFT docs',         u:'https://huggingface.co/docs/peft'},
-      {t:'TRL — DPO trainer',             u:'https://huggingface.co/docs/trl/dpo_trainer'},
-      {t:'TRL — GRPO trainer',            u:'https://huggingface.co/docs/trl/grpo_trainer'},
-      {t:'Axolotl config guide',          u:'https://github.com/OpenAccess-AI-Collective/axolotl'},
-      {t:'LLaMA-Factory',                 u:'https://github.com/hiyouga/LLaMA-Factory'},
-      {t:'QLoRA paper',                   u:'https://arxiv.org/abs/2305.14314'},
-    ]
-  },
-  inference: {
-    tools: ['vLLM','TGI','llama.cpp','Ollama','Modal','BentoML','Ray Serve','Triton','SGLang'],
-    refs: [
-      {t:'vLLM docs',                     u:'https://docs.vllm.ai/'},
-      {t:'TGI (text-generation-inference)',u:'https://huggingface.co/docs/text-generation-inference'},
-      {t:'Modal — serverless GPU',        u:'https://modal.com/docs/guide'},
-      {t:'BentoML serving guide',         u:'https://docs.bentoml.com/'},
-      {t:'SGLang (structured generation)',u:'https://github.com/sgl-project/sglang'},
-      {t:'LLM inference optimization',   u:'https://www.anyscale.com/blog/continuous-batching-llm-inference'},
-    ]
-  },
-  k8s: {
-    tools: ['kind','k3s','KServe','Ray Serve','Helm','ArgoCD','Karpenter','KEDA'],
-    refs: [
-      {t:'KServe (model serving on K8s)', u:'https://kserve.github.io/website/'},
-      {t:'Ray Serve on K8s',              u:'https://docs.ray.io/en/latest/serve/production-guide/kubernetes.html'},
-      {t:'kind quickstart',               u:'https://kind.sigs.k8s.io/docs/user/quick-start/'},
-      {t:'KEDA (event-driven autoscaling)',u:'https://keda.sh/docs/'},
-      {t:'Helm chart best practices',     u:'https://helm.sh/docs/chart_best_practices/'},
-      {t:'ArgoCD GitOps guide',           u:'https://argo-cd.readthedocs.io/en/stable/'},
-    ]
-  },
-  obs: {
-    tools: ['Langfuse','Arize Phoenix','Evidently AI','OpenTelemetry','WhyLabs','Prometheus','Grafana'],
-    refs: [
-      {t:'Langfuse LLM observability',    u:'https://langfuse.com/docs'},
-      {t:'Evidently AI (drift detection)',u:'https://docs.evidentlyai.com/'},
-      {t:'OpenTelemetry for LLMs',       u:'https://opentelemetry.io/docs/instrumentation/python/'},
-      {t:'Arize Phoenix (tracing)',       u:'https://docs.arize.com/phoenix'},
-      {t:'WhyLabs monitoring',            u:'https://docs.whylabs.ai/'},
-      {t:'Prometheus + Grafana stack',    u:'https://grafana.com/docs/grafana/latest/getting-started/get-started-grafana-prometheus/'},
-    ]
-  },
-  voice: {
-    inspire: ['Eugene Yan','Chip Huyen','Sebastian Raschka','Jason Liu','Hamel Husain'],
-    refs: [
-      {t:'Eugene Yan — applied ML writing',u:'https://eugeneyan.com/writing/'},
-      {t:'Chip Huyen blog',               u:'https://huyenchip.com/blog/'},
-      {t:'Sebastian Raschka newsletter',  u:'https://magazine.sebastianraschka.com/'},
-      {t:'Jason Liu — RAG and structured outputs',u:'https://jxnl.co/writing/'},
-      {t:'Hamel Husain — LLM evals',     u:'https://hamel.dev/'},
-    ]
-  },
-  design: {
-    refs: [
-      {t:'Designing ML Systems (Chip Huyen)',   u:'https://www.oreilly.com/library/view/designing-machine-learning/9781098107956/'},
-      {t:'ML system design patterns',           u:'https://eugeneyan.com/writing/ml-design-docs/'},
-      {t:'The Pragmatic Engineer — AI systems', u:'https://newsletter.pragmaticengineer.com/'},
-      {t:'AWS Well-Architected ML lens',        u:'https://docs.aws.amazon.com/wellarchitected/latest/machine-learning-lens/machine-learning-lens.html'},
-    ]
-  },
-  free_llm: [
-    {name:'Claude API (you have it)',  url:'https://console.anthropic.com',      note:'Best for RAG tasks, use claude-haiku-4-5 to save cost'},
-    {name:'Groq — llama3/mixtral',    url:'https://console.groq.com',            note:'Free tier, extremely fast inference'},
-    {name:'Google AI Studio',         url:'https://aistudio.google.com',         note:'Gemini free tier, generous limits'},
-    {name:'Together AI',              url:'https://api.together.xyz',            note:'Free $25 credit on signup'},
-    {name:'Colab T4 GPU',            url:'https://colab.research.google.com',   note:'Free GPU, 4–6hr sessions, ideal for fine-tuning labs'},
-    {name:'Kaggle GPU (P100)',        url:'https://www.kaggle.com/code',         note:'Free 30hr/week GPU, no session timeout'},
+// ═══════════════════════════════════════════════════════════════════════════
+//  SOURCES  —  kept in sync with memory/reference_learning_catalog.md
+// ═══════════════════════════════════════════════════════════════════════════
+const SOURCES = {
+  tier1: [
+    { name: 'Chip Huyen',        why: 'AI Engineering book, systems view',                   url: 'https://huyenchip.com' },
+    { name: 'Hamel Husain',      why: 'Evals, error analysis',                               url: 'https://hamel.dev' },
+    { name: 'Shreya Shankar',    why: 'Evals, LLM pipelines',                                url: 'https://www.sh-reya.com' },
+    { name: 'Andrej Karpathy',   why: 'Foundations, build-from-scratch',                     url: 'https://karpathy.ai' },
+    { name: 'Jay Alammar',       why: 'Illustrated transformer, Hands-On LLMs book',         url: 'https://jalammar.github.io' },
+    { name: 'Simon Willison',    why: 'Pragmatic builder, context eng',                      url: 'https://simonwillison.net' },
+    { name: 'Lilian Weng',       why: 'Deep surveys (agents, hallucination)',                url: 'https://lilianweng.github.io' },
+    { name: 'Eugene Yan',        why: 'Applied ML at Amazon',                                url: 'https://eugeneyan.com' },
+    { name: 'Jason Liu',         why: 'Structured outputs (Instructor), RAG',                url: 'https://jxnl.co' },
+    { name: 'Jerry Liu',         why: 'LlamaIndex, advanced RAG',                            url: 'https://www.llamaindex.ai' },
+    { name: 'Harrison Chase',    why: 'LangChain/LangGraph, agents',                         url: 'https://blog.langchain.dev' },
+    { name: 'Lance Martin',      why: 'RAG-from-scratch, agent evals',                       url: 'https://rlancemartin.github.io' },
+    { name: 'Philipp Schmid',    why: 'HF tutorials — actually runnable',                    url: 'https://www.philschmid.de' },
+    { name: 'Sebastian Raschka', why: 'LLMs from scratch',                                   url: 'https://sebastianraschka.com' },
+    { name: 'Nathan Lambert',    why: 'Interconnects, RLHF book — post-training authority',  url: 'https://www.interconnects.ai' },
+    { name: 'Leandro von Werra', why: 'HuggingFace TRL maintainer — SFT/DPO/GRPO in practice', url: 'https://huggingface.co/lvwerra' },
+    { name: 'Abi Aryan',         why: 'LLMOps, GPU engineering',                             url: 'https://abiaryan.com' },
   ],
-
-  // ── Writers & blogs to follow (fetched via proxy RSS) ───────────────────────
-  feeds: [
-    // ── Top individual writers (blogs) ────────────────────────────────────────
-    {name:'Sebastian Raschka',    url:'https://magazine.sebastianraschka.com/feed',              dims:['finetune','inference']},
-    {name:'Eugene Yan',           url:'https://eugeneyan.com/atom.xml',                          dims:['rag','eval','design']},
-    {name:'Chip Huyen',           url:'https://huyenchip.com/feed.xml',                          dims:['inference','design']},
-    {name:'Jason Liu (jxnl)',     url:'https://jxnl.co/writing/feed.xml',                        dims:['rag','eval']},
-    {name:'Hamel Husain',         url:'https://hamel.dev/feed.rss',                              dims:['eval','finetune']},
-    {name:'Nathan Lambert',       url:'https://www.interconnects.ai/feed',                       dims:['finetune','inference']},
-    {name:'Simon Willison',       url:'https://simonwillison.net/atom/everything/',               dims:['rag','design']},
-    {name:'Lilian Weng',          url:'https://lilianweng.github.io/index.xml',                  dims:['finetune','design']},
-    {name:'Shreya Shankar',       url:'https://www.shreya-shankar.com/rss.xml',                  dims:['eval','obs']},
-    {name:'Vicki Boykis',         url:'https://vickiboykis.com/index.xml',                       dims:['inference','design']},
-    {name:'Maxime Labonne',       url:'https://mlabonne.github.io/blog/feed.xml',                dims:['finetune','inference']},
-    {name:'Philipp Schmid (HF)',  url:'https://www.philschmid.de/feed.xml',                      dims:['finetune','inference']},
-    // ── Substacks — must-read AI engineering newsletters ─────────────────────
-    {name:'Latent Space (swyx)',  url:'https://www.latent.space/feed',                           dims:['inference','design']},
-    {name:'Import AI (J.Clark)',  url:'https://importai.substack.com/feed',                      dims:['finetune','design']},
-    {name:'Decoding ML',          url:'https://decodingml.substack.com/feed',                    dims:['rag','obs','inference']},
-    {name:'Cameron Wolfe (DL)',   url:'https://cameronrwolfe.substack.com/feed',                 dims:['finetune','inference']},
-    {name:'The Gradient',         url:'https://thegradient.pub/rss/',                            dims:['finetune','design']},
-    {name:'NLP News (S.Ruder)',   url:'https://nlpnews.substack.com/feed',                       dims:['rag','finetune']},
-    {name:'The Batch (Andrew Ng)',url:'https://www.deeplearning.ai/the-batch/feed/',             dims:['design','finetune']},
-    {name:'Last Week in AI',      url:'https://lastweekin.ai/feed',                              dims:['design','inference']},
-    {name:'Algorithmic Bridge',   url:'https://thealgorithmicbridge.substack.com/feed',          dims:['design','finetune']},
-    {name:'Davis Blalock',        url:'https://dblalock.substack.com/feed',                      dims:['inference','finetune']},
-    // ── Tool & company blogs — direct signal on what's shipping ───────────────
-    {name:'LangChain Blog',       url:'https://blog.langchain.dev/rss/',                         dims:['rag']},
-    {name:'LlamaIndex Blog',      url:'https://medium.com/feed/llamaindex',                      dims:['rag']},
-    {name:'Hugging Face Blog',    url:'https://huggingface.co/blog/feed.xml',                    dims:['finetune','inference']},
-    {name:'Weaviate Blog',        url:'https://weaviate.io/blog/feed.xml',                       dims:['rag']},
-    {name:'Qdrant Blog',          url:'https://qdrant.tech/blog/index.xml',                      dims:['rag']},
-    {name:'Weights & Biases',     url:'https://wandb.ai/fully-connected/feed',                   dims:['eval','obs']},
-    {name:'Anyscale (Ray)',        url:'https://www.anyscale.com/blog/rss.xml',                   dims:['inference','k8s']},
-    {name:'Modal Blog',           url:'https://modal.com/blog/feed',                             dims:['inference']},
-    {name:'Evidently AI',         url:'https://www.evidentlyai.com/blog/rss.xml',                dims:['obs','eval']},
-    {name:'Arize AI',             url:'https://arize.com/blog/feed/',                            dims:['obs']},
-    {name:'Langfuse Blog',        url:'https://langfuse.com/blog/feed.xml',                      dims:['obs']},
-    {name:'vLLM Blog',            url:'https://blog.vllm.ai/feed.xml',                           dims:['inference']},
-    {name:'Cohere Blog',          url:'https://cohere.com/blog/rss',                             dims:['rag','inference']},
-    {name:'Mistral Blog',         url:'https://mistral.ai/news/rss',                             dims:['inference','finetune']},
-    {name:'Deeplearning.ai',      url:'https://www.deeplearning.ai/blog/feed/',                  dims:['finetune','design']},
-    {name:'XDA Developers',       url:'https://www.xda-developers.com/feed/',                    dims:['inference','design']},
-    {name:'Towards Data Science', url:'https://towardsdatascience.com/feed',                     dims:['rag','eval','finetune']},
-    {name:'The AI Edge (Aman)',   url:'https://theaiedge.substack.com/feed',                     dims:['inference','design']},
-    {name:'Ahead of AI (S.R.)',   url:'https://magazine.sebastianraschka.com/feed',              dims:['finetune','inference']},
-    {name:'Weights of Evidence',  url:'https://weightsofevidence.substack.com/feed',             dims:['eval','rag']},
+  tier2: [
+    { name: 'Latent Space',              why: 'swyx + Alessio, #1 AI Eng podcast', url: 'https://www.latent.space' },
+    { name: 'The Agent Stack',           why: 'Vinoth — agent deep dives',          url: 'https://theagentstack.substack.com' },
+    { name: "LLM Engineer's Handbook",   why: 'Paul Iusztin + Maxime Labonne',      url: 'https://github.com/PacktPublishing/LLM-Engineers-Handbook' },
+    { name: 'Omar Khattab',              why: 'DSPy creator — programmatic prompting', url: 'https://omarkhattab.com' },
   ],
+  repos: [
+    { name: 'NirDiamant/RAG_Techniques', why: '26K+ stars, per-technique notebooks', url: 'https://github.com/NirDiamant/RAG_Techniques' },
+    { name: 'RAGAS',                     why: 'RAG eval framework',                  url: 'https://docs.ragas.io' },
+    { name: 'vLLM',                      why: 'Open inference engine',                url: 'https://docs.vllm.ai' },
+    { name: 'SGLang',                    why: 'Structured gen + fast inference',      url: 'https://docs.sglang.ai' },
+    { name: 'Instructor',                why: 'Structured outputs any LLM',           url: 'https://python.useinstructor.com' },
+    { name: 'LangGraph',                 why: 'Agent state machines',                 url: 'https://langchain-ai.github.io/langgraph/' },
+    { name: 'Langfuse',                  why: 'Open LLM observability',               url: 'https://langfuse.com' },
+    { name: 'Anthropic Cookbook',        why: 'Prompt caching, tool use, evals patterns', url: 'https://github.com/anthropics/anthropic-cookbook' },
+    { name: 'OpenAI Cookbook',           why: 'Structured outputs, function calling',     url: 'https://cookbook.openai.com' },
+    { name: 'HuggingFace blog',          why: 'Fine-tuning & inference tutorials',        url: 'https://huggingface.co/blog' },
+    { name: 'DSPy',                      why: 'Programmatic prompting (Stanford)',        url: 'https://github.com/stanfordnlp/dspy' },
+    { name: 'llama.cpp',                 why: 'Local inference, GGUF ecosystem',          url: 'https://github.com/ggerganov/llama.cpp' },
+  ],
+};
 
-  // ── Progression ladders — where the engineer is and where to take them ───────
-  progression: {
-    inference: {
-      goal: 'pro by Month 12',
-      current: 'basic',
-      ladder: [
-        {
-          level: 'basic', score: '0–25',
-          knows: 'Can call an OpenAI-compatible API. Knows what a token is.',
-          labs: ['Run vLLM locally with a small model (Qwen-1.5B)', 'Understand request/response latency vs throughput', 'Serve a model with Ollama, benchmark with curl']
-        },
-        {
-          level: 'intermediate', score: '26–50',
-          knows: 'Understands batching, quantization basics, KV cache concept.',
-          labs: ['INT4 quantization with bitsandbytes vs GGUF — measure quality loss', 'Continuous batching in vLLM — why it beats static batching', 'Build a simple load tester: requests/sec vs TTFT at different batch sizes', 'Deploy TGI on Colab, tune max_batch_prefill_tokens']
-        },
-        {
-          level: 'advanced', score: '51–75',
-          knows: 'Can tune serving configs for latency/cost tradeoffs. Understands speculative decoding, tensor parallelism.',
-          labs: ['Speculative decoding with a draft model — measure speedup on RAG outputs', 'Tensor parallelism across 2 GPUs with vLLM (use Colab + Kaggle)', 'PagedAttention internals — why KV cache fragmentation matters', 'Build a multi-model router: small model for classification, large for generation', 'Token budget enforcement for regulated outputs (max_tokens per user tier)']
-        },
-        {
-          level: 'pro', score: '76–100',
-          knows: 'Designs production serving architectures. Owns cost-per-token, SLA, and autoscaling.',
-          labs: ['Cost-per-token dashboard across model sizes and quantization levels', 'Autoscaling inference with KEDA on K8s — scale to zero on idle', 'SLA-aware routing: latency budget per request tier', 'Benchmark RAG-specific workloads: long-context retrieval latency vs chunk size', 'Incident runbook for inference degradation in a regulated environment']
-        }
-      ]
-    },
-    rag: {
-      goal: 'production-grade regulated RAG by Month 12',
-      ladder: [
-        { level:'basic',        score:'0–25',  knows:'Can build a basic RAG with LangChain over a PDF.' },
-        { level:'intermediate', score:'26–50', knows:'Handles chunking strategies, hybrid search, basic evals.' },
-        { level:'advanced',     score:'51–75', knows:'Metadata filtering, reranking, citation enforcement, PII handling.' },
-        { level:'pro',          score:'76–100',knows:'Full regulated RAG: HIPAA audit trail, access-control retrieval, eval suite, air-gap deployment.' }
-      ]
-    },
-    eval: {
-      goal: 'build and own eval infra for regulated RAG',
-      ladder: [
-        { level:'basic',        score:'0–25',  knows:'Knows RAGAS exists. Can run a basic eval.' },
-        { level:'intermediate', score:'26–50', knows:'Understands faithfulness, answer relevancy, context recall metrics.' },
-        { level:'advanced',     score:'51–75', knows:'Custom metrics, LLM-as-judge, regression testing on prompt changes.' },
-        { level:'pro',          score:'76–100',knows:'Owns eval infra: CI-integrated, dataset versioned, metrics dashboard, drift detection.' }
-      ]
-    }
+// ═══════════════════════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════════════════════
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STATE_KEY);
+    if (!raw) return { v: 1, subtopics: {} };
+    const s = JSON.parse(raw);
+    if (!s.v) return { v: 1, subtopics: {} };
+    return s;
+  } catch { return { v: 1, subtopics: {} }; }
+}
+function saveState() {
+  try { localStorage.setItem(STATE_KEY, JSON.stringify(S)); }
+  catch (e) { console.warn('localStorage full or blocked', e); }
+}
+let S = loadState();
+
+// Transient view state
+let V = {
+  openCategories: new Set(),
+  activeSub: null,        // full subtopic ref {id, name, catId, catName}
+  activeConcept: 0,       // 0/1/2
+  labOption: 0,           // 0/1
+  qaMode: false,          // show Q&A on active concept
+  labAskBusy: false,
+};
+
+function subMeta(subId) {
+  for (const cat of CURRICULUM) {
+    const sub = cat.subtopics.find(s => s.id === subId);
+    if (sub) return { id: sub.id, name: sub.name, catId: cat.id, catName: cat.name, catDesc: cat.desc };
   }
-};
-
-const DIMS = {
-  rag:       'RAG & Retrieval',
-  eval:      'Eval Infra',
-  finetune:  'Fine-tuning',
-  inference: 'Inference / MLOps',
-  k8s:       'K8s & Infra',
-  obs:       'Observability',
-  voice:     'Public Voice',
-  design:    'System Design'
-};
-
-const PLAT = {
-  colab:   { name:'Colab',   cost:'free',             url:'https://colab.research.google.com' },
-  kaggle:  { name:'Kaggle',  cost:'free',             url:'https://www.kaggle.com/code' },
-  runpod:  { name:'RunPod',  cost:'~$0.20/hr',        url:'https://www.runpod.io' },
-  vastai:  { name:'Vast.ai', cost:'~$0.15/hr',        url:'https://vast.ai' },
-  lambda:  { name:'Lambda',  cost:'~$0.50/hr',        url:'https://lambdalabs.com/service/gpu-cloud' },
-  local:   { name:'Local',   cost:'free',             url:'#' },
-  kind:    { name:'kind',    cost:'free (local K8s)', url:'https://kind.sigs.k8s.io' },
-  ollama:  { name:'Ollama',  cost:'free (local LLM)', url:'https://ollama.ai' }
-};
-
-// ── State ─────────────────────────────────────────────────────────────────────
-
-function weekStartISO() {
-  const d = new Date();
-  const day = d.getDay();
-  // Monday start: subtract days since Monday (0=Sun→6, 1=Mon→0, ..., 6=Sat→5)
-  d.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
-  return d.toISOString().slice(0,10);
+  return null;
 }
 
-function defaults() {
-  return {
-    v: 6,
-    scores: { rag:40, eval:30, finetune:28, inference:20, k8s:32, obs:33, voice:18, design:42 },
-    // Weekly plan — constant for the week
-    weekTheme: null,   // { title, description, dim }
-    weekLabs: [],      // 5 progressive labs for the week
-    weekGenDate: null, // ISO week-start date when labs were generated
-    weekDoneIds: [],   // labs completed this week
-    // All-time
-    doneIds: [],
-    streak: 0, lastActive: null,
-    // Daily brief — refreshes every day
-    brief: null, briefDate: null,
-    sources: {},
-    lastSync: null, lastWeekEval: null,
-    dimAnalysis: null,
-    evidence: []
+function ensureSubState(subId) {
+  if (!S.subtopics[subId]) S.subtopics[subId] = {
+    content: null,
+    concepts: {},
+    lab: { selectedOption: 0, chat: [], status: 'notstarted', prereqAck: false },
+    writeup: { status: 'notgenerated', substack: null, social: null, generated_at: null },
+    status: 'notstarted',
   };
+  // Backfill for state that predates writeup field
+  if (!S.subtopics[subId].writeup) {
+    S.subtopics[subId].writeup = { status: 'notgenerated', substack: null, social: null, generated_at: null };
+  }
+  return S.subtopics[subId];
 }
 
-let S;
-function load() {
-  try {
-    const r = localStorage.getItem(KEY);
-    const parsed = r ? JSON.parse(r) : null;
-    // Version migration: v5 → v6 resets to clean state
-    S = (parsed && parsed.v === 6) ? parsed : defaults();
-  } catch(e) { S = defaults(); }
-}
-function save() { localStorage.setItem(KEY, JSON.stringify(S)); }
-function isoToday() { return new Date().toISOString().slice(0,10); }
-
-function planMonth() {
-  if (!window.CONFIG?.PLAN_START) return 12;
-  return Math.max(1, Math.floor((Date.now()-new Date(window.CONFIG.PLAN_START).getTime())/(1000*60*60*24*30)));
+function recomputeSubStatus(subId) {
+  const st = S.subtopics[subId];
+  if (!st || !st.content) return 'notstarted';
+  const concepts = st.content.concepts || [];
+  const allPassed = concepts.every(c => st.concepts[c.id]?.status === 'passed');
+  const labDone = st.lab.status === 'done';
+  if (allPassed && labDone) st.status = 'done';
+  else if (Object.keys(st.concepts).length || st.lab.status !== 'notstarted') st.status = 'inprogress';
+  else st.status = 'notstarted';
+  return st.status;
 }
 
-// ── Claude ────────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════════════════════════
+function esc(s) {
+  if (s === null || s === undefined) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
-async function claude(system, user, maxTokens=1800) {
-  const url = (window.CONFIG.PROXY_URL || 'http://localhost:5001') + '/claude';
-  const r = await fetch(url, {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:maxTokens, system, messages:[{role:'user',content:user}] })
+function extractJSON(raw) {
+  if (!raw) throw new Error('Empty response');
+  let t = String(raw).trim();
+  // Strip markdown fences if present
+  if (t.startsWith('```')) {
+    t = t.replace(/^```(?:json|JSON)?\s*\n?/, '').replace(/\n?```\s*$/, '');
+    t = t.trim();
+  }
+  const first = t.indexOf('{');
+  if (first < 0) throw new Error('No JSON object found in response');
+  let depth = 0, inStr = false, esc2 = false, end = -1;
+  for (let i = first; i < t.length; i++) {
+    const c = t[i];
+    if (esc2) { esc2 = false; continue; }
+    if (c === '\\' && inStr) { esc2 = true; continue; }
+    if (c === '"') { inStr = !inStr; continue; }
+    if (inStr) continue;
+    if (c === '{') depth++;
+    else if (c === '}') { depth--; if (depth === 0) { end = i; break; } }
+  }
+  if (end < 0) throw new Error('Unterminated JSON object — response may be truncated');
+  return JSON.parse(t.slice(first, end + 1));
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  CLAUDE API
+// ═══════════════════════════════════════════════════════════════════════════
+async function callClaude({ model, system, messages, max_tokens, temperature = 0.4 }) {
+  const body = { model, max_tokens, messages, temperature };
+  if (system) body.system = system;
+  const res = await fetch(PROXY_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
   });
-  if (!r.ok) throw new Error(`Claude ${r.status}: ${await r.text()}`);
-  return (await r.json()).content[0].text;
-}
-
-function repairJSON(s) {
-  // Character-by-character scan: replace literal newlines inside JSON strings with space.
-  // Much more reliable than regex for detecting string vs non-string positions.
-  let out = '', inStr = false, esc = false;
-  for (let i = 0; i < s.length; i++) {
-    const c = s[i];
-    if (esc)           { out += c; esc = false; continue; }
-    if (c === '\\' && inStr) { out += c; esc = true; continue; }
-    if (c === '"')     { inStr = !inStr; out += c; continue; }
-    if (inStr && (c === '\n' || c === '\r')) { out += ' '; continue; }
-    out += c;
+  const text = await res.text();
+  if (!res.ok) {
+    let msg = text;
+    try { msg = JSON.parse(text)?.error?.message || text; } catch {}
+    throw new Error(`Claude API ${res.status}: ${msg.slice(0, 400)}`);
   }
-  return out;
-}
-
-function parseJSON(raw) {
-  const s = raw.replace(/^```[a-z]*\n?/,'').replace(/\n?```$/,'').trim();
-  try { return JSON.parse(s); } catch(e) {
-    try { return JSON.parse(repairJSON(s)); } catch(e2) {
-      throw new Error(e.message); // throw original error for clarity
-    }
+  let j;
+  try { j = JSON.parse(text); }
+  catch { throw new Error('Proxy returned non-JSON: ' + text.slice(0, 200)); }
+  if (j.error) throw new Error(`Claude: ${j.error.message || JSON.stringify(j.error)}`);
+  if (j.stop_reason === 'max_tokens') {
+    // Surface truncation clearly so generator can retry or fail visibly
+    console.warn('Claude stopped at max_tokens — response may be truncated');
   }
+  const out = j.content?.[0]?.text;
+  if (!out) throw new Error('No text in Claude response: ' + JSON.stringify(j).slice(0, 300));
+  return { text: out, stop_reason: j.stop_reason, usage: j.usage };
 }
 
-function levelFor(score) {
-  return score <= 25 ? 'basic' : score <= 50 ? 'intermediate' : score <= 75 ? 'advanced' : 'pro';
+// ═══════════════════════════════════════════════════════════════════════════
+//  GENERATORS
+// ═══════════════════════════════════════════════════════════════════════════
+function approvedSourcesText() {
+  const all = [...SOURCES.tier1, ...SOURCES.tier2, ...SOURCES.repos];
+  return all.map(s => `- ${s.name}: ${s.url}`).join('\n');
 }
 
-function curatedCtx() {
-  const llm = CURATED.free_llm.map(l=>`  • ${l.name}: ${l.note}`).join('\n');
-  const dims = Object.entries(CURATED).filter(([k])=>DIMS[k]).map(([k,v])=>{
-    const tools = v.tools ? `tools: ${v.tools.slice(0,6).join(', ')}` : '';
-    const regs = v.regulated ? `regulated: ${v.regulated.slice(0,3).join(', ')}` : '';
-    return `  ${DIMS[k]}: ${[tools,regs].filter(Boolean).join(' | ')}`;
-  }).join('\n');
+async function generateSubtopic(meta) {
+  const system = `You are an AI engineering pioneer generating world-class learning content for a senior engineer (20 years experience, transitioning from enterprise sales to production AI). They work ACROSS industries — NEVER frame content as regulated-industry-specific.
 
-  // Progression context for tracked dimensions
-  const prog = Object.entries(CURATED.progression||{}).map(([dim, p])=>{
-    const score = S.scores[dim] || 0;
-    const current = levelFor(score);
-    const ladder = p.ladder || [];
-    const currentStep = ladder.find(l=>l.level===current);
-    const nextStep = ladder[ladder.indexOf(currentStep)+1];
-    return `  ${DIMS[dim]||dim}: currently ${current} (score ${score}) → goal: ${p.goal}
-    Current level knows: ${currentStep?.knows||''}
-    Next level to reach: ${nextStep?.level||'pro'} — ${nextStep?.knows||'already at goal'}`;
-  }).join('\n');
+VOICE — channel (don't quote):
+- Chip Huyen's clarity and systems view
+- Hamel Husain's rigor on evals and error analysis
+- Simon Willison's pragmatism — what actually ships today
+- Andrej Karpathy's first-principles mental models
+- Jason Liu's concrete code-first examples
+- Lance Martin's production RAG patterns
+- Sebastian Raschka's precise explanations
+- Jerry Liu's depth on RAG production
 
-  return `Curated source registry (updated ${CURATED.updated||'monthly'}):\n${dims}\nFree LLM options:\n${llm}\nProgression goals:\n${prog}`;
-}
+QUALITY BAR (non-negotiable):
+- Every claim must be SPECIFIC. Replace "use good chunking" with "use recursive chunking at 512 tokens with 64-token overlap for mixed docs".
+- Every code snippet must run. Real imports, real parameters. No "# your code here", no "..." placeholders.
+- Patterns: "DO X because Y, apply when Z".
+- Antipatterns: "DON'T default to X — it breaks because Y. Instead do Z".
+- Pitfalls: the symptom a learner actually sees, the underlying cause, the concrete fix.
+- Labs run on FREE compute only: Colab T4, Kaggle P100, Groq free tier, local CPU. Plus the Claude key the learner already has.
+- The 2 lab options must differ meaningfully — different tooling, not just different hardware.
+- All source URLs come ONLY from this approved list:
+${approvedSourcesText()}
 
-function ctx() {
-  const month = planMonth();
-  const weak = Object.entries(S.scores).sort((a,b)=>a[1]-b[1]).slice(0,3).map(([k])=>DIMS[k]).join(', ');
-  return `Engineer context:
-- 20 years enterprise experience. Currently Sales at Cognizant (services firm, India).
-- Building toward AI Engineer. 18-month plan. Month ${month} of 18.
-- Specialization: RAG for regulated industries (finance, health, legal).
-- Month 15 target: role transition to Solutions Engineer — AI.
-- Skills scope: RAG with compliance, eval infra, inference serving, fine-tuning, DPO/GRPO, K8s, observability.
-- Skip: ML research, foundation model training, CUDA kernels, robotics, CV depth.
-- Writing: 1 technical post/month from Month 13. All posts from real work.
-Scores (0–100): ${Object.entries(S.scores).map(([k,v])=>`${DIMS[k]}:${v}`).join(', ')}
-Weakest: ${weak} | Labs done: ${S.doneIds.length} | This week: ${S.weekDoneIds.length}
-${curatedCtx()}`;
-}
+Respond with STRICT JSON. No prose before or after. No markdown fences.
 
-// ── Fetch sources ─────────────────────────────────────────────────────────────
-
-async function fetchHN() {
-  const KW = ['llm','rag','ai ','gpt','claude','gemini','llama','mistral','inference','eval','fine-tun',
-    'embedding','vector','retrieval','langchain','agent','hugging','transformer','gpu','kubernetes',
-    'observ','openai','anthropic','model','benchmark','dataset','diffusion'];
-  try {
-    const ids = await fetch('https://hacker-news.firebaseio.com/v0/topstories.json').then(r=>r.json());
-    const items = await Promise.allSettled(ids.slice(0,50).map(id=>
-      fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`).then(r=>r.json())
-    ));
-    return items
-      .filter(r=>r.status==='fulfilled'&&r.value?.title)
-      .map(r=>r.value)
-      .filter(s=>KW.some(k=>s.title.toLowerCase().includes(k)))
-      .slice(0,12)
-      .map(s=>({ title:s.title, url:s.url||`https://news.ycombinator.com/item?id=${s.id}`, score:s.score||0 }));
-  } catch(e){ return []; }
-}
-
-async function fetchArxiv() {
-  try {
-    const q = 'search_query=cat:cs.IR+OR+cat:cs.LG+OR+cat:cs.CL&sortBy=submittedDate&sortOrder=descending&max_results=15';
-    const text = await fetch(`https://export.arxiv.org/api/query?${q}`).then(r=>r.text());
-    const doc = new DOMParser().parseFromString(text,'text/xml');
-    return Array.from(doc.querySelectorAll('entry')).slice(0,10).map(e=>{
-      const title = e.querySelector('title')?.textContent?.trim().replace(/\s+/g,' ')||'';
-      const abstract = e.querySelector('summary')?.textContent?.trim().replace(/\s+/g,' ').slice(0,220)||'';
-      const rawId = e.querySelector('id')?.textContent?.trim()||'';
-      const url = rawId.replace('http://','https://').replace('/abs/','/abs/');
-      return { title, abstract, url };
-    });
-  } catch(e){ return []; }
-}
-
-async function fetchHFPapers() {
-  try {
-    const papers = await fetch('https://huggingface.co/api/daily_papers').then(r=>r.json());
-    return (Array.isArray(papers)?papers:[]).slice(0,8).map(p=>({
-      title: p.paper?.title||'',
-      abstract: (p.paper?.summary||'').replace(/\s+/g,' ').slice(0,220),
-      url: `https://arxiv.org/abs/${p.paper?.id||''}`,
-      upvotes: p.totalUpvotes||0
-    })).filter(p=>p.title);
-  } catch(e){ return []; }
-}
-
-async function fetchFeeds() {
-  const proxy = window.CONFIG.PROXY_URL || 'http://localhost:5001';
-  const results = await Promise.allSettled(
-    CURATED.feeds.map(async feed => {
-      try {
-        const url = `${proxy}/rss?url=${encodeURIComponent(feed.url)}`;
-        const text = await fetch(url).then(r => r.text());
-        const doc  = new DOMParser().parseFromString(text, 'text/xml');
-        return Array.from(doc.querySelectorAll('item, entry')).slice(0, 2).map(el => {
-          const title = el.querySelector('title')?.textContent?.trim() || '';
-          const link  = el.querySelector('link')?.textContent?.trim()
-                     || el.querySelector('link')?.getAttribute('href') || '';
-          const desc  = (el.querySelector('description,summary,content\\:encoded,content')
-                          ?.textContent?.trim() || '').replace(/<[^>]*>/g,'').slice(0,180);
-          return title ? { source: feed.name, dims: feed.dims, title, url: link, desc } : null;
-        }).filter(Boolean);
-      } catch(e) { return []; }
-    })
-  );
-  return results.flatMap(r => r.status === 'fulfilled' ? r.value : []);
-}
-
-// ── Multi-agent pipeline ──────────────────────────────────────────────────────
-// Agent 1: Progress analyzer — reads history, identifies focus dims + gaps
-// Agent 2: Brief synthesizer — deep concept from today's sources with citations
-// Agent 3: Lab generator — 5 guided labs with source/infra/steps
-// Agent 4: Evaluator (evalAnswers) — quiz scoring + evidence
-// ─────────────────────────────────────────────────────────────────────────────
-
-function sourceText(hn, ax, hf, feeds) {
-  const hnText   = hn.length    ? hn.map(s=>`[HN score:${s.score}] ${s.title} | ${s.url}`).join('\n') : '(none)';
-  const axText   = ax.length    ? ax.map(p=>`[arXiv] ${p.title}\n  ${p.abstract}\n  ${p.url}`).join('\n') : '(none)';
-  const hfText   = hf.length    ? hf.map(p=>`[HF ${p.upvotes}↑] ${p.title}\n  ${p.abstract}\n  ${p.url}`).join('\n') : '(none)';
-  const feedText = feeds.length ? feeds.map(f=>`[${f.source}] ${f.title}\n  ${f.desc}\n  ${f.url}`).join('\n') : '(none)';
-  return `=== HACKER NEWS ===\n${hnText}\n\n=== ARXIV ===\n${axText}\n\n=== HUGGINGFACE DAILY ===\n${hfText}\n\n=== BLOGS & NEWSLETTERS (${feeds.length} articles from ${CURATED.feeds.length} writers incl. Latent Space, Import AI, Decoding ML, Cameron Wolfe, Sebastian Raschka, Eugene Yan, XDA, Towards Data Science) ===\n${feedText}`;
-}
-
-// Agent 1 — Progress analyzer
-async function analyzeProgress() {
-  const cached = S.dimAnalysis?.date === isoToday();
-  if (cached) return S.dimAnalysis;
-
-  const scoreLines = Object.entries(S.scores).map(([k,v])=>`  ${k}: ${v}/100 (${levelFor(v)})`).join('\n');
-  const evLines = (S.evidence||[]).slice(-10).map(e=>`  [${e.date}] ${e.dim} — ${e.text}`).join('\n') || '  (none yet)';
-  const doneCount = (S.doneIds||[]).length;
-
-  const system = `You are a learning coach analyzing an AI engineer's progress. ${ctx()} Return valid JSON only. CRITICAL: no literal newlines inside JSON string values.`;
-  const user = `Current scores:\n${scoreLines}\n\nRecent evidence (last 10):\n${evLines}\n\nTotal labs completed: ${doneCount}\nPlan month: ${planMonth()}/18\n\nReturn JSON:\n{"focus_dims":["dim1","dim2"],"strength_dims":["dim3"],"gap":"One sentence: biggest skill gap vs the plan right now","week_goal":"One concrete sentence: what to focus on this week to stay on track","progression_note":"One sentence on inference level progress (current: ${levelFor(S.scores.inference||0)}, target: pro by Month 12)"}`;
-  try {
-    const result = parseJSON(await claude(system, user, 500));
-    S.dimAnalysis = { date: isoToday(), ...result };
-    save();
-    return S.dimAnalysis;
-  } catch(e) {
-    return { focus_dims: ['rag','eval'], strength_dims: [], gap: '', week_goal: '', progression_note: '' };
-  }
-}
-
-// Agent 2 — Brief synthesizer
-async function synthesizeBrief(hn, ax, hf, feeds) {
-  const system = `You are a technical synthesis expert. Your only job: from today's AI research sources, identify ONE specific sub-concept that is most relevant to this engineer's plan, and synthesize it into a deep, citation-backed brief. ${ctx()} Return valid JSON only. CRITICAL: no literal newlines inside JSON string values.`;
-
-  const user = `${sourceText(hn,ax,hf,feeds)}
-
-You are reading today's best AI engineering content from 26 reputed writers + arXiv + HuggingFace. Pick the single most important, must-know concept published today — the one that a serious AI engineer should not miss. It does not have to match my weak areas; it should be the most insightful thing in today's sources. NOT a broad topic — a precise mechanism. Examples of right level: "How RAGAS faithfulness uses NLI entailment scoring", "GRPO's group relative baseline vs PPO critic", "pgvector HNSW ef_construction tradeoff for filtered recall". Wrong: "RAG evaluation", "fine-tuning".
-
-Return JSON:
-{"topic":"Precise sub-concept","source_title":"Exact source title","source_url":"Real URL from sources above","source_author":"Author or org","why_you":"Why this specific concept matters for Month ${planMonth()} regulated-industry RAG — 1-2 sentences","points":["How the mechanism works internally — be specific","What the naive approach fails at","A concrete number formula or threshold that matters","A real production tradeoff or failure mode","How to apply or test this — specific tool config or code pattern"],"synthesis":"2-3 sentences: your technical take on what this means for regulated-industry RAG — what most engineers miss","links":[{"title":"Primary source","url":"real URL from sources"},{"title":"Go deeper","url":"real URL from sources or curated registry"},{"title":"Apply it","url":"real URL from curated registry"}]}`;
-
-  return parseJSON(await claude(system, user, 1800));
-}
-
-// Agent 3 — Lab generator
-async function generateLabs(hn, ax, hf, feeds, dimAnalysis, excludeIds=[]) {
-  const focusDims = (dimAnalysis?.focus_dims||[]).join(', ') || 'rag, eval, inference';
-  const gap = dimAnalysis?.gap || '';
-  const weekGoal = dimAnalysis?.week_goal || '';
-
-  const system = `You are an AI lab instructor. Your only job: generate 5 specific, hands-on lab exercises grounded in today's real sources. Each lab must be immediately actionable with a clear source to read, exact setup commands, and concrete steps. ${ctx()} Return valid JSON only. CRITICAL: no literal newlines inside JSON string values.`;
-
-  const user = `${sourceText(hn,ax,hf,feeds)}
-
-Engineer context:
-- Focus dimensions today: ${focusDims}
-- Biggest gap: ${gap}
-- Week goal: ${weekGoal}
-- Plan month: ${planMonth()}/18
-- Already completed lab IDs (exclude): ${excludeIds.join(', ')||'none'}
-
-Valid platform keys: colab, kaggle, runpod, vastai, lambda, local, kind, ollama
-
-Generate 5 labs. At least 2 must target the focus dimensions. Each lab must be directly inspired by one of today's sources above.
-
-Return JSON:
-{"labs":[{"id":"kebab-slug","title":"Specific lab title from today's sources","dim":"rag|eval|finetune|inference|k8s|obs|voice|design","time":"2h","diff":"easy|medium|hard","why":"Why this lab now — name the specific source that triggered it","source_blog":{"title":"Exact blog/paper title — primary reading before starting","url":"Real URL from today's sources above","author":"Author name"},"prerequisites":["Know X — e.g. understand what a vector index is","Have Y — e.g. HuggingFace account (free)","Can do Z — e.g. run Python in Colab"],"setup":"pip install exact-package another-package","best_platform":"colab","platform_note":"Why this platform — e.g. Colab T4 free is enough, no GPU needed","platforms":["colab"],"llm_note":"Exact model + access method — e.g. Use claude-haiku-4-5 (your key, cheap) or Groq llama-3.1-8b (free)","steps":["1. Open Colab at colab.research.google.com, paste setup command, run","2. Exact action with code or command","3. Exact action with code or command","4. Run evaluation or measurement with specific metric","5. Compare or tweak one parameter and observe the delta"],"references":[{"title":"Same as source_blog — read first","url":"same URL as source_blog.url"},{"title":"Official tool docs","url":"real stable URL from curated registry"},{"title":"Related resource","url":"real URL"}]}]}`;
-
-  const result = parseJSON(await claude(system, user, 4000));
-  return result.labs || [];
-}
-
-// Agent: Weekly plan — one focused theme + 5 progressive labs for the whole week
-async function generateWeeklyPlan(src, dimAnalysis) {
-  const focusDims = (dimAnalysis?.focus_dims||['rag','eval']).join(', ');
-  const gap = dimAnalysis?.gap || '';
-
-  const system = `You are an AI engineering curriculum designer. Design ONE focused week-long learning theme with 5 progressive labs that build on each other. The engineer completes Labs 1-3 first (unlocked), then Labs 4-5 unlock. Labs must progress from beginner-runnable (Lab 1: ~1hr, easy) to advanced (Lab 5: ~3-4hr, hard). All labs must be on the SAME theme and directly buildable — real code, real tools, real outputs. Lab 1 MUST start with a guided, structured resource — pick the best one available: short courses (fast.ai, DeepLearning.ai, Google ML Crash Course, HuggingFace courses, Cohere LLM University, Weights & Biases courses, Lightning AI courses), canonical blog tutorials (Lilian Weng, Sebastian Raschka, Andrej Karpathy, Simon Willison, Eugene Yan), or official quickstart docs. The source_blog for Lab 1 must be that exact resource. Labs 2-5 shift to hands-on building. INFERENCE is a priority dimension — if the theme touches serving, deployment, or optimization, go deep on vLLM/TGI/SGLang/Ollama specifics. ${ctx()} Return valid JSON only. CRITICAL: no literal newlines inside JSON string values.`;
-
-  const user = `${sourceText(src.hn, src.ax, src.hf, src.feeds)}
-
-Engineer focus: ${focusDims}. Gap: ${gap}. Month: ${planMonth()}/18.
-
-Labs 1-3 = "must_know" (core career skills). Labs 4-5 = "nice_to_know" (stretch / advanced). Add a "priority" field to each lab: "must_know" or "nice_to_know". Add a "priority_reason" field: 1 sentence explaining why — e.g. "Core to regulated RAG interviews at Month 12" or "Advanced optimization — valuable but not blocking your goals right now".
-
-Pick ONE specific weekly theme from today's sources — something hands-on and buildable in a week. Examples: "Production RAG with RAGAS Evaluation", "Fine-tuning Llama-3 with LoRA on Colab", "LLM Observability with Langfuse", "Inference Optimization with vLLM". Make it concrete, not broad.
-
-Return JSON:
-{"theme":{"title":"Week theme — specific and motivating","description":"2 sentences: what you will build this week and why it matters for Month ${planMonth()} career goals","dim":"primary dimension"},"labs":[{"id":"kebab-slug-1","order":1,"title":"Lab 1 title — easiest entry point to the theme","dim":"rag|eval|finetune|inference|k8s|obs|voice|design","time":"1h","diff":"easy","why":"Why start here — what foundation this builds","source_blog":{"title":"Blog/paper title","url":"real URL from sources","author":"Author"},"prerequisites":["Only 2-3 things — keep low barrier for Lab 1"],"setup":"pip install minimal-packages","best_platform":"colab","platform_note":"Why Colab — free T4, no setup","platforms":["colab"],"llm_note":"Free LLM option","steps":["1. Open Colab and run setup","2. Concrete action","3. Concrete action","4. Measure or evaluate something","5. Note what you learned"],"references":[{"title":"Primary source","url":"real URL"},{"title":"Docs","url":"real stable URL"}]},{"id":"kebab-slug-2","order":2,"title":"Lab 2 — builds on Lab 1","time":"2h","diff":"medium","why":"...","dim":"...","source_blog":{"title":"...","url":"...","author":"..."},"prerequisites":["Completed Lab 1"],"setup":"pip install ...","best_platform":"colab","platform_note":"...","platforms":["colab"],"llm_note":"...","steps":["1....","2....","3....","4....","5...."],"references":[{"title":"...","url":"..."}]},{"id":"kebab-slug-3","order":3,"title":"Lab 3 — integrates Labs 1+2","time":"2h","diff":"medium","why":"...","dim":"...","source_blog":{"title":"...","url":"...","author":"..."},"prerequisites":["Completed Labs 1 and 2"],"setup":"pip install ...","best_platform":"colab","platform_note":"...","platforms":["colab"],"llm_note":"...","steps":["1....","2....","3....","4....","5...."],"references":[{"title":"...","url":"..."}]},{"id":"kebab-slug-4","order":4,"title":"Lab 4 — advanced, unlocks after 3 done","time":"3h","diff":"hard","why":"...","dim":"...","source_blog":{"title":"...","url":"...","author":"..."},"prerequisites":["Completed Labs 1, 2, and 3"],"setup":"pip install ...","best_platform":"colab","platform_note":"...","platforms":["colab"],"llm_note":"...","steps":["1....","2....","3....","4....","5...."],"references":[{"title":"...","url":"..."}]},{"id":"kebab-slug-5","order":5,"title":"Lab 5 — capstone: production-ready output","time":"4h","diff":"hard","why":"...","dim":"...","source_blog":{"title":"...","url":"...","author":"..."},"prerequisites":["Completed all previous labs"],"setup":"pip install ...","best_platform":"colab","platform_note":"...","platforms":["colab"],"llm_note":"...","steps":["1....","2....","3....","4....","5...."],"references":[{"title":"...","url":"..."}]}]}`;
-
-  const result = parseJSON(await claude(system, user, 6000));
-  return result;
-}
-
-// ── Quiz ──────────────────────────────────────────────────────────────────────
-
-async function genQuestions(lab) {
-  const system = `You are an AI engineering coach. ${ctx()}
-Generate 4 questions for someone who just completed this lab. Must only make sense if they did the actual work. Cover: (1) conceptual understanding, (2) a tricky edge case, (3) a failure mode, (4) regulated-industry application. Return valid JSON only.`;
-  const user = `Lab: "${lab.title}" (${DIMS[lab.dim]})\nSteps: ${(lab.steps||[]).join(' → ')}\nReturn: {"questions":[{"id":"q1","text":"..."},{"id":"q2","text":"..."},{"id":"q3","text":"..."},{"id":"q4","text":"..."}]}`;
-  return parseJSON(await claude(system, user, 500)).questions;
-}
-
-async function evalAnswers(lab, questions, answers) {
-  const system = `You are an AI engineering coach. ${ctx()}
-Evaluate these answers honestly. Score 0–100. Give 3–4 sentences of specific feedback. Also write one evidence sentence — a precise statement of what was demonstrably understood, suitable for a skills portfolio. Return valid JSON only.`;
-  const user = `Lab: "${lab.title}" (${DIMS[lab.dim]})\n\n${questions.map((q,i)=>`Q${i+1}: ${q.text}\nA: ${answers[i]||'(blank)'}`).join('\n\n')}\n\nReturn: {"score":72,"feedback":"...","delta":8,"evidence":"Demonstrated understanding of X by correctly explaining Y — specific and verifiable"}`;
-  return parseJSON(await claude(system, user, 400));
-}
-
-async function weekSynth(labs) {
-  const system = `You are an AI engineering coach. ${ctx()}
-Write a 4–5 sentence weekly synthesis: what was actually learned, the biggest gap vs plan, one concrete focus next week. Honest and specific.`;
-  return claude(system, `Labs this week: ${labs.map(l=>l.title).join(', ')||'none'}`, 350);
-}
-
-// ── Blog assessment ───────────────────────────────────────────────────────────
-
-async function assessBlog() {
-  const content = document.getElementById('blogInput').value.trim();
-  if (!content) { alert('Paste your blog post first.'); return; }
-
-  const btn = document.querySelector('.blog-card .primary');
-  btn.disabled = true; btn.textContent = 'Assessing…';
-  document.getElementById('blogResult').innerHTML = '';
-
-  try {
-    const system = `You are an AI engineering coach. ${ctx()}
-Assess this blog post or article the engineer wrote. Be honest — not generous. Return valid JSON only.`;
-
-    const user = `Blog post content:
-${content.slice(0, 6000)}
-
-Return JSON:
+SCHEMA:
 {
-  "score": 72,
-  "strong": "What is technically strong or well-argued",
-  "gaps": "What is missing, vague, or could go deeper",
-  "niche_fit": "How well it aligns with RAG for regulated industries specialization",
-  "suggestion": "One specific thing to add or rewrite to make it sharper",
-  "delta": 8
-}
-(delta = Public Voice score points to add, 0–15)`;
-
-    const result = parseJSON(await claude(system, user, 500));
-
-    S.scores.voice = Math.min(100, S.scores.voice + (result.delta || 5));
-    save();
-    renderScores();
-    sync();
-
-    document.getElementById('blogResult').innerHTML = `
-      <div class="blog-result">
-        <div class="blog-score">Public Voice: ${result.score}/100 <span style="font-size:13px;font-weight:400;color:#888">(+${result.delta} to score)</span></div>
-        <div class="blog-result-row">
-          <div class="blog-result-label">Strong</div>
-          <div class="blog-result-text">${result.strong}</div>
-        </div>
-        <div class="blog-result-row">
-          <div class="blog-result-label">Gaps</div>
-          <div class="blog-result-text">${result.gaps}</div>
-        </div>
-        <div class="blog-result-row">
-          <div class="blog-result-label">Niche fit</div>
-          <div class="blog-result-text">${result.niche_fit}</div>
-        </div>
-        <div class="blog-result-row">
-          <div class="blog-result-label">Make it sharper</div>
-          <div class="blog-result-text">${result.suggestion}</div>
-        </div>
-      </div>`;
-  } catch(e) {
-    document.getElementById('blogResult').innerHTML = `<p class="err" style="margin-top:10px">Assessment failed: ${e.message}</p>`;
+  "overview": {
+    "plan_to_learn": ["string", ...],                // 3-5 specific items
+    "you_will_achieve": ["string", ...],             // 3-4 outcomes — what the learner can DO
+    "why_it_matters": "string"                       // 2-3 sentences, production relevance
+  },
+  "concepts": [                                      // EXACTLY 3, sequenced foundational -> applied -> production
+    {
+      "id": "c1",
+      "title": "string",
+      "summary": "string",                           // 1-sentence hook
+      "key_points": [
+        { "point": "string", "explanation": "string", "example": "string" }
+      ],                                             // 4-6 entries
+      "patterns": [
+        { "do": "string", "why": "string", "when": "string" }
+      ],                                             // 2-4 entries
+      "antipatterns": [
+        { "dont": "string", "why_wrong": "string", "instead": "string" }
+      ],                                             // 2-4 entries
+      "pitfalls": [
+        { "symptom": "string", "cause": "string", "fix": "string" }
+      ],                                             // 2-4 entries
+      "sources": [
+        { "name": "string", "url": "string", "what_to_read": "string" }
+      ]                                              // 2-3 entries
+    }
+  ],
+  "lab": {
+    "title": "string",
+    "covers_concepts": ["c1","c2","c3"],
+    "what_you_build": "string",                      // 2-3 sentences
+    "why_this_lab": "string",                        // 1-2 sentences — what it cements
+    "estimated_time": "string",                      // e.g. "45-60 min"
+    "prerequisites": ["string", ...],                // short imperative check-offs
+    "options": [
+      {
+        "name": "string",                            // e.g. "Option A: Colab T4 + LangChain + Chroma"
+        "compute": "string",
+        "cost": "string",                            // "Free" expected
+        "tooling": "string",
+        "tradeoffs": "string",
+        "setup_steps": ["string", ...],              // 2-4 short bullets
+        "steps": [
+          { "n": 1, "do": "string", "code": "string", "verify": "string" }
+        ]                                            // 6-10 steps
+      }
+    ],                                               // EXACTLY 2 options, meaningfully different tooling
+    "expected_output": "string",
+    "verification": ["string", ...],                 // 3-4 concrete checks
+    "stretch": "string",
+    "sources": [
+      { "name": "string", "url": "string", "what_to_read": "string" }
+    ]
   }
+}`;
 
-  btn.disabled = false; btn.textContent = 'Assess my writing';
-}
+  const user = `Generate the learning package for:
+Category: ${meta.catName}
+Category context: ${meta.catDesc}
+Subtopic: ${meta.name}
 
-// ── GitHub ────────────────────────────────────────────────────────────────────
+Sequence the 3 concepts as: foundational intuition → practical application → production decisions. The lab must exercise all 3 concepts and produce a tangible artifact the learner can show.`;
 
-async function ghCommit(path, content, msg) {
-  if (!window.CONFIG?.GITHUB_TOKEN || !window.CONFIG?.GITHUB_REPO) return;
-  try {
-    const base = `https://api.github.com/repos/${window.CONFIG.GITHUB_REPO}/contents/${path}`;
-    const hdr = { 'Authorization':`token ${window.CONFIG.GITHUB_TOKEN}`, 'Content-Type':'application/json' };
-    const ex = await fetch(base, { headers:hdr });
-    const sha = ex.ok ? (await ex.json()).sha : undefined;
-    await fetch(base, { method:'PUT', headers:hdr,
-      body: JSON.stringify({ message:msg, content:btoa(unescape(encodeURIComponent(content))), ...(sha&&{sha}) }) });
-    S.lastSync = isoToday(); save();
-  } catch(e){ console.warn('GitHub sync failed:', e); }
-}
-
-function journalEntry() {
-  const today = isoToday();
-  let md = `## ${today} | Month ${planMonth()}\n`;
-  (S.weekLabs||[]).filter(l=>l.status==='done').forEach(l=>{
-    md += `\n**${l.title}** (${DIMS[l.dim]}) — ${l.eval?.score||'?'}/100\n`;
-    if (l.eval?.feedback) md += `${l.eval.feedback}\n`;
-    if (l.quiz && l.answers) {
-      l.quiz.forEach((q,i)=>{ md += `\nQ: ${q.text}\nA: ${l.answers?.[i]||'(blank)'}\n`; });
-    }
-  });
-  md += `\nScores: ${Object.entries(S.scores).map(([k,v])=>`${k}:${v}`).join(' ')}\n`;
-  return md;
-}
-
-function evidenceSummary() {
-  // Primary artifact — high-level proof of skills by dimension
-  const ev = S.evidence || [];
-  let md = `# Skills Evidence\nUpdated: ${isoToday()} | Month ${planMonth()}/18 | Streak: ${S.streak}d\n\n`;
-
-  // Group by dimension
-  const byDim = {};
-  ev.forEach(e => { (byDim[e.dim]=byDim[e.dim]||[]).push(e); });
-
-  Object.entries(DIMS).forEach(([k, name]) => {
-    const items = byDim[k] || [];
-    const score = S.scores[k] || 0;
-    const lvl = levelFor(score);
-    md += `## ${name} — ${score}/100 (${lvl})\n`;
-    if (items.length) {
-      items.slice(-5).forEach(e => { md += `- **${e.date}** (${e.score}/100) ${e.text}\n`; });
-    } else {
-      md += `- No evidence yet\n`;
-    }
-    md += '\n';
-  });
-
-  md += `## Stats\n- Labs completed: ${S.doneIds.length}\n- Evidence items: ${ev.length}\n`;
-  const prog = CURATED.progression?.inference;
-  if (prog) md += `- Inference goal: ${prog.goal}\n`;
-  return md;
-}
-
-function dailyArchiveMd() {
-  const today = isoToday();
-  const b = S.brief || {};
-  let md = `# AI Engineer Daily — ${today}\n`;
-  md += `> Month ${planMonth()}/18 · Streak ${S.streak}d\n\n`;
-
-  // Brief
-  md += `## Today's Brief\n`;
-  if (b.topic) {
-    md += `**${b.topic}**\n\n`;
-    if (b.why_you) md += `*${b.why_you}*\n\n`;
-    if (b.points?.length) {
-      md += `### Key Points\n`;
-      b.points.forEach(p => { md += `- ${p}\n`; });
-      md += '\n';
-    }
-    if (b.synthesis) md += `### Synthesis\n${b.synthesis}\n\n`;
-    if (b.links?.length) {
-      md += `### References\n`;
-      b.links.filter(l=>l.url&&!l.url.includes('...')).forEach((l,i) => {
-        md += `[^${i+1}]: [${l.title}](${l.url})\n`;
+  let attempt = 0;
+  let lastErr;
+  while (attempt < 2) {
+    attempt++;
+    try {
+      const { text } = await callClaude({
+        model: OPUS,
+        system,
+        messages: [{ role: 'user', content: user }],
+        max_tokens: 14000,
+        temperature: attempt === 1 ? 0.45 : 0.25,
       });
-      md += '\n';
+      const parsed = extractJSON(text);
+      // Validate shape loosely
+      if (!parsed.overview || !Array.isArray(parsed.concepts) || !parsed.lab) {
+        throw new Error('Missing top-level fields (overview/concepts/lab)');
+      }
+      if (parsed.concepts.length < 2) throw new Error('Too few concepts generated');
+      if (!Array.isArray(parsed.lab.options) || parsed.lab.options.length < 2) {
+        throw new Error('Lab must have 2 options');
+      }
+      return parsed;
+    } catch (e) {
+      lastErr = e;
+      console.warn(`generateSubtopic attempt ${attempt} failed:`, e.message);
     }
-  } else if (b.content) {
-    md += `${b.content}\n\n`;
   }
+  throw lastErr || new Error('generateSubtopic failed');
+}
 
-  // Labs
-  md += `## This Week's Labs\n\n`;
-  if (S.weekTheme) md += `**Theme:** ${S.weekTheme.title}\n\n`;
-  (S.weekLabs||[]).forEach((l, i) => {
-    const status = l.status === 'done' ? '✅' : l.status === 'inprogress' ? '🔄' : '⬜';
-    md += `### ${status} Lab ${i+1}: ${l.title}\n`;
-    md += `**Dimension:** ${DIMS[l.dim] || l.dim} | **Time:** ${l.time} | **Difficulty:** ${l.diff}\n\n`;
-    if (l.why) md += `*${l.why}*\n\n`;
-    if (l.steps?.length) {
-      md += `**Steps:**\n`;
-      l.steps.forEach((s, si) => { md += `${si+1}. ${s}\n`; });
-      md += '\n';
-    }
-    if (l.references?.length) {
-      md += `**References:**\n`;
-      l.references.filter(r=>r.url&&!r.url.includes('...')).forEach(r => {
-        md += `- [${r.title}](${r.url})\n`;
-      });
-      md += '\n';
-    }
-    if (l.eval) md += `**Quiz score:** ${l.eval.score}/100 — ${l.eval.feedback}\n\n`;
+async function generateQA(concept) {
+  const system = 'You generate short, precise quiz questions to test understanding of an AI engineering concept. Respond with JSON only. No prose, no markdown fences.';
+  const user = `Concept: ${concept.title}
+Summary: ${concept.summary}
+Key points:
+${(concept.key_points || []).map(k => `- ${k.point}: ${k.explanation}`).join('\n')}
+
+Patterns: ${(concept.patterns || []).map(p => p.do).join(' | ')}
+Antipatterns: ${(concept.antipatterns || []).map(p => p.dont).join(' | ')}
+
+Generate 3 questions that mix:
+1. A key distinction or mechanism ("explain the difference between X and Y" or "why does X work?")
+2. A judgment call in a scenario ("you see behavior S — what would you do and why?")
+3. A pitfall recognition ("what symptom indicates P, and what's the fix?")
+
+Return JSON:
+{"questions": [{"id":"q1","text":"..."},{"id":"q2","text":"..."},{"id":"q3","text":"..."}]}`;
+
+  const { text } = await callClaude({
+    model: SONNET,
+    system,
+    messages: [{ role: 'user', content: user }],
+    max_tokens: 900,
+    temperature: 0.5,
   });
+  const parsed = extractJSON(text);
+  if (!Array.isArray(parsed.questions) || parsed.questions.length === 0) {
+    throw new Error('No questions generated');
+  }
+  return parsed.questions;
+}
 
-  // Scores
-  md += `## Scores\n`;
-  Object.entries(S.scores).forEach(([k,v]) => {
-    md += `- **${k.toUpperCase()}** ${v}/100 (${levelFor(v)})\n`;
+async function evalQA(concept, items) {
+  const system = 'You evaluate AI engineering Q&A responses strictly but fairly. Name specific gaps, not generic feedback. Respond with JSON only.';
+  const user = `Concept: ${concept.title}
+Key points (ground truth):
+${(concept.key_points || []).map(k => `- ${k.point}: ${k.explanation}${k.example ? ' (e.g., ' + k.example + ')' : ''}`).join('\n')}
+Patterns: ${(concept.patterns || []).map(p => `${p.do} — ${p.why}`).join(' | ')}
+Antipatterns: ${(concept.antipatterns || []).map(p => `${p.dont} — ${p.why_wrong}`).join(' | ')}
+
+Learner responses:
+${items.map((it, i) => `Q${i+1}: ${it.question}\nA${i+1}: ${it.answer || '(no answer)'}`).join('\n\n')}
+
+Evaluate:
+- Score 0–100 reflecting how well the answers demonstrate understanding of the key points, patterns, and pitfalls.
+- Feedback: 3–5 sentences. Name specific gaps. If an answer missed a key mechanism, say which one. If it nailed something well, say so.
+- passed: true if score >= 70.
+
+Return JSON:
+{"score": number, "feedback": "string", "passed": boolean}`;
+
+  const { text } = await callClaude({
+    model: SONNET,
+    system,
+    messages: [{ role: 'user', content: user }],
+    max_tokens: 700,
+    temperature: 0.2,
   });
-  return md;
+  const p = extractJSON(text);
+  const score = Math.max(0, Math.min(100, Math.round(Number(p.score) || 0)));
+  return { score, feedback: String(p.feedback || ''), passed: !!p.passed || score >= 70 };
 }
 
-function kbEntryMd() {
-  const today = isoToday();
-  const b = S.brief || {};
-  if (!b.topic) return null;
-  // Slug from topic for filename
-  const slug = b.topic.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,60);
-  const links = (b.links||[]).filter(l=>l.url&&!l.url.includes('...')).map((l,i)=>`[^${i+1}]: [${l.title}](${l.url})`).join('\n');
-  let md = `---\ntags: [ai-engineering]\ndate: ${today}\nsource: ${b.source_title||''}\nauthor: ${b.source_author||''}\n---\n\n`;
-  md += `# ${b.topic}\n\n`;
-  if (b.why_you) md += `> ${b.why_you}\n\n`;
-  if (b.points?.length) {
-    md += `## What you need to know\n`;
-    b.points.forEach(p => { md += `- ${p}\n`; });
-    md += '\n';
-  }
-  if (b.synthesis) md += `## Key insight\n${b.synthesis}\n\n`;
-  if (b.source_url && !b.source_url.includes('...')) md += `## Primary source\n[${b.source_title||b.source_url}](${b.source_url})\n\n`;
-  if (links) md += `## References\n${links}\n`;
-  return { md, slug };
-}
+async function generateWriteup(sub, content) {
+  const system = `You are ghost-writing a Substack post for a senior engineer (20 years enterprise experience) deliberately rebuilding hands-on AI engineering skills. They work ACROSS industries — broad enterprise AI, NOT regulated-only. They just finished a subtopic and want to publish what they learned. Canonical home: Substack. Cross-posted: LinkedIn / X.
 
-async function archiveToday() {
-  const today = isoToday();
-  const kb = kbEntryMd();
-  await Promise.allSettled([
-    ghCommit(`archive/${today}.md`, dailyArchiveMd(), `Daily archive: ${today}`),
-    kb ? ghCommit(`kb/${kb.slug}.md`, kb.md, `KB: ${S.brief?.topic||today}`) : Promise.resolve()
-  ]);
-}
+VOICE:
+- First-person, specific, pragmatic
+- Channel Hamel Husain's directness, Simon Willison's "here's what actually works", Eugene Yan's clarity
+- Show the NON-OBVIOUS thing — what a beginner would have missed
+- Every claim concrete. No "LLMs are powerful" filler. No hype. No Claude-isms ("Let's dive in...", "I hope this helps").
 
-async function sync() {
-  const today = isoToday();
-  await Promise.allSettled([
-    ghCommit('evidence_summary.md', evidenceSummary(), `Evidence: ${today}`),           // primary
-    ghCommit(`learning_journal/${today}.md`, journalEntry(), `Archive: ${today}`),      // archive
-  ]);
-}
+READABILITY (non-negotiable):
+- Plain English → specific → so-what. Every paragraph passes the one-read test.
+- Dense compressions are a failure, not a flex.
+- Summaries must land completely, not cut off mid-thought.
+- No section that could have been deleted. No filler adjectives.
 
-// ── Streak / week ─────────────────────────────────────────────────────────────
+SUBSTACK POST (700–1000 words):
+- Title: ≤10 words, specific, no clickbait
+- Open with the surprising thing you learned (NOT "today I learned")
+- 3–4 H2 sections with concrete takeaways
+- Include ONE concrete moment from the lab (what you built, what broke, what you verified)
+- Close with "what I'll do differently now"
+- Markdown H2 (##) for sections. No H1 (title is separate).
 
-function tickStreak() {
-  const today = isoToday();
-  if (S.lastActive===today) return;
-  const yest = new Date(Date.now()-86400000).toISOString().slice(0,10);
-  S.streak = S.lastActive===yest ? S.streak+1 : 1;
-  S.lastActive = today; save();
-}
+LINKEDIN / X TEASER (80–120 words):
+- Stands alone — does not require clicking through
+- Hook in the first line
+- 2–3 specific takeaways
+- End with "Full write-up: [link]"
+- Max 2 hashtags, and only if they add discoverability
 
-function isNewWeek() {
-  return S.weekGenDate !== weekStartISO();
-}
+Respond with STRICT JSON only. No prose outside. No markdown fences.
 
-function weekLabsDoneCount() {
-  return (S.weekLabs||[]).filter(l => (S.weekDoneIds||[]).includes(l.id) || l.status==='done').length;
-}
+SCHEMA:
+{
+  "substack": { "title": "string", "body": "string (markdown)" },
+  "social":   { "text":  "string (plain text, ready to paste)" }
+}`;
 
-function checkWeekReset() {
-  if (isNewWeek()) {
-    // New week: clear done IDs so locking resets; labs regenerated by init()
-    S.weekDoneIds = [];
-  }
-}
+  const conceptBlurbs = (content.concepts || []).map((c, i) => {
+    const kp = (c.key_points || []).slice(0, 3).map(k => `${k.point} — ${k.explanation}`).join(' | ');
+    const pit = c.pitfalls?.[0];
+    const pat = c.patterns?.[0];
+    return `${i+1}. ${c.title} — ${c.summary}
+   Key points: ${kp}
+   Pattern: ${pat ? pat.do : 'n/a'}
+   Pitfall: ${pit ? `${pit.symptom} (cause: ${pit.cause}; fix: ${pit.fix})` : 'n/a'}`;
+  }).join('\n\n');
 
-function getWeekLabs() {
-  // Apply live statuses + locking logic
-  const doneCount = weekLabsDoneCount();
-  return (S.weekLabs||[]).map((l, i) => {
-    if (S.doneIds?.includes(l.id) || l.status==='done') return {...l, status:'done'};
-    if (l.status==='inprogress') return l;
-    if (i >= 3 && doneCount < 3) return {...l, status:'locked'};
-    return {...l, status: l.status||'todo'};
+  const user = `Subtopic just completed: ${sub.name}  (category: ${sub.catName})
+
+OVERVIEW
+Why it matters: ${content.overview.why_it_matters}
+Plan to learn: ${(content.overview.plan_to_learn || []).join(' · ')}
+You will achieve: ${(content.overview.you_will_achieve || []).join(' · ')}
+
+CONCEPTS
+${conceptBlurbs}
+
+LAB COMPLETED
+Title: ${content.lab.title}
+What they built: ${content.lab.what_you_build}
+Why this lab: ${content.lab.why_this_lab || ''}
+Verified by: ${(content.lab.verification || []).slice(0, 3).join(' | ')}
+Expected output: ${content.lab.expected_output || ''}
+
+Write the post from THEIR first-person perspective. Treat the lab as something they actually did yesterday, not hypothetical. The surprising-thing opener should be grounded in a specific technical insight from the concepts above — not a generic "I learned a lot".`;
+
+  const { text } = await callClaude({
+    model: OPUS,
+    system,
+    messages: [{ role: 'user', content: user }],
+    max_tokens: 5000,
+    temperature: 0.6,
   });
+  const p = extractJSON(text);
+  if (!p.substack?.title || !p.substack?.body || !p.social?.text) {
+    throw new Error('Write-up response missing required fields');
+  }
+  return p;
 }
 
-// ── Render ────────────────────────────────────────────────────────────────────
+async function askLab(lab, chatHistory, userQuestion) {
+  const labContext = `You are helping a learner complete THIS specific lab. ONLY answer questions about this lab. If the learner asks about unrelated AI or programming topics, politely redirect: "That's outside the scope of this lab — let's stay focused. On this lab, you might be asking about X — here's the answer."
 
-function renderAll() {
-  document.getElementById('monthTag').textContent = `Month ${planMonth()} of 18 — RAG for Regulated Industries`;
-  document.getElementById('dateTag').innerHTML = new Date().toLocaleDateString('en-IN',
-    {weekday:'long',year:'numeric',month:'long',day:'numeric'}).replace(',','<br>');
+Lab: ${lab.title}
+What they build: ${lab.what_you_build}
+Why this lab: ${lab.why_this_lab || ''}
 
-  renderBrief();
-  renderWeekTheme();
+Prerequisites:
+${(lab.prerequisites || []).map(p => `- ${p}`).join('\n')}
 
-  const labs = getWeekLabs();
-  document.getElementById('labsEl').innerHTML = labs.length
-    ? labs.map((l,i) => labCard(l,i)).join('')
-    : '<div style="color:#aaa;font-size:13px;padding:20px 0">No labs yet — loading this week\'s plan…</div>';
+OPTIONS:
+${(lab.options || []).map(o => `
+=== ${o.name} ===
+Compute: ${o.compute}
+Tooling: ${o.tooling}
+Tradeoffs: ${o.tradeoffs}
+Setup:
+${(o.setup_steps || []).map(s => `  - ${s}`).join('\n')}
+Steps:
+${(o.steps || []).map(s => `  ${s.n}. ${s.do}${s.code ? '\n     CODE: ' + s.code : ''}${s.verify ? '\n     VERIFY: ' + s.verify : ''}`).join('\n')}
+`).join('\n')}
 
-  const done = weekLabsDoneCount();
-  const total = (S.weekLabs||[]).length;
-  const wkStatus = document.getElementById('weekLabsStatus');
-  if (wkStatus) wkStatus.textContent = total ? `${done}/${total} done this week` : '';
+Verification:
+${(lab.verification || []).map(v => `- ${v}`).join('\n')}
 
-  renderScores();
+Expected output: ${lab.expected_output || ''}
 
-  document.getElementById('streakEl').textContent = `Streak: ${S.streak} day${S.streak!==1?'s':''}`;
-  document.getElementById('syncEl').textContent = S.lastSync ? `Synced: ${S.lastSync}` : 'Not synced';
+Be concrete. Give specific commands, exact error-to-fix mappings, code snippets the learner can paste. Don't suggest alternative tooling unless their chosen option is fundamentally broken for the task.`;
 
-  const daysSince = S.lastWeekEval ? Math.floor((Date.now()-new Date(S.lastWeekEval).getTime())/86400000) : 999;
-  const wk = document.getElementById('wkBanner');
-  const weekDone = S.weekDoneIds||[];
-  if (weekDone.length >= 3 && daysSince >= 7) {
-    document.getElementById('wkCount').textContent = weekDone.length;
-    wk.style.display = 'flex';
-  } else { wk.style.display = 'none'; }
+  const messages = [];
+  for (const m of (chatHistory || [])) {
+    messages.push({ role: m.role, content: m.text });
+  }
+  messages.push({ role: 'user', content: userQuestion });
+
+  const { text } = await callClaude({
+    model: SONNET,
+    system: [
+      { type: 'text', text: labContext, cache_control: { type: 'ephemeral' } },
+    ],
+    messages,
+    max_tokens: 1200,
+    temperature: 0.3,
+  });
+  return text;
 }
 
-function renderWeekTheme() {
-  const el = document.getElementById('weekThemeEl');
-  if (!el) return;
-  const t = S.weekTheme;
-  if (!t?.title) { el.style.display = 'none'; return; }
-  const done = weekLabsDoneCount();
-  const total = (S.weekLabs||[]).length || 5;
-  const pct = Math.round((done / total) * 100);
-  const wk = weekStartISO();
-  const weekNum = Math.ceil((new Date(wk) - new Date(window.CONFIG?.PLAN_START||'2025-04-01')) / (7*86400000));
-  el.style.display = 'block';
-  el.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px">
-      <div style="flex:1">
-        <div class="week-theme-eyebrow">Week ${weekNum > 0 ? weekNum : ''} Focus · ${(DIMS[t.dim]||t.dim||'').toUpperCase()}</div>
-        <div class="week-theme-title">${t.title}</div>
-        <div class="week-theme-desc">${t.description||''}</div>
-      </div>
-      <div style="text-align:right;flex-shrink:0">
-        <div style="font-size:22px;font-weight:800;color:#fff">${done}<span style="font-size:14px;font-weight:400;color:#60a5fa">/${total}</span></div>
-        <div style="font-size:11px;color:#60a5fa">labs done</div>
-      </div>
-    </div>
-    <div class="week-progress-bar"><div class="week-progress-fill" style="width:${pct}%"></div></div>
-    <div class="week-progress-label">${done < 3 ? `Complete ${3-done} more to unlock advanced labs` : done === total ? '🎉 All labs done — great week!' : `${total-done} lab${total-done!==1?'s':''} remaining`}</div>`;
-}
+// ═══════════════════════════════════════════════════════════════════════════
+//  SIDEBAR
+// ═══════════════════════════════════════════════════════════════════════════
+function renderSidebar() {
+  const el = document.getElementById('sidebar');
+  const activeSubId = V.activeSub?.id;
 
-function renderBrief() {
-  const el = document.getElementById('briefEl');
-  const b = S.brief;
-  if (!b || (!b.topic && !b.content)) {
-    if (!window._briefFetching) {
-      el.innerHTML = '<div class="brief-body" style="color:#aaa;font-size:13px">Loading today\'s brief…</div>';
-      refreshBrief();
-    }
-    return;
+  // Auto-open the category of the active subtopic
+  if (activeSubId) {
+    const parent = CURRICULUM.find(c => c.subtopics.some(s => s.id === activeSubId));
+    if (parent) V.openCategories.add(parent.id);
   }
 
-  if (b.topic) {
-    const points = (b.points||[]).map(p=>`<li>${p}</li>`).join('');
-    const links  = (b.links||[]).filter(l=>l.url&&!l.url.includes('...')).map(l=>
-      `<a href="${l.url}" target="_blank" rel="noopener">${l.title}</a>`).join('');
-    const srcLink = b.source_url && !b.source_url.includes('...')
-      ? `<a href="${b.source_url}" target="_blank" rel="noopener">source ↗</a>` : '';
+  const catsHtml = CURRICULUM.map(cat => {
+    const total = cat.subtopics.length;
+    const done = cat.subtopics.filter(s => S.subtopics[s.id]?.status === 'done').length;
+    const isOpen = V.openCategories.has(cat.id);
 
-    const srcCount = S.sources ? `${(S.sources.feeds||0)+(S.sources.hf||0)+(S.sources.ax||0)+(S.sources.hn||0)} sources scanned` : '';
-    el.innerHTML = `
-      <div class="brief-topbar">
-        <div style="flex:1">
-          <div class="brief-eyebrow">Concept of the Day${srcCount ? ' · ' + srcCount : ''}</div>
-          <div class="brief-topic">${b.topic}</div>
-        </div>
-        ${srcLink}
-      </div>
-      ${b.why_you ? `<div class="brief-why">💡 ${b.why_you}</div>` : ''}
-      <div class="brief-body">
-        ${points ? `<div class="brief-label">What you need to know</div>
-          <ul class="brief-points">${points}</ul>` : ''}
-        ${b.synthesis ? `<div class="brief-label">Key insight</div>
-          <div class="brief-synthesis">${b.synthesis}</div>` : ''}
-        ${links ? `<div class="brief-label">Go deeper</div>
-          <div class="brief-links">${links}</div>` : ''}
+    const subsHtml = cat.subtopics.map(sub => {
+      const st = S.subtopics[sub.id]?.status || 'notstarted';
+      const mark = st === 'done' ? '✓' : (st === 'inprogress' ? '●' : '○');
+      const cls = [st === 'done' ? 'done' : (st === 'inprogress' ? 'inprogress' : ''),
+                   activeSubId === sub.id ? 'active' : ''].filter(Boolean).join(' ');
+      return `<div class="sub ${cls}" data-sub="${esc(sub.id)}">
+        <span class="sub-mark">${mark}</span>
+        <span>${esc(sub.name)}</span>
       </div>`;
-  } else {
-    // Legacy fallback
-    el.innerHTML = `<div class="brief-body">${(b.content||'').split('\n').filter(Boolean).map(p=>`<p style="margin-bottom:8px">${p}</p>`).join('')}</div>`;
-  }
-}
+    }).join('');
 
-function renderScores() {
-  const el = document.getElementById('scoresEl');
-  if (!el) return;
-  const colorFor = v => v <= 25 ? '#dc2626' : v <= 50 ? '#d97706' : '#16a34a';
-  el.innerHTML = Object.entries(S.scores).map(([k,v]) => {
-    const lvl = levelFor(v);
-    const color = colorFor(v);
-    return `<div class="score-row">
-      <div class="score-row-name">${DIMS[k]||k}<br><span style="font-size:10px;color:#b0bac5">${lvl}</span></div>
-      <div class="score-row-bar"><div class="score-row-fill" style="width:${v}%;background:${color}"></div></div>
-      <div class="score-row-val" style="color:${color}">${v}</div>
+    return `<div class="cat ${isOpen ? 'open' : ''}" data-cat="${esc(cat.id)}">
+      <div class="cat-head" data-cat-head="${esc(cat.id)}">
+        <span class="cat-name"><span class="cat-chev">▶</span> ${esc(cat.name)}</span>
+        <span class="cat-count ${done > 0 ? 'has-done' : ''}">${done}/${total}</span>
+      </div>
+      <div class="subs">${subsHtml}</div>
     </div>`;
   }).join('');
-}
 
-function labCard(lab, idx) {
-  // Locked labs — minimal card, just title + unlock hint
-  if (lab.status === 'locked') {
-    return `<div class="lab locked" id="lab-${lab.id}">
-      <div class="lab-top">
-        <div class="lab-title" style="color:#94a3b8">${idx+1}. ${lab.title}</div>
-        <div class="lab-meta">${lab.time||'3h'} · ${lab.diff||'hard'}</div>
-      </div>
-      <div style="font-size:13px;color:#94a3b8;margin-top:8px">🔒 Complete the first 3 labs to unlock</div>
-    </div>`; // locked labs have no ask bar
-  }
-
-  const badge = lab.status==='inprogress' ? '<span class="lab-badge badge-ip">In progress</span>'
-    : lab.status==='done' ? '<span class="lab-badge badge-done">Done</span>' : '';
-
-  const priorityHtml = lab.priority === 'must_know'
-    ? `<span class="priority-must">⭐ Must Know${lab.priority_reason ? ` · <span style="font-weight:400">${lab.priority_reason}</span>` : ''}</span>`
-    : lab.priority === 'nice_to_know'
-    ? `<span class="priority-nice">💡 Nice to Know${lab.priority_reason ? ` · <span style="font-weight:400">${lab.priority_reason}</span>` : ''}</span>`
-    : '';
-
-  // Best platform — show recommended prominently, rest as alternatives
-  const bestKey = lab.best_platform || (lab.platforms||[])[0];
-  const bestPlat = PLAT[bestKey];
-  const altPlats = (lab.platforms||[]).filter(p=>p!==bestKey&&PLAT[p]).map(p=>{
-    const pl=PLAT[p];
-    return `<a href="${pl.url}" target="_blank" rel="noopener">${pl.name} · ${pl.cost}</a>`;
-  }).join(' · ');
-
-  const platformHtml = bestPlat ? `<div class="lab-section">
-    <div class="lab-section-label">Best platform</div>
-    <div style="margin-top:4px">
-      <a href="${bestPlat.url}" target="_blank" rel="noopener" style="font-weight:600;color:#4a90e2">${bestPlat.name} · ${bestPlat.cost}</a>
-      ${lab.platform_note ? `<span style="color:#888;font-size:12px;margin-left:8px">— ${lab.platform_note}</span>` : ''}
+  const sourcesHtml = `
+    <div class="sidebar-section">
+      <h3>Tier 1 — Pioneers</h3>
+      ${SOURCES.tier1.map(s => `<div class="src"><a href="${esc(s.url)}" target="_blank" rel="noopener"><span class="src-who">${esc(s.name)}</span> · ${esc(s.why)}</a></div>`).join('')}
     </div>
-    ${altPlats ? `<div style="font-size:12px;color:#aaa;margin-top:4px">Also: ${altPlats}</div>` : ''}
-  </div>` : '';
-
-  let actions = '';
-  if (lab.status==='todo') {
-    actions = `<button onclick="startLab('${lab.id}')">Start</button><button onclick="swapLab('${lab.id}')">Swap</button>`;
-  } else if (lab.status==='inprogress') {
-    actions = `<button class="btn-green" onclick="markDone('${lab.id}')">Mark done</button>`;
-  }
-  let quiz = '';
-  if (lab.status==='done') {
-    if (lab.eval) {
-      quiz = `<div class="quiz"><div class="eval-box"><div class="eval-score">${lab.eval.score}/100</div><div>${lab.eval.feedback}</div></div></div>`;
-    } else if (lab.quiz) {
-      quiz = quizForm(lab);
-    } else {
-      quiz = `<div class="quiz" id="qload-${lab.id}"><button onclick="loadQuiz('${lab.id}')">Load reflection questions</button></div>`;
-    }
-  }
-
-  // Source blog — original article/paper. Fall back to references[0] if missing.
-  const blog = lab.source_blog?.url && !lab.source_blog.url.includes('...')
-    ? lab.source_blog
-    : (lab.references||[]).find(r=>r.url&&!r.url.includes('...'))
-      ? { title:(lab.references[0].title||''), url:lab.references[0].url, author:'' }
-      : null;
-  const blogHtml = blog
-    ? `<a href="${blog.url}" target="_blank" rel="noopener" class="lab-source-link">
-        📖 ${blog.title}${blog.author ? ` <span style="font-weight:400;opacity:0.7">· ${blog.author}</span>` : ''}
-      </a>` : '';
-
-  const prereqHtml = (lab.prerequisites||[]).length
-    ? `<div class="lab-section">
-        <div class="lab-section-label">Before you start</div>
-        <ul class="prereq-list">${(lab.prerequisites||[]).map(p=>`<li>${p}</li>`).join('')}</ul>
-      </div>` : '';
-
-  const setupHtml = lab.setup
-    ? `<div class="lab-section">
-        <div class="lab-section-label">Setup</div>
-        <code class="lab-setup-cmd">${lab.setup}</code>
-      </div>` : '';
-
-  const stepsHtml = (lab.steps||[]).length
-    ? `<div class="lab-section">
-        <div class="lab-section-label">Step-by-step guide</div>
-        <ol class="prereq-list">${(lab.steps||[]).map(s=>`<li>${s}</li>`).join('')}</ol>
-      </div>` : '';
-
-  const refsHtml = (lab.references||[]).filter(r=>r.url&&!r.url.includes('...')).length
-    ? `<div class="lab-section">
-        <div class="lab-section-label">Further reading</div>
-        <ul class="ref-list">${(lab.references||[]).filter(r=>r.url&&!r.url.includes('...')).map(r=>`<li><a href="${r.url}" target="_blank" rel="noopener">↗ ${r.title}</a></li>`).join('')}</ul>
-      </div>` : '';
-
-  const llmHtml = lab.llm_note
-    ? `<div class="lab-section">
-        <div class="lab-section-label">Free LLM to use</div>
-        <div class="llm-note">${lab.llm_note}</div>
-      </div>` : '';
-
-  return `<div class="lab ${lab.status}" id="lab-${lab.id}">
-    ${badge}
-    <div class="lab-top">
-      <div class="lab-title">${idx+1}. ${lab.title}</div>
-      <div class="lab-meta">${lab.time||'2h'} · ${lab.diff||'medium'}</div>
+    <div class="sidebar-section">
+      <h3>Tier 2 — Signals</h3>
+      ${SOURCES.tier2.map(s => `<div class="src"><a href="${esc(s.url)}" target="_blank" rel="noopener"><span class="src-who">${esc(s.name)}</span> · ${esc(s.why)}</a></div>`).join('')}
     </div>
-    ${priorityHtml}
-    <div class="lab-why">${lab.why||''}</div>
-    ${blogHtml}
-    ${prereqHtml}
-    ${platformHtml}
-    ${setupHtml}
-    ${llmHtml}
-    ${stepsHtml}
-    ${refsHtml}
-    ${actions?`<div class="lab-actions">${actions}</div>`:''}
-    ${quiz}
-    <div class="lab-ask">
-      <div class="lab-ask-row">
-        <input class="lab-ask-input" id="ask-${lab.id}" type="text"
-          placeholder="Ask anything about this lab — setup, errors, steps…"
-          onkeydown="if(event.key==='Enter')askLab('${lab.id}')">
-        <button class="lab-ask-btn" id="askbtn-${lab.id}" onclick="askLab('${lab.id}')">Ask</button>
-      </div>
-      <div class="lab-ask-answer" id="askans-${lab.id}"></div>
+    <div class="sidebar-section">
+      <h3>Repos & Docs</h3>
+      ${SOURCES.repos.map(s => `<div class="src"><a href="${esc(s.url)}" target="_blank" rel="noopener"><span class="src-who">${esc(s.name)}</span> · ${esc(s.why)}</a></div>`).join('')}
     </div>
-  </div>`;
-}
+  `;
 
-function quizForm(lab) {
-  const qs = lab.quiz.map((q,i)=>`
-    <div class="quiz-q"><span class="quiz-qn">Q${i+1}</span>${q.text}</div>
-    <textarea class="qta" id="qa-${lab.id}-${i}" placeholder="Your answer…"></textarea>
-  `).join('');
-  return `<div class="quiz"><h2 style="margin-bottom:12px">Reflection</h2>${qs}
-    <button class="primary" onclick="submitQuiz('${lab.id}')">Submit reflection</button></div>`;
-}
+  el.innerHTML = `
+    <div class="sidebar-brand">AI Engineer</div>
+    <div class="sidebar-tag">Curriculum · pioneer-grade</div>
+    ${catsHtml}
+    ${sourcesHtml}
+  `;
 
-// ── Lab actions ───────────────────────────────────────────────────────────────
-
-function labById(id) {
-  return (S.weekLabs||[]).find(l=>l.id===id);
-}
-
-function startLab(id) {
-  const l=labById(id); if(!l||l.status!=='todo') return;
-  l.status='inprogress'; l.startedAt=new Date().toISOString();
-  tickStreak(); save(); renderAll();
-}
-
-async function markDone(id) {
-  const l=labById(id); if(!l||l.status!=='inprogress') return;
-  l.status='done'; l.doneAt=new Date().toISOString();
-  if(!S.weekDoneIds) S.weekDoneIds=[];
-  if(!S.weekDoneIds.includes(id)) S.weekDoneIds.push(id);
-  if(!S.doneIds) S.doneIds=[];
-  if(!S.doneIds.includes(id)) S.doneIds.push(id);
-  tickStreak(); save(); renderAll();
-  await loadQuiz(id);
-}
-
-async function loadQuiz(id) {
-  const l=labById(id); if(!l) return;
-  const el=document.getElementById(`qload-${id}`);
-  if(el) el.innerHTML='<span style="color:#aaa;font-size:13px">Generating questions…</span>';
-  try { l.quiz=await genQuestions(l); save(); renderAll(); }
-  catch(e) { if(el) el.innerHTML=`<span class="err">Failed. <button onclick="loadQuiz('${id}')">Retry</button></span>`; }
-}
-
-async function submitQuiz(id) {
-  const l=labById(id); if(!l?.quiz) return;
-  const answers=l.quiz.map((_,i)=>(document.getElementById(`qa-${id}-${i}`)?.value||'').trim());
-  const btn=document.querySelector(`#lab-${id} .primary`);
-  if(btn){btn.disabled=true;btn.textContent='Evaluating…';}
-  try {
-    l.eval=await evalAnswers(l,l.quiz,answers);
-    S.scores[l.dim]=Math.min(100,S.scores[l.dim]+(l.eval.delta||5));
-    if(l.eval.evidence){
-      if(!S.evidence) S.evidence=[];
-      S.evidence.push({date:isoToday(),dim:l.dim,lab:l.title,score:l.eval.score,text:l.eval.evidence});
-    }
-    save(); renderAll(); sync();
-  } catch(e){
-    if(btn){btn.disabled=false;btn.textContent='Submit reflection';}
-    alert('Evaluation failed. Please try again.');
-  }
-}
-
-async function refreshLabs() {
-  const btn=document.getElementById('refreshBtn');
-  btn.disabled=true; btn.textContent='Generating labs…';
-  try {
-    const keep=S.labs.filter(l=>l.status!=='todo');
-    const excl=[...(S.doneIds||[]),...keep.map(l=>l.id)];
-    const [[hn,ax,hf,feeds], dimAnalysis] = await Promise.all([
-      Promise.allSettled([fetchHN(),fetchArxiv(),fetchHFPapers(),fetchFeeds()]),
-      analyzeProgress()
-    ]);
-    const labs = await generateLabs(hn.value||[],ax.value||[],hf.value||[],feeds.value||[], dimAnalysis, excl);
-    const fresh = labs.filter(l=>!excl.includes(l.id)).map(l=>({...l,status:'todo'}));
-    S.labs=[...keep,...fresh].slice(0,5);
-    save(); renderAll();
-  } catch(e){ alert('Lab refresh failed: ' + e.message); }
-  btn.disabled=false; btn.textContent='↻ Refresh open labs';
-}
-
-async function runWeeklyEval() {
-  const banner=document.getElementById('wkBanner');
-  banner.innerHTML='<span style="color:#999">Synthesizing your week…</span>';
-  try {
-    const weekDone = S.weekDoneIds||[];
-    const labs=(S.weekLabs||[]).filter(l=>weekDone.includes(l.id)||l.status==='done');
-    const text=await weekSynth(labs);
-    S.lastWeekEval=isoToday(); save();
-    banner.innerHTML=`<div style="width:100%">
-      <div style="font-weight:700;margin-bottom:8px">Weekly synthesis</div>
-      <div style="font-size:14px;line-height:1.7">${text}</div>
-      <button style="margin-top:10px" onclick="this.closest('.wk-banner').style.display='none'">Dismiss</button>
-    </div>`;
-    sync();
-  } catch(e){ banner.innerHTML='<span class="err">Failed. <button onclick="runWeeklyEval()">Retry</button></span>'; }
-}
-
-// ── Lab ask bar ───────────────────────────────────────────────────────────────
-
-async function askLab(id) {
-  const lab = labById(id);
-  if (!lab) return;
-
-  const input = document.getElementById(`ask-${id}`);
-  const btn   = document.getElementById(`askbtn-${id}`);
-  const ansEl = document.getElementById(`askans-${id}`);
-  if (!input || !ansEl) return;
-
-  const question = input.value.trim();
-  if (!question) { input.focus(); return; }
-
-  btn.disabled = true; btn.textContent = '…';
-  ansEl.className = 'lab-ask-answer show';
-  ansEl.innerHTML = '<span style="color:#94a3b8">Thinking…</span>';
-
-  // Every call is independent — no history, fresh context each time
-  const system = `You are an expert AI engineering mentor. The engineer is actively working on a lab and needs help to COMPLETE it. Your job: answer the exact question asked so they can unblock themselves and move forward. Rules: (1) Give the complete answer — never truncate, never say "let me know if you need more". (2) If the answer involves a command or code, write the exact runnable command. (3) If it is an error, give the fix — exact cause and exact fix. (4) If it is a concept question, explain just enough to complete the current step. (5) No preamble, no "great question", no padding. Start directly with the answer.`;
-
-  const user = `## Lab context
-Title: "${lab.title}"
-Dimension: ${DIMS[lab.dim]||lab.dim}
-Platform: ${lab.best_platform||'colab'} — ${lab.platform_note||''}
-Setup command: ${lab.setup||'(none)'}
-Steps:
-${(lab.steps||[]).map((s,i)=>`${i+1}. ${s}`).join('\n')}
-Prerequisites: ${(lab.prerequisites||[]).join(', ')||'none'}
-LLM to use: ${lab.llm_note||''}
-Source: ${lab.source_blog?.title||''} ${lab.source_blog?.url||''}
-
-## Question
-${question}`;
-
-  try {
-    const answer = await claude(system, user, 1500);
-    ansEl.innerHTML = answer
-      .replace(/```(\w*)\n?([\s\S]*?)```/g, '<pre style="background:#1e293b;color:#e2e8f0;padding:10px 14px;border-radius:6px;font-size:12px;overflow-x:auto;margin:8px 0;font-family:\'Courier New\',monospace;white-space:pre-wrap">$2</pre>')
-      .replace(/`([^`\n]+)`/g, '<code>$1</code>')
-      .replace(/\n\n/g, '<br><br>')
-      .replace(/\n/g, '<br>');
-    input.value = '';
-  } catch(e) {
-    ansEl.innerHTML = `<span style="color:#dc2626">Failed: ${e.message}</span>`;
-  }
-
-  btn.disabled = false; btn.textContent = 'Ask';
-}
-
-// ── True / False quick check ─────────────────────────────────────────────────
-
-async function generateTrueFalse(brief) {
-  const tfBody = document.getElementById('tfBody');
-  if (!brief?.topic) {
-    if (tfBody) tfBody.innerHTML = '<div class="tf-generating">Waiting for brief to load…</div>';
-    return null;
-  }
-  if (tfBody) tfBody.innerHTML = '<div class="tf-generating">Generating questions…</div>';
-  const system = `You are an AI engineering quiz generator. Return valid JSON only. CRITICAL: no literal newlines inside JSON string values. Keep all strings short.`;
-  const user = `Topic: "${brief.topic}"\nKey points: ${(brief.points||[]).join(' | ').slice(0,400)}\n\nGenerate 5 True/False statements testing conceptual understanding. Mix true/false 50/50. Keep "text" under 20 words. Keep "explanation" under 15 words.\n\nReturn JSON only: {"questions":[{"id":"tf1","text":"Short statement","answer":true,"explanation":"Short reason why"}]}`;
-  try {
-    const result = parseJSON(await claude(system, user, 900));
-    const qs = result.questions || [];
-    if (!qs.length) throw new Error('Empty questions array');
-    return qs;
-  } catch(e) {
-    console.error('T/F generation failed:', e.message);
-    if (tfBody) tfBody.innerHTML = `<div class="tf-empty" style="padding:16px">Failed: ${e.message}<br><button onclick="resetTF()" style="margin-top:8px;font-size:12px;padding:4px 12px">Retry</button></div>`;
-    return null;
-  }
-}
-
-let _tfAnswered = 0, _tfCorrect = 0;
-
-function renderTrueFalse(questions) {
-  const body = document.getElementById('tfBody');
-  if (!body) return;
-  if (questions === null) return; // error already shown in generateTrueFalse
-  if (!questions.length) {
-    body.innerHTML = '<div class="tf-empty">No questions returned — try ↻ to retry</div>';
-    return;
-  }
-  // Show 5 questions (shuffled each call for variety)
-  const pool = [...questions].sort(() => Math.random() - 0.5).slice(0, 5);
-  _tfAnswered = 0; _tfCorrect = 0; _tfTotal = pool.length;
-  updateTfScore();
-
-  const conceptLabel = S.brief?.topic
-    ? `<div style="font-size:11px;color:#94a3b8;padding-bottom:10px;border-bottom:1px solid #f1f5f9;margin-bottom:4px;line-height:1.5">Based on: <span style="color:#2563eb;font-weight:600">${S.brief.topic}</span><br><span style="color:#cbd5e1;font-size:10.5px">Read the concept on the left first</span></div>`
-    : '';
-
-  body.innerHTML = `<div class="tf-body">
-    ${conceptLabel}
-    ${pool.map((q, i) => `
-      <div class="tf-q" id="tfq-${i}">
-        <div class="tf-q-text"><span style="color:#94a3b8;font-size:11px;margin-right:5px">Q${i+1}</span>${q.text}</div>
-        <div class="tf-buttons">
-          <button class="tf-btn" onclick="answerTF(${i}, true,  ${q.answer}, \`${(q.explanation||'').replace(/`/g,"'")}\`)">True</button>
-          <button class="tf-btn" onclick="answerTF(${i}, false, ${q.answer}, \`${(q.explanation||'').replace(/`/g,"'")}\`)">False</button>
-        </div>
-        <div class="tf-explanation" id="tfexp-${i}"></div>
-      </div>`).join('')}
-  </div>`;
-}
-
-let _tfTotal = 0;
-
-function answerTF(idx, userAnswer, correct, explanation) {
-  const qEl = document.getElementById(`tfq-${idx}`);
-  if (!qEl || qEl.dataset.answered) return;
-  qEl.dataset.answered = '1';
-
-  const isRight = userAnswer === correct;
-  if (isRight) _tfCorrect++;
-  _tfAnswered++;
-  updateTfScore();
-
-  const btns = qEl.querySelectorAll('.tf-btn');
-  btns.forEach(b => {
-    const bVal = b.textContent === 'True';
-    if (bVal === correct)                    b.classList.add('correct');
-    else if (bVal === userAnswer && !isRight) b.classList.add('wrong');
-    else                                     b.classList.add('neutral');
-    b.disabled = true;
+  el.querySelectorAll('[data-cat-head]').forEach(h => {
+    h.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = h.dataset.catHead;
+      if (V.openCategories.has(id)) V.openCategories.delete(id);
+      else V.openCategories.add(id);
+      renderSidebar();
+    });
   });
 
-  const expEl = document.getElementById(`tfexp-${idx}`);
-  if (expEl) {
-    expEl.textContent = (isRight ? '✓ ' : '✗ ') + explanation;
-    expEl.className = `tf-explanation show ${isRight ? 'correct-exp' : 'wrong-exp'}`;
-  }
-
-  // Auto-refresh when all answered
-  if (_tfAnswered >= _tfTotal && _tfTotal > 0) {
-    setTimeout(() => {
-      if (!S.brief?.topic) return;
-      document.getElementById('tfBody').innerHTML = '<div class="tf-generating">Loading next set…</div>';
-      generateTrueFalse(S.brief).then(renderTrueFalse);
-    }, 1800);
-  }
+  el.querySelectorAll('[data-sub]').forEach(s => {
+    s.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openSubtopic(s.dataset.sub);
+    });
+  });
 }
 
-function updateTfScore() {
-  const chip = document.getElementById('tfScoreChip');
-  if (!chip) return;
-  if (_tfAnswered === 0) { chip.textContent = '—'; return; }
-  chip.textContent = `${_tfCorrect}/${_tfAnswered} correct`;
-}
-
-function resetTF() {
-  if (S.brief?.topic) {
-    document.getElementById('tfBody').innerHTML = '<div class="tf-generating">Regenerating…</div>';
-    generateTrueFalse(S.brief).then(renderTrueFalse);
-  }
-}
-
-// ── Brief refresh (Agent 2 — synthesizer) ────────────────────────────────────
-
-async function refreshBrief() {
-  window._briefFetching = true;
-  const btn = document.getElementById('briefRefreshBtn');
-  btn.disabled = true; btn.textContent = '↻ Synthesizing…';
-  document.getElementById('briefEl').innerHTML = `<div class="brief-body" style="color:#aaa;font-size:13px">Synthesizing today's best concept from ${CURATED.feeds.length} writers + arXiv + HuggingFace…</div>`;
-
-  try {
-    const [hn,ax,hf,feeds] = await Promise.allSettled([fetchHN(),fetchArxiv(),fetchHFPapers(),fetchFeeds()]);
-    const brief = await synthesizeBrief(hn.value||[], ax.value||[], hf.value||[], feeds.value||[]);
-    S.brief = { date: isoToday(), ...brief };
-    S.sources = { hn:(hn.value||[]).length, ax:(ax.value||[]).length, hf:(hf.value||[]).length, feeds:(feeds.value||[]).length };
-    save();
-    renderBrief();
-    // Generate T/F questions for today's concept
-    const tfBody = document.getElementById('tfBody');
-    if (tfBody) tfBody.innerHTML = '<div class="tf-generating">Generating questions…</div>';
-    generateTrueFalse(S.brief).then(renderTrueFalse);
-  } catch(e) {
-    document.getElementById('briefEl').innerHTML = `<div class="brief-body"><span class="err">Could not load brief: ${e.message}</span><br><button style="margin-top:10px" onclick="window._briefFetching=false;refreshBrief()">Retry</button></div>`;
-  }
-
-  window._briefFetching = false;
-  btn.disabled = false; btn.textContent = '↻ New angle';
-}
-
-// ── Init ──────────────────────────────────────────────────────────────────────
-
-async function init() {
-  if (window.__configMissing || !window.CONFIG) {
-    document.getElementById('loading').style.display='none';
-    document.getElementById('setup').style.display='block';
+// ═══════════════════════════════════════════════════════════════════════════
+//  MAIN AREA
+// ═══════════════════════════════════════════════════════════════════════════
+let _lastRenderedSub = null;
+function renderMain() {
+  const el = document.getElementById('main');
+  if (!V.activeSub) { el.innerHTML = welcomeHtml(); _lastRenderedSub = null; return; }
+  const st = S.subtopics[V.activeSub.id];
+  if (!st || !st.content) {
+    el.innerHTML = subHeaderHtml(V.activeSub) + loaderHtml('Generating curriculum with Opus 4.7 — this takes ~30–60 seconds');
     return;
   }
+  el.innerHTML = renderSubtopicView(V.activeSub, st);
+  attachSubtopicHandlers();
 
-  load(); checkWeekReset(); tickStreak();
-
-  const setStatus = t => { const el=document.getElementById('loadStatus'); if(el) el.textContent=t; };
-  const mEl = document.getElementById('loadMonth'); if(mEl) mEl.textContent = planMonth();
-
-  const today = isoToday();
-  const briefCached = S.brief?.date === today;
-  const weekCached  = !isNewWeek() && (S.weekLabs||[]).length >= 3;
-
-  // Full cache hit — show immediately, still generate fresh T/F
-  if (briefCached && weekCached) {
-    document.getElementById('loading').style.display='none';
-    document.getElementById('main').style.display='block';
-    renderAll();
-    if (S.brief?.topic) generateTrueFalse(S.brief).then(renderTrueFalse);
-    return;
+  // Only scroll to top when we switch to a new subtopic
+  if (_lastRenderedSub !== V.activeSub.id) {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    _lastRenderedSub = V.activeSub.id;
   }
 
-  try {
-    // Phase 1: fetch all sources in parallel
-    const feedCount = CURATED.feeds.length;
-    setStatus(`Reading ${feedCount} AI writers, arXiv & Hacker News…`);
-    const [hnR,axR,hfR,feedsR] = await Promise.allSettled([fetchHN(),fetchArxiv(),fetchHFPapers(),fetchFeeds()]);
-    const src = { hn:hnR.value||[], ax:axR.value||[], hf:hfR.value||[], feeds:feedsR.value||[] };
-    S.sources = { hn:src.hn.length, ax:src.ax.length, hf:src.hf.length, feeds:src.feeds.length };
+  // Scroll ask-history to bottom so latest message is visible
+  const hist = document.querySelector('.ask-hist');
+  if (hist) hist.scrollTop = hist.scrollHeight;
+}
 
-    // Progress analysis — silent fallback
-    const dimAnalysis = await analyzeProgress().catch(()=>({ focus_dims:['rag','inference'], gap:'', week_goal:'' }));
+function welcomeHtml() {
+  return `<div class="welcome">
+    <h1>AI Engineer — Curriculum</h1>
+    <p>Pioneer-grade content. 8 categories, 47 subtopics covering the full production AI engineering surface. Pick a subtopic from the left to begin.</p>
+    <div class="flow">
+      <h4>How it works</h4>
+      <ol>
+        <li>Click a subtopic — Opus 4.7 generates 3 concepts + 1 lab (cached forever)</li>
+        <li>Read concept 1 → attempt its Q&A → unlock concept 2</li>
+        <li>Finish all concepts → lab unlocks (2 free-compute options)</li>
+        <li>Ask the lab-scoped chatbot anytime you get stuck</li>
+        <li>Mark lab done → subtopic ✓ in sidebar</li>
+      </ol>
+    </div>
+    <p class="sub-tag">All content generated on-demand. Free-compute first. Labs are the point.</p>
+  </div>`;
+}
 
-    // Phase 2: weekly plan OR brief — not both running the heavy plan call when not needed
-    if (isNewWeek()) {
-      // One Claude call per week — generates theme + 5 progressive labs
-      setStatus('Planning your week — theme and 5 progressive labs…');
-      const planR = await Promise.allSettled([generateWeeklyPlan(src, dimAnalysis)]);
-      const plan = planR[0].status === 'fulfilled' ? planR[0].value : null;
-      if (plan?.theme && plan?.labs?.length >= 3) {
-        S.weekTheme   = plan.theme;
-        S.weekLabs    = plan.labs.map(l => ({...l, status:'todo'}));
-        S.weekGenDate = weekStartISO();
-        S.weekDoneIds = [];
+function subHeaderHtml(sub) {
+  return `<div class="sub-header">
+    <div class="sub-breadcrumb">${esc(sub.catName)}</div>
+    <div class="sub-title">${esc(sub.name)}</div>
+    <div class="sub-desc">${esc(sub.catDesc)}</div>
+  </div>`;
+}
+
+function loaderHtml(msg) {
+  return `<div class="loader">${esc(msg || 'Loading…')}
+    <div class="loader-dots"><span class="loader-dot">●</span><span class="loader-dot">●</span><span class="loader-dot">●</span></div>
+  </div>`;
+}
+
+function errorHtml(title, body, retryLabel) {
+  return `<div class="error-card">
+    <b>${esc(title)}</b><br>${body}
+    ${retryLabel ? `<div class="lab-actions"><button class="btn btn-primary" data-action="retry-sub">${esc(retryLabel)}</button></div>` : ''}
+  </div>`;
+}
+
+// ─── Subtopic view (overview + concept tabs + active concept + lab) ───
+function renderSubtopicView(sub, st) {
+  const content = st.content;
+  const conceptIdx = Math.min(V.activeConcept, content.concepts.length - 1);
+  const concept = content.concepts[conceptIdx];
+  const cState = st.concepts[concept.id] || { status: 'notstarted' };
+
+  // Gate: concept N is locked until concept N-1 is submitted (any result)
+  const gate = idx => {
+    if (idx === 0) return false;
+    for (let i = 0; i < idx; i++) {
+      const prev = content.concepts[i];
+      const ps = st.concepts[prev.id];
+      if (!ps || !ps.eval) return true;  // locked
+    }
+    return false;
+  };
+
+  const conceptTabs = content.concepts.map((c, i) => {
+    const cs = st.concepts[c.id] || {};
+    const locked = gate(i);
+    const mark = cs.status === 'passed' ? '✓' : (cs.eval ? (cs.eval.passed ? '✓' : '✗') : (locked ? '🔒' : '○'));
+    const cls = [
+      i === conceptIdx ? 'active' : '',
+      cs.status === 'passed' ? 'done' : '',
+      locked ? 'locked' : '',
+    ].filter(Boolean).join(' ');
+    return `<div class="c-tab ${cls}" data-c-idx="${i}" data-locked="${locked ? 1 : 0}">
+      <span class="c-tab-mark">${mark}</span>
+      <span>Concept ${i+1}</span>
+    </div>`;
+  }).join('');
+
+  const allConceptsPassed = content.concepts.every(c => st.concepts[c.id]?.status === 'passed');
+
+  return `
+    ${subHeaderHtml(sub)}
+    ${renderOverview(content.overview)}
+    <div class="concept-tabs">${conceptTabs}</div>
+    ${renderConceptCard(concept, cState, conceptIdx, content.concepts.length)}
+    ${V.qaMode ? renderQACard(concept, cState) : ''}
+    ${allConceptsPassed ? renderLabCard(content.lab, st.lab) : renderLabGate(st)}
+    ${st.status === 'done' ? renderWriteupCard(sub, st) : ''}
+  `;
+}
+
+function renderWriteupCard(sub, st) {
+  const w = st.writeup || { status: 'notgenerated' };
+
+  if (w.status === 'generating') {
+    return `<div class="writeup-card">
+      <div class="writeup-head">✦ Weekly write-up</div>
+      ${loaderHtml('Drafting Substack post with Opus 4.7 — ~20–30 seconds')}
+    </div>`;
+  }
+
+  if (w.status !== 'generated' || !w.substack) {
+    return `<div class="writeup-card">
+      <div class="writeup-head">✦ Weekly write-up</div>
+      <div class="writeup-tag">You finished <b>${esc(sub.name)}</b>. Draft a Substack-ready post + LinkedIn teaser from what you learned. First-person, specific, Hamel/Willison voice.</div>
+      <div class="lab-actions">
+        <button class="btn btn-primary" data-action="gen-writeup">Generate post</button>
+      </div>
+    </div>`;
+  }
+
+  const gen = w.generated_at ? new Date(w.generated_at).toLocaleString() : '';
+  return `<div class="writeup-card">
+    <div class="writeup-head">✦ Weekly write-up</div>
+
+    <div class="writeup-section">
+      <div class="writeup-label">Substack post</div>
+      <div class="writeup-title">${esc(w.substack.title)}</div>
+      <pre class="writeup-body">${esc(w.substack.body)}</pre>
+      <div class="lab-actions">
+        <button class="btn btn-sm btn-primary" data-action="copy-substack">Copy post</button>
+      </div>
+    </div>
+
+    <div class="writeup-section">
+      <div class="writeup-label">LinkedIn / X teaser</div>
+      <pre class="writeup-body">${esc(w.social.text)}</pre>
+      <div class="lab-actions">
+        <button class="btn btn-sm btn-primary" data-action="copy-social">Copy teaser</button>
+      </div>
+    </div>
+
+    <div class="lab-actions" style="margin-top: 16px;">
+      <button class="btn" data-action="regen-writeup">Regenerate</button>
+      ${gen ? `<span class="writeup-meta">Generated ${esc(gen)}</span>` : ''}
+    </div>
+  </div>`;
+}
+
+function renderOverview(ov) {
+  return `<div class="sub-overview">
+    <div class="ov-col">
+      <div class="ov-label">Plan to learn</div>
+      <ul class="ov-list">${(ov.plan_to_learn || []).map(x => `<li>${esc(x)}</li>`).join('')}</ul>
+    </div>
+    <div class="ov-col">
+      <div class="ov-label">You will achieve</div>
+      <ul class="ov-list">${(ov.you_will_achieve || []).map(x => `<li>${esc(x)}</li>`).join('')}</ul>
+    </div>
+    <div class="ov-col">
+      <div class="ov-label">Why it matters</div>
+      <div class="ov-why">${esc(ov.why_it_matters || '')}</div>
+    </div>
+  </div>`;
+}
+
+function renderConceptCard(c, cState, idx, total) {
+  const passed = cState.status === 'passed';
+  const attempted = !!cState.eval;
+  const isLast = idx === total - 1;
+
+  const keyPoints = (c.key_points || []).map(k => `
+    <div class="kp">
+      <div class="kp-point">${esc(k.point)}</div>
+      <div class="kp-exp">${esc(k.explanation)}</div>
+      ${k.example ? `<div class="kp-ex"><span class="kp-ex-label">example</span>${esc(k.example)}</div>` : ''}
+    </div>`).join('');
+
+  const patterns = (c.patterns || []).map(p => `
+    <div class="pattern">
+      <div class="p-head"><span class="p-tag do">DO</span>${esc(p.do)}</div>
+      <div class="p-body"><b>Why:</b> ${esc(p.why)} &nbsp; <b>When:</b> ${esc(p.when)}</div>
+    </div>`).join('');
+
+  const antipatterns = (c.antipatterns || []).map(p => `
+    <div class="antipattern">
+      <div class="p-head"><span class="p-tag dont">DON'T</span>${esc(p.dont)}</div>
+      <div class="p-body"><b>Why wrong:</b> ${esc(p.why_wrong)} &nbsp; <b>Instead:</b> ${esc(p.instead)}</div>
+    </div>`).join('');
+
+  const pitfalls = (c.pitfalls || []).map(p => `
+    <div class="pitfall">
+      <div class="p-head"><span class="p-tag pit">PITFALL</span>${esc(p.symptom)}</div>
+      <div class="p-body"><b>Cause:</b> ${esc(p.cause)} &nbsp; <b>Fix:</b> ${esc(p.fix)}</div>
+    </div>`).join('');
+
+  const sources = (c.sources || []).map(s => `
+    <div class="src-item">
+      <a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a>
+      ${s.what_to_read ? `<span class="src-note">${esc(s.what_to_read)}</span>` : ''}
+    </div>`).join('');
+
+  let footer = '';
+  if (!V.qaMode) {
+    if (passed) {
+      footer = `<div class="sub-actions">
+        <span class="btn btn-ghost" style="color:#059669;">✓ Q&A passed — ${cState.eval ? cState.eval.score : ''}/100</span>
+        ${!isLast ? `<button class="btn btn-primary" data-action="request-next">Request concept ${idx + 2} →</button>` : ''}
+      </div>`;
+    } else if (attempted) {
+      footer = `<div class="sub-actions">
+        <span class="btn btn-ghost" style="color:#dc2626;">Q&A attempted — ${cState.eval.score}/100</span>
+        <button class="btn" data-action="retake-qa">Retake Q&A</button>
+        ${!isLast ? `<button class="btn btn-ghost" data-action="request-next">Skip to concept ${idx + 2} →</button>` : ''}
+      </div>`;
+    } else {
+      footer = `<div class="sub-actions">
+        <button class="btn btn-primary" data-action="start-qa">Attempt Q&A</button>
+      </div>`;
+    }
+  }
+
+  return `<div class="concept-card">
+    <div class="concept-title">${esc(c.title)}</div>
+    <div class="concept-summary">${esc(c.summary)}</div>
+
+    <div class="section-label">Key points</div>
+    ${keyPoints}
+
+    <div class="section-label">Patterns</div>
+    ${patterns}
+
+    <div class="section-label">Antipatterns</div>
+    ${antipatterns}
+
+    <div class="section-label">Pitfalls</div>
+    ${pitfalls}
+
+    <div class="section-label">Sources</div>
+    <div class="src-list">${sources}</div>
+
+    ${footer}
+  </div>`;
+}
+
+function renderQACard(concept, cState) {
+  // If no questions yet, show loader / generate button
+  if (!cState.questions || cState.questions.length === 0) {
+    return `<div class="qa-card">
+      <div class="qa-head">Q&A — ${esc(concept.title)}</div>
+      <div id="qa-loader">Generating questions…</div>
+    </div>`;
+  }
+
+  const items = cState.questions.map((q, i) => `
+    <div class="qa-item">
+      <div class="qa-q">Q${i+1}. ${esc(q.text)}</div>
+      <textarea class="qa-a" data-qid="${esc(q.id)}" placeholder="Write your answer…">${esc((cState.answers && cState.answers[q.id]) || '')}</textarea>
+    </div>`).join('');
+
+  let evalBlock = '';
+  if (cState.eval) {
+    const cls = cState.eval.passed ? 'passed' : 'failed';
+    evalBlock = `<div class="qa-eval ${cls}">
+      <div class="qa-verdict">${cState.eval.passed ? 'Passed' : 'Not passed'}</div>
+      <div class="qa-score ${cls}">${cState.eval.score}/100</div>
+      <div class="qa-feedback">${esc(cState.eval.feedback)}</div>
+    </div>`;
+  }
+
+  const submitting = cState._submitting ? 'disabled' : '';
+  const submitText = cState._submitting ? 'Evaluating…' : (cState.eval ? 'Re-evaluate' : 'Submit for evaluation');
+
+  return `<div class="qa-card">
+    <div class="qa-head">Q&A — ${esc(concept.title)}</div>
+    ${items}
+    ${evalBlock}
+    <div class="qa-actions">
+      <button class="btn btn-primary" data-action="submit-qa" ${submitting}>${submitText}</button>
+      <button class="btn" data-action="regen-qa">Regenerate questions</button>
+      <button class="btn btn-ghost" data-action="close-qa">Back to concept</button>
+    </div>
+  </div>`;
+}
+
+function renderLabGate(st) {
+  const content = st.content;
+  const passedCount = content.concepts.filter(c => st.concepts[c.id]?.status === 'passed').length;
+  const total = content.concepts.length;
+  return `<div class="lab-gate">
+    <b>Lab locked</b> — pass Q&A on all ${total} concepts to unlock. (${passedCount}/${total} passed)
+  </div>`;
+}
+
+function renderLabCard(lab, labState) {
+  const optIdx = Math.min(labState.selectedOption || 0, (lab.options || []).length - 1);
+  const opt = lab.options[optIdx];
+  const optTabs = lab.options.map((o, i) => `
+    <div class="opt-tab ${i === optIdx ? 'active' : ''}" data-opt="${i}">${esc(o.name)}</div>`).join('');
+
+  const setupSteps = (opt.setup_steps || []).map(s => `<li>${esc(s)}</li>`).join('');
+  const steps = (opt.steps || []).map(s => `
+    <div class="step">
+      <div class="step-n">${esc(s.n)}</div>
+      <div class="step-body">
+        <div class="step-do">${esc(s.do)}</div>
+        ${s.code ? `<div class="step-code">${esc(s.code)}</div>` : ''}
+        ${s.verify ? `<div class="step-verify">${esc(s.verify)}</div>` : ''}
+      </div>
+    </div>`).join('');
+
+  const prereqs = (lab.prerequisites || []).map(p => `<li>${esc(p)}</li>`).join('');
+  const verification = (lab.verification || []).map(v => `<li>${esc(v)}</li>`).join('');
+  const sources = (lab.sources || []).map(s => `
+    <div class="src-item">
+      <a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a>
+      ${s.what_to_read ? `<span class="src-note">${esc(s.what_to_read)}</span>` : ''}
+    </div>`).join('');
+
+  const status = labState.status;
+  const ack = labState.prereqAck;
+
+  let actions = '';
+  if (status === 'done') {
+    actions = `<span class="btn btn-ghost" style="color:#059669;">✓ Lab marked done</span>
+               <button class="btn" data-action="reset-lab">Reset lab</button>`;
+  } else if (status === 'inprogress') {
+    actions = `<button class="btn btn-primary" data-action="mark-lab-done">Mark lab done</button>
+               <button class="btn" data-action="reset-lab">Reset</button>`;
+  } else {
+    actions = `<button class="btn btn-primary" data-action="start-lab" ${ack ? '' : 'disabled'}>
+                 ${ack ? 'Start lab' : 'Acknowledge prerequisites first'}
+               </button>`;
+  }
+
+  const chat = (labState.chat || []).map(m =>
+    `<div class="ask-msg ${m.role === 'user' ? 'user' : 'ai'}">${esc(m.text)}</div>`).join('');
+
+  return `<div class="lab-card">
+    <div class="lab-eyebrow">Hands-on lab</div>
+    <div class="lab-title">${esc(lab.title)}</div>
+    <div class="lab-build">${esc(lab.what_you_build)}</div>
+    ${lab.why_this_lab ? `<div class="lab-why">${esc(lab.why_this_lab)}</div>` : ''}
+    <div class="lab-meta">
+      <span><strong>Time:</strong> ${esc(lab.estimated_time || '—')}</span>
+      <span><strong>Covers:</strong> ${esc((lab.covers_concepts || []).join(', '))}</span>
+    </div>
+
+    <div class="lab-prereq">
+      <div class="ov-label">Prerequisites</div>
+      <ul>${prereqs}</ul>
+      <div class="sub-actions" style="margin-top:10px;">
+        <label style="font-size:12.5px; display:flex; align-items:center; gap:8px; cursor:pointer; color:#78350f;">
+          <input type="checkbox" data-action="prereq-ack" ${ack ? 'checked' : ''} ${status !== 'notstarted' ? 'disabled' : ''}>
+          I have all prerequisites ready
+        </label>
+      </div>
+    </div>
+
+    <div class="lab-options">${optTabs}</div>
+
+    <div class="opt-meta">
+      <span><b>Compute:</b> ${esc(opt.compute)}</span>
+      <span><b>Cost:</b> ${esc(opt.cost)}</span>
+      <span><b>Tooling:</b> ${esc(opt.tooling)}</span>
+    </div>
+    <div class="opt-tradeoff"><b>Tradeoffs:</b> ${esc(opt.tradeoffs)}</div>
+
+    ${setupSteps ? `<div class="section-label">Setup</div><ul class="setup-steps">${setupSteps}</ul>` : ''}
+
+    <div class="section-label">Steps</div>
+    ${steps}
+
+    <div class="lab-verify">
+      <div class="ov-label">You're done when</div>
+      <ul>${verification}</ul>
+    </div>
+
+    ${lab.expected_output ? `<div class="lab-output"><b>Expected output:</b> ${esc(lab.expected_output)}</div>` : ''}
+    ${lab.stretch ? `<div class="lab-stretch"><b>Stretch:</b> ${esc(lab.stretch)}</div>` : ''}
+
+    ${sources ? `<div class="section-label">Sources</div><div class="src-list">${sources}</div>` : ''}
+
+    <div class="lab-actions">${actions}</div>
+
+    <div class="ask-card">
+      <div class="ask-head">Ask about this lab</div>
+      <div class="ask-tag">Sonnet 4.6 · scoped to this lab only · prompt-cached for cheap follow-ups</div>
+      <div class="ask-hist">${chat || '<div class="ask-tag">No questions yet. Ask anything about the steps, errors, or expected output.</div>'}</div>
+      <div class="ask-row">
+        <input type="text" class="ask-input" id="ask-input" placeholder="e.g., 'Step 4 throws ImportError — what am I missing?'" />
+        <button class="btn btn-primary" data-action="ask">Send</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  HANDLERS
+// ═══════════════════════════════════════════════════════════════════════════
+function attachSubtopicHandlers() {
+  const m = document.getElementById('main');
+
+  m.querySelectorAll('[data-c-idx]').forEach(t => {
+    t.addEventListener('click', () => {
+      if (t.dataset.locked === '1') {
+        flashMessage('Pass the previous concept Q&A first.');
+        return;
       }
-    }
+      V.activeConcept = parseInt(t.dataset.cIdx, 10);
+      V.qaMode = false;
+      renderMain();
+    });
+  });
 
-    // Daily brief — fresh every day
-    if (!briefCached) {
-      setStatus('Synthesizing today\'s best concept…');
-      const briefR = await Promise.allSettled([synthesizeBrief(src.hn, src.ax, src.hf, src.feeds)]);
-      const brief = briefR[0].status === 'fulfilled' ? briefR[0].value : null;
-      if (brief?.topic) S.brief = { date:today, ...brief };
-    }
+  m.querySelectorAll('[data-opt]').forEach(t => {
+    t.addEventListener('click', () => {
+      const st = S.subtopics[V.activeSub.id];
+      st.lab.selectedOption = parseInt(t.dataset.opt, 10);
+      saveState();
+      renderMain();
+    });
+  });
 
-    save();
-  } catch(e) {
-    console.error('Init error:', e);
+  m.querySelectorAll('[data-action]').forEach(b => {
+    b.addEventListener('click', (e) => handleAction(b.dataset.action, b, e));
+    if (b.tagName === 'INPUT' && b.type === 'checkbox') {
+      b.addEventListener('change', (e) => handleAction(b.dataset.action, b, e));
+    }
+  });
+
+  const askInput = document.getElementById('ask-input');
+  if (askInput) {
+    askInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleAction('ask');
+      }
+    });
   }
-
-  // Always show — partial results beat a stuck loading screen
-  document.getElementById('loading').style.display='none';
-  document.getElementById('main').style.display='block';
-  renderAll();
-  if (S.brief?.topic) generateTrueFalse(S.brief).then(renderTrueFalse);
-  archiveToday();
 }
 
+async function handleAction(action, btn, evt) {
+  const subId = V.activeSub?.id;
+  const st = subId ? S.subtopics[subId] : null;
+
+  if (action === 'retry-sub')  return openSubtopic(subId, true);
+
+  if (!st) return;
+
+  if (action === 'start-qa')      { V.qaMode = true; renderMain(); return ensureQuestions(); }
+  if (action === 'close-qa')      { V.qaMode = false; renderMain(); return; }
+  if (action === 'retake-qa')     { V.qaMode = true; renderMain(); return; }
+  if (action === 'regen-qa')      return regenQuestions();
+  if (action === 'submit-qa')     return submitQA();
+  if (action === 'request-next')  return requestNextConcept();
+
+  if (action === 'prereq-ack')    { st.lab.prereqAck = !!btn.checked; saveState(); renderMain(); return; }
+  if (action === 'start-lab')     { st.lab.status = 'inprogress'; recomputeSubStatus(subId); saveState(); renderMain(); renderSidebar(); return; }
+  if (action === 'mark-lab-done') { st.lab.status = 'done'; recomputeSubStatus(subId); saveState(); renderMain(); renderSidebar(); return; }
+  if (action === 'reset-lab')     { st.lab.status = 'notstarted'; st.lab.prereqAck = false; recomputeSubStatus(subId); saveState(); renderMain(); renderSidebar(); return; }
+  if (action === 'ask')           return submitAsk();
+
+  if (action === 'gen-writeup')   return generateWriteupAction();
+  if (action === 'regen-writeup') {
+    st.writeup = { status: 'notgenerated', substack: null, social: null, generated_at: null };
+    saveState();
+    return generateWriteupAction();
+  }
+  if (action === 'copy-substack') {
+    const w = st.writeup;
+    if (w?.substack) copyText(w.substack.title + '\n\n' + w.substack.body);
+    return;
+  }
+  if (action === 'copy-social') {
+    const w = st.writeup;
+    if (w?.social?.text) copyText(w.social.text);
+    return;
+  }
+}
+
+async function generateWriteupAction() {
+  const subId = V.activeSub.id;
+  const st = S.subtopics[subId];
+  if (!st || !st.content) return;
+  st.writeup.status = 'generating';
+  saveState();
+  renderMain();
+  try {
+    const out = await generateWriteup(V.activeSub, st.content);
+    st.writeup.substack = out.substack;
+    st.writeup.social = out.social;
+    st.writeup.status = 'generated';
+    st.writeup.generated_at = new Date().toISOString();
+    saveState();
+    renderMain();
+  } catch (e) {
+    st.writeup.status = 'notgenerated';
+    saveState();
+    renderMain();
+    flashMessage('Write-up failed: ' + (e.message || e));
+  }
+}
+
+function copyText(text) {
+  if (!navigator.clipboard) { flashMessage('Clipboard API unavailable'); return; }
+  navigator.clipboard.writeText(text)
+    .then(() => flashMessage('Copied to clipboard'))
+    .catch(() => flashMessage('Copy failed'));
+}
+
+function flashMessage(msg) {
+  const m = document.getElementById('main');
+  const div = document.createElement('div');
+  div.className = 'error-card';
+  div.style.position = 'fixed';
+  div.style.top = '20px';
+  div.style.right = '20px';
+  div.style.zIndex = '1000';
+  div.style.background = '#fef3c7';
+  div.style.borderColor = '#fcd34d';
+  div.style.color = '#78350f';
+  div.textContent = msg;
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 2600);
+}
+
+async function openSubtopic(subId, forceRegen = false) {
+  const meta = subMeta(subId);
+  if (!meta) return;
+  V.activeSub = meta;
+  V.activeConcept = 0;
+  V.qaMode = false;
+
+  const st = ensureSubState(subId);
+  renderSidebar();
+
+  if (st.content && !forceRegen) {
+    renderMain();
+    return;
+  }
+
+  // Generate
+  document.getElementById('main').innerHTML =
+    subHeaderHtml(meta) +
+    loaderHtml('Generating pioneer-grade curriculum with Opus 4.7 — ~30–60 seconds');
+
+  try {
+    const content = await generateSubtopic(meta);
+    st.content = content;
+    st.lab.selectedOption = 0;
+    st.lab.prereqAck = false;
+    recomputeSubStatus(subId);
+    saveState();
+    renderMain();
+    renderSidebar();
+  } catch (e) {
+    const missingProxy = /(Failed to fetch|NetworkError|ERR_CONNECTION_REFUSED)/i.test(e.message || '');
+    const body = missingProxy
+      ? `Could not reach the proxy at <code>${esc(PROXY_URL)}</code>. Is it running? Run <code>start.bat</code> from the project folder.`
+      : `${esc(e.message || String(e))}`;
+    document.getElementById('main').innerHTML =
+      subHeaderHtml(meta) + errorHtml('Generation failed', body, 'Retry');
+    document.querySelectorAll('[data-action="retry-sub"]').forEach(b =>
+      b.addEventListener('click', () => openSubtopic(subId, true)));
+  }
+}
+
+async function ensureQuestions() {
+  const subId = V.activeSub.id;
+  const st = S.subtopics[subId];
+  const concept = st.content.concepts[V.activeConcept];
+  if (!st.concepts[concept.id]) st.concepts[concept.id] = { status: 'reading' };
+  const cs = st.concepts[concept.id];
+  if (cs.questions && cs.questions.length) return;
+
+  // Show QA card with loader
+  renderMain();
+  try {
+    const qs = await generateQA(concept);
+    cs.questions = qs;
+    cs.answers = cs.answers || {};
+    cs.status = cs.status === 'passed' ? 'passed' : 'reading';
+    saveState();
+    renderMain();
+  } catch (e) {
+    const loader = document.getElementById('qa-loader');
+    if (loader) loader.innerHTML = `<div class="error-card">Could not generate questions: ${esc(e.message)}</div>`;
+  }
+}
+
+async function regenQuestions() {
+  const subId = V.activeSub.id;
+  const st = S.subtopics[subId];
+  const concept = st.content.concepts[V.activeConcept];
+  const cs = st.concepts[concept.id];
+  if (!cs) return;
+  cs.questions = null;
+  cs.answers = {};
+  cs.eval = null;
+  saveState();
+  await ensureQuestions();
+}
+
+async function submitQA() {
+  const subId = V.activeSub.id;
+  const st = S.subtopics[subId];
+  const concept = st.content.concepts[V.activeConcept];
+  const cs = st.concepts[concept.id];
+  if (!cs || !cs.questions) return;
+
+  // Collect answers
+  cs.answers = cs.answers || {};
+  document.querySelectorAll('.qa-a').forEach(t => {
+    cs.answers[t.dataset.qid] = t.value.trim();
+  });
+  saveState();
+
+  cs._submitting = true;
+  renderMain();
+
+  try {
+    const items = cs.questions.map(q => ({ question: q.text, answer: cs.answers[q.id] || '' }));
+    const res = await evalQA(concept, items);
+    cs.eval = res;
+    cs.status = res.passed ? 'passed' : 'reading';
+    cs._submitting = false;
+    recomputeSubStatus(subId);
+    saveState();
+    renderMain();
+    renderSidebar();
+  } catch (e) {
+    cs._submitting = false;
+    saveState();
+    renderMain();
+    flashMessage('Evaluation failed: ' + (e.message || e));
+  }
+}
+
+function requestNextConcept() {
+  const subId = V.activeSub.id;
+  const st = S.subtopics[subId];
+  const next = V.activeConcept + 1;
+  if (next >= st.content.concepts.length) return;
+  V.activeConcept = next;
+  V.qaMode = false;
+  renderMain();
+}
+
+async function submitAsk() {
+  const input = document.getElementById('ask-input');
+  if (!input) return;
+  const q = input.value.trim();
+  if (!q) return;
+  if (V.labAskBusy) return;
+
+  const subId = V.activeSub.id;
+  const st = S.subtopics[subId];
+  const lab = st.content.lab;
+
+  st.lab.chat = st.lab.chat || [];
+  st.lab.chat.push({ role: 'user', text: q });
+  input.value = '';
+  V.labAskBusy = true;
+  saveState();
+  renderMain();
+
+  try {
+    const resp = await askLab(lab, st.lab.chat.slice(0, -1), q);
+    st.lab.chat.push({ role: 'assistant', text: resp });
+    V.labAskBusy = false;
+    saveState();
+    renderMain();
+    // Focus input again
+    setTimeout(() => document.getElementById('ask-input')?.focus(), 50);
+  } catch (e) {
+    V.labAskBusy = false;
+    st.lab.chat.push({ role: 'assistant', text: 'Error: ' + (e.message || e) });
+    saveState();
+    renderMain();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════════════════════
+function init() {
+  renderSidebar();
+  renderMain();
+}
 init();
 </script>
 </body>
