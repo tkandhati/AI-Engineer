@@ -838,125 +838,138 @@ function approvedSourcesText() {
   return all.map(s => `- ${s.name}: ${s.url}`).join('\n');
 }
 
-async function generateSubtopic(meta) {
-  const system = `You are an AI engineering pioneer generating world-class learning content for a senior engineer (20 years experience, transitioning from enterprise sales to production AI). They work ACROSS industries — NEVER frame content as regulated-industry-specific.
+// Split into two calls so each stays well within Opus output limits (~3-4K tokens each).
+// onProgress(msg) lets the caller update the loader between steps.
+async function generateSubtopic(meta, onProgress) {
+  const part1 = await generateConceptsPart(meta, onProgress);
+  const lab   = await generateLabPart(meta, part1.concepts, onProgress);
+  return { ...part1, lab };
+}
 
-VOICE — channel (don't quote):
-- Chip Huyen's clarity and systems view
-- Hamel Husain's rigor on evals and error analysis
-- Simon Willison's pragmatism — what actually ships today
-- Andrej Karpathy's first-principles mental models
-- Jason Liu's concrete code-first examples
-- Lance Martin's production RAG patterns
-- Sebastian Raschka's precise explanations
-- Jerry Liu's depth on RAG production
+function _opusSystem(extra) {
+  return `You are an AI engineering pioneer generating world-class learning content for a senior engineer (20 years experience, transitioning from enterprise sales to production AI). They work ACROSS industries — NEVER frame as regulated-industry-specific.
 
-QUALITY BAR (non-negotiable):
-- Every claim must be SPECIFIC. Replace "use good chunking" with "use recursive chunking at 512 tokens with 64-token overlap for mixed docs".
-- Every code snippet must run. Real imports, real parameters. No "# your code here", no "..." placeholders.
+VOICE — channel (don't quote): Chip Huyen's systems clarity · Hamel Husain's evals rigor · Simon Willison's pragmatism · Karpathy's first-principles · Jason Liu's code-first examples · Lance Martin's production RAG · Sebastian Raschka's precision.
+
+QUALITY (non-negotiable):
+- Every claim SPECIFIC. "use recursive chunking at 512 tokens with 64-token overlap" not "use good chunking".
+- Every code snippet must run. Real imports, real params. No "# your code here".
 - Patterns: "DO X because Y, apply when Z".
-- Antipatterns: "DON'T default to X — it breaks because Y. Instead do Z".
-- Pitfalls: the symptom a learner actually sees, the underlying cause, the concrete fix.
-- Labs run on FREE compute only: Colab T4, Kaggle P100, Groq free tier, local CPU. Plus the Claude key the learner already has.
-- The 2 lab options must differ meaningfully — different tooling, not just different hardware.
-- All source URLs come ONLY from this approved list:
-${approvedSourcesText()}
+- Antipatterns: "DON'T X — breaks because Y. Instead Z".
+- Pitfalls: symptom the learner actually sees · cause · concrete fix.
+- Source URLs ONLY from: ${approvedSourcesText()}
 
-Respond with STRICT JSON. No prose before or after. No markdown fences.
+Respond with STRICT JSON only. No prose. No markdown fences.
+${extra || ''}`;
+}
 
+async function generateConceptsPart(meta, onProgress) {
+  onProgress?.('Generating concepts (1 of 2) — ~30–60s');
+  const system = _opusSystem(`
 SCHEMA:
 {
   "overview": {
-    "plan_to_learn": ["string", ...],                // 3-5 specific items
-    "you_will_achieve": ["string", ...],             // 3-4 outcomes — what the learner can DO
-    "why_it_matters": "string"                       // 2-3 sentences, production relevance
+    "plan_to_learn":    ["string"],   // 3-5 items
+    "you_will_achieve": ["string"],   // 3-4 outcomes — what the learner can DO
+    "why_it_matters":   "string"      // 2-3 sentences
   },
-  "concepts": [                                      // EXACTLY 3, sequenced foundational -> applied -> production
+  "concepts": [                       // EXACTLY 3, sequenced foundational -> applied -> production
     {
       "id": "c1",
       "title": "string",
-      "summary": "string",                           // 1-sentence hook
+      "summary": "string",            // 1-sentence hook
       "key_points": [
         { "point": "string", "explanation": "string", "example": "string" }
-      ],                                             // 4-6 entries
-      "patterns": [
-        { "do": "string", "why": "string", "when": "string" }
-      ],                                             // 2-4 entries
-      "antipatterns": [
-        { "dont": "string", "why_wrong": "string", "instead": "string" }
-      ],                                             // 2-4 entries
-      "pitfalls": [
-        { "symptom": "string", "cause": "string", "fix": "string" }
-      ],                                             // 2-4 entries
-      "sources": [
-        { "name": "string", "url": "string", "what_to_read": "string" }
-      ]                                              // 2-3 entries
+      ],                              // EXACTLY 4 entries
+      "patterns":     [{ "do": "string", "why": "string", "when": "string" }],      // 2-3
+      "antipatterns": [{ "dont": "string", "why_wrong": "string", "instead": "string" }], // 2-3
+      "pitfalls":     [{ "symptom": "string", "cause": "string", "fix": "string" }],      // 2
+      "sources":      [{ "name": "string", "url": "string", "what_to_read": "string" }]   // 2
     }
-  ],
+  ]
+}`);
+
+  const user = `Category: ${meta.catName} — ${meta.catDesc}
+Subtopic: ${meta.name}
+
+Generate overview + 3 concepts sequenced: foundational intuition → practical application → production decisions.
+Keep explanations tight — one concrete example per key point, no padding.`;
+
+  const { text, stop_reason } = await callClaude({
+    model: OPUS,
+    system,
+    messages: [{ role: 'user', content: user }],
+    max_tokens: 6000,
+  });
+  if (stop_reason === 'max_tokens') throw new Error('Concepts response truncated — try again');
+  const parsed = extractJSON(text);
+  if (!parsed.overview || !Array.isArray(parsed.concepts) || parsed.concepts.length < 2) {
+    throw new Error('Concepts response missing required fields');
+  }
+  return parsed;
+}
+
+async function generateLabPart(meta, concepts, onProgress) {
+  onProgress?.('Generating lab (2 of 2) — ~30–60s');
+  const system = _opusSystem(`
+RULES FOR LAB:
+- Runs on FREE compute only: Colab T4, Kaggle P100, Groq free tier, local CPU.
+- 2 options MUST differ in tooling (e.g. LangChain+Chroma vs LlamaIndex+Qdrant) — not just hardware.
+- Every step has real runnable code. No placeholders.
+- Verification tells the learner exactly when they're done.
+
+SCHEMA:
+{
   "lab": {
     "title": "string",
     "covers_concepts": ["c1","c2","c3"],
-    "what_you_build": "string",                      // 2-3 sentences
-    "why_this_lab": "string",                        // 1-2 sentences — what it cements
-    "estimated_time": "string",                      // e.g. "45-60 min"
-    "prerequisites": ["string", ...],                // short imperative check-offs
+    "what_you_build":  "string",        // 2 sentences
+    "why_this_lab":    "string",        // 1-2 sentences
+    "estimated_time":  "string",
+    "prerequisites":   ["string"],      // short imperatives
     "options": [
       {
-        "name": "string",                            // e.g. "Option A: Colab T4 + LangChain + Chroma"
-        "compute": "string",
-        "cost": "string",                            // "Free" expected
-        "tooling": "string",
-        "tradeoffs": "string",
-        "setup_steps": ["string", ...],              // 2-4 short bullets
+        "name":        "string",        // e.g. "Option A: Colab T4 + LangChain + Chroma"
+        "compute":     "string",
+        "cost":        "Free",
+        "tooling":     "string",
+        "tradeoffs":   "string",
+        "setup_steps": ["string"],      // 2-3 bullets
         "steps": [
           { "n": 1, "do": "string", "code": "string", "verify": "string" }
-        ]                                            // 6-10 steps
+        ]                               // EXACTLY 6 steps
       }
-    ],                                               // EXACTLY 2 options, meaningfully different tooling
+    ],                                  // EXACTLY 2 options
     "expected_output": "string",
-    "verification": ["string", ...],                 // 3-4 concrete checks
-    "stretch": "string",
-    "sources": [
-      { "name": "string", "url": "string", "what_to_read": "string" }
-    ]
+    "verification":    ["string"],      // 3 concrete checks
+    "stretch":         "string",
+    "sources": [{ "name": "string", "url": "string", "what_to_read": "string" }]
   }
-}`;
+}`);
 
-  const user = `Generate the learning package for:
-Category: ${meta.catName}
-Category context: ${meta.catDesc}
+  const conceptSummary = concepts.map(c =>
+    `${c.id}: ${c.title} — ${c.summary}`).join('\n');
+
+  const user = `Category: ${meta.catName}
 Subtopic: ${meta.name}
 
-Sequence the 3 concepts as: foundational intuition → practical application → production decisions. The lab must exercise all 3 concepts and produce a tangible artifact the learner can show.`;
+Concepts to exercise:
+${conceptSummary}
 
-  let attempt = 0;
-  let lastErr;
-  while (attempt < 2) {
-    attempt++;
-    try {
-      const { text } = await callClaude({
-        model: OPUS,
-        system,
-        messages: [{ role: 'user', content: user }],
-        max_tokens: 14000,
-        temperature: attempt === 1 ? 0.45 : 0.25,
-      });
-      const parsed = extractJSON(text);
-      // Validate shape loosely
-      if (!parsed.overview || !Array.isArray(parsed.concepts) || !parsed.lab) {
-        throw new Error('Missing top-level fields (overview/concepts/lab)');
-      }
-      if (parsed.concepts.length < 2) throw new Error('Too few concepts generated');
-      if (!Array.isArray(parsed.lab.options) || parsed.lab.options.length < 2) {
-        throw new Error('Lab must have 2 options');
-      }
-      return parsed;
-    } catch (e) {
-      lastErr = e;
-      console.warn(`generateSubtopic attempt ${attempt} failed:`, e.message);
-    }
+Generate ONE lab that exercises all 3 concepts and produces a tangible, demonstrable artifact.`;
+
+  const { text, stop_reason } = await callClaude({
+    model: OPUS,
+    system,
+    messages: [{ role: 'user', content: user }],
+    max_tokens: 6000,
+  });
+  if (stop_reason === 'max_tokens') throw new Error('Lab response truncated — try again');
+  const parsed = extractJSON(text);
+  if (!parsed.lab || !Array.isArray(parsed.lab.options) || parsed.lab.options.length < 2) {
+    throw new Error('Lab response missing required fields or options');
   }
-  throw lastErr || new Error('generateSubtopic failed');
+  return parsed.lab;
 }
 
 async function generateQA(concept) {
@@ -1798,13 +1811,14 @@ async function openSubtopic(subId, forceRegen = false) {
     }
   }
 
-  // Nothing cached — generate with Opus
-  document.getElementById('main').innerHTML =
-    subHeaderHtml(meta) +
-    loaderHtml('Generating pioneer-grade curriculum with Opus 4.7 — ~30–60 seconds');
+  // Nothing cached — generate with Opus (2 focused calls)
+  const setLoader = msg => {
+    document.getElementById('main').innerHTML = subHeaderHtml(meta) + loaderHtml(msg);
+  };
+  setLoader('Starting generation — 2 steps, ~30–60s each');
 
   try {
-    const content = await generateSubtopic(meta);
+    const content = await generateSubtopic(meta, setLoader);
     st.content = content;
     st.lab.selectedOption = 0;
     st.lab.prereqAck = false;

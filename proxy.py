@@ -74,7 +74,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             method='POST',
         )
         try:
-            with urllib.request.urlopen(req) as r:
+            with urllib.request.urlopen(req, timeout=360) as r:
                 resp = r.read()
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json')
