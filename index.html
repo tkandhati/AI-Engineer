@@ -809,6 +809,27 @@ async function callClaude({ model, system, messages, max_tokens, temperature = 0
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+//  FILE CACHE  (proxy /cache endpoints → cache/{id}.json, gitignored)
+// ═══════════════════════════════════════════════════════════════════════════
+async function fileCacheGet(subId) {
+  try {
+    const res = await fetch(`${PROXY_URL}/cache?id=${encodeURIComponent(subId)}`);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch { return null; }
+}
+
+async function fileCachePut(subId, data) {
+  try {
+    await fetch(`${PROXY_URL}/cache`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: subId, data }),
+    });
+  } catch (e) { console.warn('File cache write failed (proxy down?):', e.message); }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 //  GENERATORS
 // ═══════════════════════════════════════════════════════════════════════════
 function approvedSourcesText() {
@@ -1711,6 +1732,7 @@ async function generateWriteupAction() {
     st.writeup.status = 'generated';
     st.writeup.generated_at = new Date().toISOString();
     saveState();
+    await fileCachePut(subId, { content: st.content, writeup: st.writeup });  // update file cache
     renderMain();
   } catch (e) {
     st.writeup.status = 'notgenerated';
@@ -1758,7 +1780,24 @@ async function openSubtopic(subId, forceRegen = false) {
     return;
   }
 
-  // Generate
+  // Check file cache first (survives browser clears; gitignored local folder)
+  if (!forceRegen) {
+    document.getElementById('main').innerHTML =
+      subHeaderHtml(meta) + loaderHtml('Checking local cache…');
+    const cached = await fileCacheGet(subId);
+    if (cached && cached.content) {
+      st.content = cached.content;
+      if (cached.writeup) st.writeup = cached.writeup;
+      st.lab.selectedOption = 0;
+      recomputeSubStatus(subId);
+      saveState();
+      renderMain();
+      renderSidebar();
+      return;
+    }
+  }
+
+  // Nothing cached — generate with Opus
   document.getElementById('main').innerHTML =
     subHeaderHtml(meta) +
     loaderHtml('Generating pioneer-grade curriculum with Opus 4.7 — ~30–60 seconds');
@@ -1770,6 +1809,7 @@ async function openSubtopic(subId, forceRegen = false) {
     st.lab.prereqAck = false;
     recomputeSubStatus(subId);
     saveState();
+    await fileCachePut(subId, { content: st.content });   // persist to file cache
     renderMain();
     renderSidebar();
   } catch (e) {
