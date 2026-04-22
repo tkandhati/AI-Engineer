@@ -3,3 +3,4 @@ apikey.txt
 _proxy_launch.bat
 .claude/
 cache/
+__pycache__/
