@@ -904,7 +904,7 @@ Keep explanations tight — one concrete example per key point, no padding.`;
     model: OPUS,
     system,
     messages: [{ role: 'user', content: user }],
-    max_tokens: 6000,
+    max_tokens: 8000,
   });
   if (stop_reason === 'max_tokens') throw new Error('Concepts response truncated — try again');
   const parsed = extractJSON(text);
@@ -921,6 +921,8 @@ RULES FOR LAB:
 - Runs on FREE compute only: Colab T4, Kaggle P100, Groq free tier, local CPU.
 - 2 options MUST differ in tooling (e.g. LangChain+Chroma vs LlamaIndex+Qdrant) — not just hardware.
 - Every step has real runnable code. No placeholders.
+- CODE BLOCKS CONCISE: 5-15 lines each. Show the core call, not full boilerplate. Assume imports done in setup_steps.
+- Steps are tight: "do" is 1 sentence, "verify" is 1 sentence. No prose padding.
 - Verification tells the learner exactly when they're done.
 
 SCHEMA:
@@ -967,7 +969,7 @@ Generate ONE lab that exercises all 3 concepts and produces a tangible, demonstr
     model: OPUS,
     system,
     messages: [{ role: 'user', content: user }],
-    max_tokens: 6000,
+    max_tokens: 12000,
   });
   if (stop_reason === 'max_tokens') throw new Error('Lab response truncated — try again');
   const parsed = extractJSON(text);
