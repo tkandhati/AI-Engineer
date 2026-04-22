@@ -782,7 +782,8 @@ function extractJSON(raw) {
 //  CLAUDE API
 // ═══════════════════════════════════════════════════════════════════════════
 async function callClaude({ model, system, messages, max_tokens, temperature = 0.4 }) {
-  const body = { model, max_tokens, messages, temperature };
+  const body = { model, max_tokens, messages };
+  if (model !== OPUS) body.temperature = temperature;  // temperature deprecated on Opus 4.7
   if (system) body.system = system;
   const res = await fetch(PROXY_URL, {
     method: 'POST',
