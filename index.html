@@ -1113,7 +1113,9 @@ MCQ RULES:
 - 4 options (A/B/C/D) per question
 - Distractors must be PLAUSIBLE — drawn from common misconceptions, antipatterns, or partial truths; not obviously wrong
 - correct: the single letter of the right answer
-- explanation: 2 sentences — why correct is right, why the most tempting wrong option fails
+- explanation: 1-2 concise sentences. Tight. Say why correct is right + why the main distractor fails.
+- Option text: under 25 words each. No prose paragraphs.
+- Question text: under 30 words.
 
 Return JSON:
 {
@@ -1128,18 +1130,19 @@ Return JSON:
   ]
 }`;
 
-  const { text } = await callClaude({
+  const { text, stop_reason } = await callClaude({
     model: SONNET,
     system,
     messages: [{ role: 'user', content: user }],
-    max_tokens: 2500,
+    max_tokens: 4000,
     temperature: 0.4,
   });
+  if (stop_reason === 'max_tokens') throw new Error('MCQ response truncated — regenerate');
   const parsed = extractJSON(text);
   if (!Array.isArray(parsed.questions) || parsed.questions.length === 0) {
     throw new Error('No questions generated');
   }
-  // Validate MCQ shape — drop any question missing required fields
+  // Drop any question missing required fields (survives partial corruption)
   const valid = parsed.questions.filter(q =>
     q.id && q.text && q.options && q.correct && q.explanation &&
     ['A','B','C','D'].includes(q.correct) &&
