@@ -1449,15 +1449,48 @@ function findResume() {
   return null;
 }
 
-function voiceOfDay() {
+const TIPS = [
+  { area: 'RAG',         tip: 'Reranking a top-50 retrieval gives more quality lift than swapping embedding models. Reorder before you re-embed.' },
+  { area: 'Evals',       tip: 'Build a 20-row eval set before you prompt harder. You cannot fix what you do not measure.' },
+  { area: 'Prompt',      tip: 'Put instructions BEFORE context, not after. Long context buries trailing instructions.' },
+  { area: 'Fine-tuning', tip: 'Try prompting + RAG first. Fine-tuning fixes behavior, not knowledge gaps.' },
+  { area: 'Inference',   tip: 'vLLM continuous batching gives ~10-20x throughput over naive batching for chat workloads.' },
+  { area: 'Agents',      tip: 'Agents fail at step 3-5 for the same reason: unclear tool schemas. Test every tool standalone first.' },
+  { area: 'RAG',         tip: 'Recursive character splitters at semantic breaks beat fixed-size chunks on mixed documents.' },
+  { area: 'Evals',       tip: 'LLM-as-judge drifts across model versions. Pin your judge and re-baseline when you upgrade.' },
+  { area: 'Prompt',      tip: 'Structured output (tool use / JSON mode) eliminates ~80% of parsing errors. Use it even for single strings.' },
+  { area: 'Fine-tuning', tip: 'QLoRA at rank 16 hits ~95% of full-tune quality at ~3% of the cost. Default there first.' },
+  { area: 'Inference',   tip: 'Speculative decoding cuts latency ~2x for common patterns. Pair a small draft model with your main one.' },
+  { area: 'Agents',      tip: 'Give agents fewer tools, not more. 5 sharp tools beats 20 overlapping ones.' },
+  { area: 'RAG',         tip: 'Hybrid search (BM25 + dense) consistently beats either alone. Do not skip the keyword path.' },
+  { area: 'Evals',       tip: 'Manual error analysis on 50 failures teaches more than 500 auto-graded examples.' },
+  { area: 'Prompt',      tip: 'Anthropic prompt caching: put the longest static content first in the system prompt. You pay for it once.' },
+  { area: 'Fine-tuning', tip: 'DPO needs ~1K preference pairs to move the needle, ~5K to stabilize. Under 500 is noise.' },
+  { area: 'Inference',   tip: 'GGUF Q4_K_M quantization: ~4x smaller, <3% quality loss on most tasks. First stop for local inference.' },
+  { area: 'Agents',      tip: 'ReAct wins under 10 steps. Plan-execute wins for structured pipelines. Pick by shape, not fashion.' },
+  { area: 'RAG',         tip: 'Include 1-2 sentences of surrounding context with each chunk. Retrieval precision jumps at near-zero cost.' },
+  { area: 'Evals',       tip: 'Failure taxonomies drift. Re-categorize errors monthly or your dashboard lies to you.' },
+  { area: 'Prompt',      tip: 'Few-shot beats zero-shot on structured tasks. Zero-shot wins on creative ones. Match the tool to the job.' },
+  { area: 'Fine-tuning', tip: 'Synthetic data from a bigger model is the cheapest way to 10x your training set. Quality-filter before use.' },
+  { area: 'Inference',   tip: 'Paged attention saves 40-60% VRAM on long conversations. Worth the setup even on a single GPU.' },
+  { area: 'Agents',      tip: 'Memory fails quietly. Log every memory read/write or you will debug invisible state corruption for days.' },
+  { area: 'LLMOps',      tip: 'Trace every LLM call with input, output, latency, and cost. You cannot tune what you cannot see.' },
+  { area: 'RAG',         tip: 'HyDE (hypothetical document embeddings) improves retrieval on vague queries. Cheap to try, high-variance win.' },
+  { area: 'Evals',       tip: 'Golden sets go stale. Rotate 10-20% of examples per quarter as your product changes.' },
+  { area: 'Prompt',      tip: 'Prompt injection defense: treat user input as data, not instructions. Delimit clearly and validate outputs.' },
+  { area: 'Inference',   tip: 'Batch size sweet spot: 4-16 for throughput, 1-2 for latency. Mixing the two kills both.' },
+  { area: 'Agents',      tip: 'Tool-call failures are your most common agent failure mode. Validate tool schemas explicitly, log rejections.' },
+];
+
+function tipOfDay() {
   const day = Math.floor(Date.now() / 86400000);
-  return SOURCES.tier1[day % SOURCES.tier1.length];
+  return TIPS[day % TIPS.length];
 }
 
 function welcomeHtml() {
   const stats = computeStats();
   const resume = findResume();
-  const voice = voiceOfDay();
+  const tip = tipOfDay();
 
   const progress = `<div class="w-card">
     <div class="w-head">Your progress</div>
@@ -1501,16 +1534,15 @@ function welcomeHtml() {
     </div>`;
   }
 
-  const voiceCard = `<div class="w-card">
-    <div class="w-head">Today's voice</div>
-    <div class="w-voice-name"><a href="${esc(voice.url)}" target="_blank" rel="noopener">${esc(voice.name)}</a></div>
-    <div class="w-voice-why">${esc(voice.why)}</div>
+  const tipCard = `<div class="w-card">
+    <div class="w-head">Tip of the day · ${esc(tip.area)}</div>
+    <div class="w-voice-why">${esc(tip.tip)}</div>
   </div>`;
 
   return `<div class="w-wrap">
     ${progress}
     ${resumeCard}
-    ${voiceCard}
+    ${tipCard}
     <div class="w-hint">${V.activeSub ? '' : 'Open the curriculum (top-left ☰) to pick any subtopic.'}</div>
   </div>`;
 }
