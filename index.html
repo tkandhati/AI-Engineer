@@ -1018,52 +1018,70 @@ Generate ONE lab that exercises all 3 concepts and produces a tangible, demonstr
 }
 
 async function generateQA(concept) {
-  const system = 'You generate short, precise quiz questions to test understanding of an AI engineering concept. Respond with JSON only. No prose, no markdown fences.';
+  const system = `You generate quiz questions that test FULL understanding of an AI engineering concept across every dimension. No fixed count — cover what the concept has, max 10. Respond with JSON only. No prose, no markdown fences.`;
+
+  const kps  = concept.key_points   || [];
+  const pats = concept.patterns      || [];
+  const aps  = concept.antipatterns  || [];
+  const pits = concept.pitfalls      || [];
+
   const user = `Concept: ${concept.title}
 Summary: ${concept.summary}
-Key points:
-${(concept.key_points || []).map(k => `- ${k.point}: ${k.explanation}`).join('\n')}
 
-Patterns: ${(concept.patterns || []).map(p => p.do).join(' | ')}
-Antipatterns: ${(concept.antipatterns || []).map(p => p.dont).join(' | ')}
+KEY POINTS (${kps.length}):
+${kps.map((k, i) => `${i+1}. ${k.point} — ${k.explanation}${k.example ? ' [e.g. ' + k.example + ']' : ''}`).join('\n')}
 
-Generate 3 questions that mix:
-1. A key distinction or mechanism ("explain the difference between X and Y" or "why does X work?")
-2. A judgment call in a scenario ("you see behavior S — what would you do and why?")
-3. A pitfall recognition ("what symptom indicates P, and what's the fix?")
+PATTERNS (${pats.length}):
+${pats.map((p, i) => `${i+1}. DO: ${p.do} | WHY: ${p.why} | WHEN: ${p.when}`).join('\n')}
+
+ANTIPATTERNS (${aps.length}):
+${aps.map((p, i) => `${i+1}. DON'T: ${p.dont} | WRONG BECAUSE: ${p.why_wrong} | INSTEAD: ${p.instead}`).join('\n')}
+
+PITFALLS (${pits.length}):
+${pits.map((p, i) => `${i+1}. SYMPTOM: ${p.symptom} | CAUSE: ${p.cause} | FIX: ${p.fix}`).join('\n')}
+
+RULES:
+- One question per key point — test application or distinction, NOT recall ("what is X?")
+- One question per pitfall — scenario-based: "you observe [symptom], what's happening and how do you fix it?"
+- One combined question covering patterns vs antipatterns — judgment call in a realistic scenario
+- Total: ${Math.min(kps.length + pits.length + 1, 10)} questions max
+- Questions must be answerable from the concept content above — no out-of-scope knowledge required
+- Make questions specific enough that a vague answer fails: "explain X" should specify what angle
 
 Return JSON:
-{"questions": [{"id":"q1","text":"..."},{"id":"q2","text":"..."},{"id":"q3","text":"..."}]}`;
+{"questions": [{"id": "q1", "text": "..."}, {"id": "q2", "text": "..."}, ...]}`;
 
   const { text } = await callClaude({
     model: SONNET,
     system,
     messages: [{ role: 'user', content: user }],
-    max_tokens: 900,
-    temperature: 0.5,
+    max_tokens: 1800,
+    temperature: 0.4,
   });
   const parsed = extractJSON(text);
   if (!Array.isArray(parsed.questions) || parsed.questions.length === 0) {
     throw new Error('No questions generated');
   }
-  return parsed.questions;
+  return parsed.questions.slice(0, 10);
 }
 
 async function evalQA(concept, items) {
-  const system = 'You evaluate AI engineering Q&A responses strictly but fairly. Name specific gaps, not generic feedback. Respond with JSON only.';
+  const system = 'You evaluate AI engineering Q&A responses strictly but fairly across all tested dimensions. Name specific gaps — not generic feedback. Respond with JSON only.';
   const user = `Concept: ${concept.title}
-Key points (ground truth):
-${(concept.key_points || []).map(k => `- ${k.point}: ${k.explanation}${k.example ? ' (e.g., ' + k.example + ')' : ''}`).join('\n')}
-Patterns: ${(concept.patterns || []).map(p => `${p.do} — ${p.why}`).join(' | ')}
-Antipatterns: ${(concept.antipatterns || []).map(p => `${p.dont} — ${p.why_wrong}`).join(' | ')}
 
-Learner responses:
+Ground truth:
+KEY POINTS: ${(concept.key_points || []).map(k => `${k.point}: ${k.explanation}`).join(' | ')}
+PATTERNS: ${(concept.patterns || []).map(p => `${p.do} (${p.why})`).join(' | ')}
+ANTIPATTERNS: ${(concept.antipatterns || []).map(p => `${p.dont} — instead: ${p.instead}`).join(' | ')}
+PITFALLS: ${(concept.pitfalls || []).map(p => `${p.symptom} → ${p.fix}`).join(' | ')}
+
+Learner responses (${items.length} questions):
 ${items.map((it, i) => `Q${i+1}: ${it.question}\nA${i+1}: ${it.answer || '(no answer)'}`).join('\n\n')}
 
-Evaluate:
-- Score 0–100 reflecting how well the answers demonstrate understanding of the key points, patterns, and pitfalls.
-- Feedback: 3–5 sentences. Name specific gaps. If an answer missed a key mechanism, say which one. If it nailed something well, say so.
-- passed: true if score >= 70.
+Evaluate holistically across all ${items.length} answers:
+- Score 0–100: proportion of dimensions genuinely understood (key points, pattern application, pitfall recognition)
+- Feedback: 3–5 sentences. Call out the specific key point or pitfall that was missed or misunderstood. Note what was strong. No generic praise.
+- passed: true if score >= 70
 
 Return JSON:
 {"score": number, "feedback": "string", "passed": boolean}`;
@@ -1072,7 +1090,7 @@ Return JSON:
     model: SONNET,
     system,
     messages: [{ role: 'user', content: user }],
-    max_tokens: 700,
+    max_tokens: 800,
     temperature: 0.2,
   });
   const p = extractJSON(text);
