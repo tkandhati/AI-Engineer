@@ -569,6 +569,34 @@ body {
 }
 .writeup-meta { font-size: 11.5px; color: #7c3aed; margin-top: 10px; }
 
+/* Welcome cards (progress + resume + voice) */
+.w-wrap { display: flex; flex-direction: column; gap: 14px; max-width: 720px; margin: 20px auto; }
+.w-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px 20px; }
+.w-head { font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #94a3b8; font-weight: 700; margin-bottom: 12px; }
+.w-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
+.w-tile { background: #f8fafc; border-radius: 7px; padding: 10px 8px; text-align: center; }
+.w-num { font-size: 22px; font-weight: 800; color: #0f172a; line-height: 1.1; letter-spacing: -0.5px; }
+.w-lbl { font-size: 10.5px; color: #64748b; margin-top: 3px; letter-spacing: 0.03em; }
+.w-bar { background: #f1f5f9; border-radius: 99px; height: 6px; overflow: hidden; }
+.w-bar-fill { background: linear-gradient(90deg, #2563eb, #10b981); height: 100%; transition: width 0.4s ease; }
+.w-pct { font-size: 11px; color: #64748b; margin-top: 6px; text-align: right; }
+
+.w-resume-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+.w-resume-info { flex: 1; min-width: 0; }
+.w-resume-sub  { font-size: 15px; font-weight: 700; color: #0f172a; letter-spacing: -0.2px; }
+.w-resume-ctx  { font-size: 12.5px; color: #64748b; margin-top: 2px; }
+
+.w-voice-name { font-size: 15px; font-weight: 700; color: #0f172a; letter-spacing: -0.2px; margin-bottom: 4px; }
+.w-voice-name a { color: #0f172a; text-decoration: none; }
+.w-voice-name a:hover { color: #2563eb; }
+.w-voice-why  { font-size: 13px; color: #475569; line-height: 1.55; }
+
+.w-hint { font-size: 12.5px; color: #94a3b8; text-align: center; margin-top: 10px; }
+
+@media (max-width: 600px) {
+  .w-tiles { grid-template-columns: repeat(2, 1fr); }
+}
+
 .hide { display: none !important; }
 
 @media (max-width: 900px) {
@@ -1363,7 +1391,13 @@ function renderSidebar() {
 let _lastRenderedSub = null;
 function renderMain() {
   const el = document.getElementById('main');
-  if (!V.activeSub) { el.innerHTML = welcomeHtml(); _lastRenderedSub = null; return; }
+  if (!V.activeSub) {
+    el.innerHTML = welcomeHtml();
+    _lastRenderedSub = null;
+    el.querySelectorAll('[data-action="resume"]').forEach(b =>
+      b.addEventListener('click', () => openSubtopic(b.dataset.sub)));
+    return;
+  }
   const st = S.subtopics[V.activeSub.id];
   if (!st || !st.content) {
     el.innerHTML = subHeaderHtml(V.activeSub) + loaderHtml('Generating curriculum with Opus 4.7 — this takes ~30–60 seconds');
@@ -1383,21 +1417,101 @@ function renderMain() {
   if (hist) hist.scrollTop = hist.scrollHeight;
 }
 
+function computeStats() {
+  const totalSub = CURRICULUM.reduce((n, c) => n + c.subtopics.length, 0);
+  let subDone = 0, conceptsPassed = 0, labsDone = 0, posts = 0;
+  for (const st of Object.values(S.subtopics || {})) {
+    if (st.status === 'done') subDone++;
+    if (st.lab?.status === 'done') labsDone++;
+    if (st.writeup?.status === 'generated') posts++;
+    for (const c of Object.values(st.concepts || {})) {
+      if (c.status === 'passed') conceptsPassed++;
+    }
+  }
+  return { totalSub, subDone, conceptsPassed, labsDone, posts, pct: Math.round((subDone / totalSub) * 100) };
+}
+
+function findResume() {
+  // First in-progress subtopic
+  for (const [id, st] of Object.entries(S.subtopics || {})) {
+    if (st.status === 'inprogress' && st.content) {
+      const meta = subMeta(id);
+      if (!meta) continue;
+      const concepts = st.content.concepts || [];
+      const passed = concepts.filter(c => st.concepts[c.id]?.status === 'passed').length;
+      let ctx;
+      if (passed < concepts.length) ctx = `Concept ${passed + 1} of ${concepts.length}`;
+      else if (st.lab?.status !== 'done') ctx = 'Lab in progress';
+      else ctx = 'Write-up pending';
+      return { meta, ctx };
+    }
+  }
+  return null;
+}
+
+function voiceOfDay() {
+  const day = Math.floor(Date.now() / 86400000);
+  return SOURCES.tier1[day % SOURCES.tier1.length];
+}
+
 function welcomeHtml() {
-  return `<div class="welcome">
-    <h1>AI Engineer — Curriculum</h1>
-    <p>Pioneer-grade content. 8 categories, 47 subtopics covering the full production AI engineering surface. Pick a subtopic from the left to begin.</p>
-    <div class="flow">
-      <h4>How it works</h4>
-      <ol>
-        <li>Click a subtopic — Opus 4.7 generates 3 concepts + 1 lab (cached forever)</li>
-        <li>Read concept 1 → attempt its Q&A → unlock concept 2</li>
-        <li>Finish all concepts → lab unlocks (2 free-compute options)</li>
-        <li>Ask the lab-scoped chatbot anytime you get stuck</li>
-        <li>Mark lab done → subtopic ✓ in sidebar</li>
-      </ol>
+  const stats = computeStats();
+  const resume = findResume();
+  const voice = voiceOfDay();
+
+  const progress = `<div class="w-card">
+    <div class="w-head">Your progress</div>
+    <div class="w-tiles">
+      <div class="w-tile"><div class="w-num">${stats.subDone}</div><div class="w-lbl">of ${stats.totalSub} subtopics</div></div>
+      <div class="w-tile"><div class="w-num">${stats.conceptsPassed}</div><div class="w-lbl">concepts passed</div></div>
+      <div class="w-tile"><div class="w-num">${stats.labsDone}</div><div class="w-lbl">labs shipped</div></div>
+      <div class="w-tile"><div class="w-num">${stats.posts}</div><div class="w-lbl">posts drafted</div></div>
     </div>
-    <p class="sub-tag">All content generated on-demand. Free-compute first. Labs are the point.</p>
+    <div class="w-bar"><div class="w-bar-fill" style="width:${stats.pct}%"></div></div>
+    <div class="w-pct">${stats.pct}% complete</div>
+  </div>`;
+
+  let resumeCard;
+  if (resume) {
+    resumeCard = `<div class="w-card">
+      <div class="w-head">Continue</div>
+      <div class="w-resume-row">
+        <div class="w-resume-info">
+          <div class="w-resume-sub">${esc(resume.meta.catName)} → ${esc(resume.meta.name)}</div>
+          <div class="w-resume-ctx">${esc(resume.ctx)}</div>
+        </div>
+        <button class="btn btn-primary" data-action="resume" data-sub="${esc(resume.meta.id)}">Resume →</button>
+      </div>
+    </div>`;
+  } else if (stats.subDone === stats.totalSub && stats.totalSub > 0) {
+    resumeCard = `<div class="w-card">
+      <div class="w-head">All done</div>
+      <div class="w-resume-ctx">You've completed all ${stats.totalSub} subtopics. Pick any from the sidebar to review or regenerate.</div>
+    </div>`;
+  } else {
+    resumeCard = `<div class="w-card">
+      <div class="w-head">Start here</div>
+      <div class="w-resume-row">
+        <div class="w-resume-info">
+          <div class="w-resume-sub">RAG Systems → Document parsing & data prep</div>
+          <div class="w-resume-ctx">Highest-ROI starting point — production RAG is 70% data engineering</div>
+        </div>
+        <button class="btn btn-primary" data-action="resume" data-sub="rag.parsing">Start →</button>
+      </div>
+    </div>`;
+  }
+
+  const voiceCard = `<div class="w-card">
+    <div class="w-head">Today's voice</div>
+    <div class="w-voice-name"><a href="${esc(voice.url)}" target="_blank" rel="noopener">${esc(voice.name)}</a></div>
+    <div class="w-voice-why">${esc(voice.why)}</div>
+  </div>`;
+
+  return `<div class="w-wrap">
+    ${progress}
+    ${resumeCard}
+    ${voiceCard}
+    <div class="w-hint">${V.activeSub ? '' : 'Open the curriculum (top-left ☰) to pick any subtopic.'}</div>
   </div>`;
 }
 
