@@ -297,6 +297,43 @@ body {
 .src-item a:hover { text-decoration: underline; }
 .src-note { color: #64748b; font-size: 11.5px; display: block; margin-top: 2px; }
 
+/* MCQ options */
+.mcq-options { display: flex; flex-direction: column; gap: 6px; margin: 10px 0 4px; }
+.mcq-opt {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 7px;
+  border: 1.5px solid #e2e8f0;
+  cursor: pointer;
+  font-size: 13.5px;
+  line-height: 1.55;
+  transition: border-color 0.12s, background 0.12s;
+  background: #fff;
+}
+.mcq-opt:hover:not(.mcq-correct):not(.mcq-wrong):not(.mcq-dim) { border-color: #94a3b8; background: #f8fafc; }
+.mcq-opt input[type="radio"] { margin-top: 3px; flex-shrink: 0; accent-color: #2563eb; }
+.mcq-selected { border-color: #2563eb; background: #eff6ff; }
+.mcq-correct  { border-color: #10b981; background: #ecfdf5; }
+.mcq-wrong    { border-color: #ef4444; background: #fef2f2; }
+.mcq-dim      { opacity: 0.45; }
+.mcq-key  { font-weight: 700; color: #475569; min-width: 18px; flex-shrink: 0; }
+.mcq-text { flex: 1; color: #1e293b; }
+.mcq-icon { font-size: 14px; font-weight: 700; flex-shrink: 0; margin-left: 4px; }
+.mcq-correct .mcq-icon { color: #059669; }
+.mcq-wrong .mcq-icon   { color: #dc2626; }
+.mcq-explanation {
+  font-size: 12.5px;
+  color: #334155;
+  background: #f0fdf4;
+  border-left: 3px solid #10b981;
+  padding: 8px 12px;
+  border-radius: 0 5px 5px 0;
+  margin-top: 4px;
+  line-height: 1.6;
+}
+
 /* Q&A */
 .qa-card {
   background: #fff;
@@ -1018,7 +1055,7 @@ Generate ONE lab that exercises all 3 concepts and produces a tangible, demonstr
 }
 
 async function generateQA(concept) {
-  const system = `You generate quiz questions that test FULL understanding of an AI engineering concept across every dimension. No fixed count — cover what the concept has, max 10. Respond with JSON only. No prose, no markdown fences.`;
+  const system = `You generate multiple-choice questions (MCQ) that test FULL understanding of an AI engineering concept across every dimension. Max 10 questions. Respond with JSON only. No prose, no markdown fences.`;
 
   const kps  = concept.key_points   || [];
   const pats = concept.patterns      || [];
@@ -1040,62 +1077,78 @@ ${aps.map((p, i) => `${i+1}. DON'T: ${p.dont} | WRONG BECAUSE: ${p.why_wrong} | 
 PITFALLS (${pits.length}):
 ${pits.map((p, i) => `${i+1}. SYMPTOM: ${p.symptom} | CAUSE: ${p.cause} | FIX: ${p.fix}`).join('\n')}
 
-RULES:
-- One question per key point — test application or distinction, NOT recall ("what is X?")
-- One question per pitfall — scenario-based: "you observe [symptom], what's happening and how do you fix it?"
-- One combined question covering patterns vs antipatterns — judgment call in a realistic scenario
+MCQ RULES:
+- One question per key point — test application/distinction, NOT bare recall ("what is X?")
+- One question per pitfall — "you observe [symptom] — what is happening and what do you do?"
+- One question covering patterns vs antipatterns — realistic scenario, pick the right approach
 - Total: ${Math.min(kps.length + pits.length + 1, 10)} questions max
-- Questions must be answerable from the concept content above — no out-of-scope knowledge required
-- Make questions specific enough that a vague answer fails: "explain X" should specify what angle
+- 4 options (A/B/C/D) per question
+- Distractors must be PLAUSIBLE — drawn from common misconceptions, antipatterns, or partial truths; not obviously wrong
+- correct: the single letter of the right answer
+- explanation: 2 sentences — why correct is right, why the most tempting wrong option fails
 
 Return JSON:
-{"questions": [{"id": "q1", "text": "..."}, {"id": "q2", "text": "..."}, ...]}`;
+{
+  "questions": [
+    {
+      "id": "q1",
+      "text": "Question text?",
+      "options": { "A": "...", "B": "...", "C": "...", "D": "..." },
+      "correct": "B",
+      "explanation": "B is correct because... The most common wrong choice (A/C/D) fails because..."
+    }
+  ]
+}`;
 
   const { text } = await callClaude({
     model: SONNET,
     system,
     messages: [{ role: 'user', content: user }],
-    max_tokens: 1800,
+    max_tokens: 2500,
     temperature: 0.4,
   });
   const parsed = extractJSON(text);
   if (!Array.isArray(parsed.questions) || parsed.questions.length === 0) {
     throw new Error('No questions generated');
   }
-  return parsed.questions.slice(0, 10);
+  // Validate MCQ shape — drop any question missing required fields
+  const valid = parsed.questions.filter(q =>
+    q.id && q.text && q.options && q.correct && q.explanation &&
+    ['A','B','C','D'].includes(q.correct) &&
+    Object.keys(q.options).length >= 2
+  );
+  if (valid.length === 0) throw new Error('No valid MCQ questions returned');
+  return valid.slice(0, 10);
 }
 
-async function evalQA(concept, items) {
-  const system = 'You evaluate AI engineering Q&A responses strictly but fairly across all tested dimensions. Name specific gaps — not generic feedback. Respond with JSON only.';
-  const user = `Concept: ${concept.title}
+// MCQ scoring is client-side — no API call needed.
+// correct answers + explanations are embedded in the cached questions.
+function scoreMCQ(questions, answers) {
+  let correct = 0;
+  const wrongItems = [];
 
-Ground truth:
-KEY POINTS: ${(concept.key_points || []).map(k => `${k.point}: ${k.explanation}`).join(' | ')}
-PATTERNS: ${(concept.patterns || []).map(p => `${p.do} (${p.why})`).join(' | ')}
-ANTIPATTERNS: ${(concept.antipatterns || []).map(p => `${p.dont} — instead: ${p.instead}`).join(' | ')}
-PITFALLS: ${(concept.pitfalls || []).map(p => `${p.symptom} → ${p.fix}`).join(' | ')}
-
-Learner responses (${items.length} questions):
-${items.map((it, i) => `Q${i+1}: ${it.question}\nA${i+1}: ${it.answer || '(no answer)'}`).join('\n\n')}
-
-Evaluate holistically across all ${items.length} answers:
-- Score 0–100: proportion of dimensions genuinely understood (key points, pattern application, pitfall recognition)
-- Feedback: 3–5 sentences. Call out the specific key point or pitfall that was missed or misunderstood. Note what was strong. No generic praise.
-- passed: true if score >= 70
-
-Return JSON:
-{"score": number, "feedback": "string", "passed": boolean}`;
-
-  const { text } = await callClaude({
-    model: SONNET,
-    system,
-    messages: [{ role: 'user', content: user }],
-    max_tokens: 800,
-    temperature: 0.2,
+  questions.forEach(q => {
+    const selected = answers[q.id];
+    if (selected === q.correct) {
+      correct++;
+    } else {
+      const selectedText = selected ? `You chose ${selected}: "${q.options[selected]}"` : 'Not answered';
+      wrongItems.push(`• ${q.text}\n  ${selectedText} — Correct: ${q.correct}: "${q.options[q.correct]}"\n  ${q.explanation}`);
+    }
   });
-  const p = extractJSON(text);
-  const score = Math.max(0, Math.min(100, Math.round(Number(p.score) || 0)));
-  return { score, feedback: String(p.feedback || ''), passed: !!p.passed || score >= 70 };
+
+  const total = questions.length;
+  const score = Math.round((correct / total) * 100);
+  const passed = score >= 70;
+
+  let feedback;
+  if (correct === total) {
+    feedback = `All ${total} correct. Strong understanding across every dimension.`;
+  } else {
+    feedback = `${correct}/${total} correct (${score}%).\n\n${wrongItems.join('\n\n')}`;
+  }
+
+  return { score, feedback, passed };
 }
 
 async function generateWriteup(sub, content) {
@@ -1560,19 +1613,65 @@ function renderConceptCard(c, cState, idx, total) {
 }
 
 function renderQACard(concept, cState) {
-  // If no questions yet, show loader / generate button
   if (!cState.questions || cState.questions.length === 0) {
     return `<div class="qa-card">
-      <div class="qa-head">Q&A — ${esc(concept.title)}</div>
-      <div id="qa-loader">Generating questions…</div>
+      <div class="qa-head">MCQ — ${esc(concept.title)}</div>
+      <div id="qa-loader" class="loader">Generating questions…
+        <div class="loader-dots"><span class="loader-dot">●</span><span class="loader-dot">●</span><span class="loader-dot">●</span></div>
+      </div>
     </div>`;
   }
 
-  const items = cState.questions.map((q, i) => `
-    <div class="qa-item">
+  // Detect old open-ended format (no options field) — prompt regeneration
+  const isMCQ = cState.questions[0]?.options;
+  if (!isMCQ) {
+    return `<div class="qa-card">
+      <div class="qa-head">MCQ — ${esc(concept.title)}</div>
+      <div class="ov-why" style="margin-bottom:14px;">Questions are in old open-ended format. Regenerate to get MCQs.</div>
+      <div class="qa-actions">
+        <button class="btn btn-primary" data-action="regen-qa">Regenerate as MCQ</button>
+        <button class="btn btn-ghost" data-action="close-qa">Back</button>
+      </div>
+    </div>`;
+  }
+
+  const submitted = !!cState.eval;
+  const answers   = cState.answers || {};
+
+  const items = cState.questions.map((q, i) => {
+    const optKeys = Object.keys(q.options);
+    const selected = answers[q.id];
+
+    const opts = optKeys.map(k => {
+      const isSelected = selected === k;
+      const isCorrect  = q.correct === k;
+      let cls = 'mcq-opt';
+      if (submitted) {
+        if (isCorrect)                     cls += ' mcq-correct';
+        else if (isSelected && !isCorrect) cls += ' mcq-wrong';
+        else                               cls += ' mcq-dim';
+      } else if (isSelected) {
+        cls += ' mcq-selected';
+      }
+      const icon = submitted ? (isCorrect ? '✓' : (isSelected ? '✗' : '')) : '';
+      return `<label class="${cls}">
+        <input type="radio" name="${esc(q.id)}" data-qid="${esc(q.id)}" value="${esc(k)}"
+          ${isSelected ? 'checked' : ''} ${submitted ? 'disabled' : ''}>
+        <span class="mcq-key">${esc(k)}</span>
+        <span class="mcq-text">${esc(q.options[k])}</span>
+        ${icon ? `<span class="mcq-icon">${icon}</span>` : ''}
+      </label>`;
+    }).join('');
+
+    const expBlock = (submitted && q.explanation)
+      ? `<div class="mcq-explanation">${esc(q.explanation)}</div>` : '';
+
+    return `<div class="qa-item">
       <div class="qa-q">Q${i+1}. ${esc(q.text)}</div>
-      <textarea class="qa-a" data-qid="${esc(q.id)}" placeholder="Write your answer…">${esc((cState.answers && cState.answers[q.id]) || '')}</textarea>
-    </div>`).join('');
+      <div class="mcq-options">${opts}</div>
+      ${expBlock}
+    </div>`;
+  }).join('');
 
   let evalBlock = '';
   if (cState.eval) {
@@ -1584,16 +1683,17 @@ function renderQACard(concept, cState) {
     </div>`;
   }
 
-  const submitting = cState._submitting ? 'disabled' : '';
-  const submitText = cState._submitting ? 'Evaluating…' : (cState.eval ? 'Re-evaluate' : 'Submit for evaluation');
+  const canSubmit = !submitted && Object.keys(answers).length > 0;
 
   return `<div class="qa-card">
-    <div class="qa-head">Q&A — ${esc(concept.title)}</div>
+    <div class="qa-head">MCQ — ${esc(concept.title)} &nbsp;<span style="font-weight:400;letter-spacing:0;">(${cState.questions.length} questions)</span></div>
     ${items}
     ${evalBlock}
     <div class="qa-actions">
-      <button class="btn btn-primary" data-action="submit-qa" ${submitting}>${submitText}</button>
-      <button class="btn" data-action="regen-qa">Regenerate questions</button>
+      ${!submitted
+        ? `<button class="btn btn-primary" data-action="submit-qa" ${canSubmit ? '' : 'disabled'}>Submit</button>`
+        : `<button class="btn" data-action="submit-qa">Retry</button>`}
+      <button class="btn" data-action="regen-qa">New questions</button>
       <button class="btn btn-ghost" data-action="close-qa">Back to concept</button>
     </div>
   </div>`;
@@ -1932,8 +2032,9 @@ async function regenQuestions() {
   const cs = st.concepts[concept.id];
   if (!cs) return;
   cs.questions = null;
-  cs.answers = {};
-  cs.eval = null;
+  cs.answers   = {};
+  cs.eval      = null;
+  cs.status    = 'reading';
   saveState();
   await ensureQuestions();
 }
@@ -1945,32 +2046,21 @@ async function submitQA() {
   const cs = st.concepts[concept.id];
   if (!cs || !cs.questions) return;
 
-  // Collect answers
+  // Collect selected MCQ options from radio buttons
   cs.answers = cs.answers || {};
-  document.querySelectorAll('.qa-a').forEach(t => {
-    cs.answers[t.dataset.qid] = t.value.trim();
+  document.querySelectorAll('.mcq-option input[type="radio"]:checked').forEach(r => {
+    cs.answers[r.dataset.qid] = r.value;
   });
   saveState();
 
-  cs._submitting = true;
+  // Score client-side — no API call
+  const res = scoreMCQ(cs.questions, cs.answers);
+  cs.eval = res;
+  cs.status = res.passed ? 'passed' : 'reading';
+  recomputeSubStatus(subId);
+  saveState();
   renderMain();
-
-  try {
-    const items = cs.questions.map(q => ({ question: q.text, answer: cs.answers[q.id] || '' }));
-    const res = await evalQA(concept, items);
-    cs.eval = res;
-    cs.status = res.passed ? 'passed' : 'reading';
-    cs._submitting = false;
-    recomputeSubStatus(subId);
-    saveState();
-    renderMain();
-    renderSidebar();
-  } catch (e) {
-    cs._submitting = false;
-    saveState();
-    renderMain();
-    flashMessage('Evaluation failed: ' + (e.message || e));
-  }
+  renderSidebar();
 }
 
 function requestNextConcept() {
